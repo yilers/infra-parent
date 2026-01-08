@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.extension.parser.cache.JdkSerialCaffeineJsqlPars
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.*;
 import com.github.yilers.upm.permission.CustomDataPermissionHandler;
-import com.github.yilers.upm.permission.CustomResultInterceptor;
 import com.github.yilers.upm.permission.CustomTenantHandler;
 import com.github.yilers.web.mybatis.InsertBatchSqlInjector;
 import jakarta.annotation.PostConstruct;
@@ -33,8 +32,8 @@ public class MybatisPlusConfig {
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
         // 列数据权限
-        CustomResultInterceptor customResultInterceptor = new CustomResultInterceptor();
-        interceptor.addInnerInterceptor(customResultInterceptor);
+//        CustomResultInterceptor customResultInterceptor = new CustomResultInterceptor();
+//        interceptor.addInnerInterceptor(customResultInterceptor);
         // 多租户插件
         TenantLineInnerInterceptor tenantInterceptor = new TenantLineInnerInterceptor();
         tenantInterceptor.setTenantLineHandler(new CustomTenantHandler());
