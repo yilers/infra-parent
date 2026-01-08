@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.github.yilers</groupId>
+    <artifactId>infra-parent</artifactId>
+    <version>${revision}</version>
+    <name>infra-parent</name>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>common</module>
+        <module>upm</module>
+    </modules>
+
+    <developers>
+        <developer>
+            <name>zhanghui</name>
+            <email>jwtpermission@gmail.com</email>
+        </developer>
+    </developers>
+
+    <properties>
+        <revision>1.0.0</revision>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <spring-boot.version>4.0.1</spring-boot.version>
+        <hutool-v7.version>7.0.0-M2</hutool-v7.version>
+        <redisson.version>4.1.0</redisson.version>
+        <cglib.version>3.3.0</cglib.version>
+        <sa-token.version>1.44.0</sa-token.version>
+        <dynamic-tp.version>1.2.2</dynamic-tp.version>
+        <mybatis-plus.version>3.5.15</mybatis-plus.version>
+        <knife4j.version>4.5.0</knife4j.version>
+        <dynamic-datasource.version>4.5.0</dynamic-datasource.version>
+        <powerjob.version>5.1.2</powerjob.version>
+        <sms4j.version>3.3.5</sms4j.version>
+        <jetcache.version>2.7.8</jetcache.version>
+        <ip2region.version>3.3.4</ip2region.version>
+
+        <spring-boot-admin.version>2.7.16</spring-boot-admin.version>
+        <sleuth.version>3.1.11</sleuth.version>
+        <fastexcel.version>1.2.0</fastexcel.version>
+        <caffeine.version>3.2.0</caffeine.version>
+        <bcpkix-jdk18on.version>1.81</bcpkix-jdk18on.version>
+        <flatten-maven-plugin.version>1.7.3</flatten-maven-plugin.version>
+    </properties>
+
+    <!-- ✅ 统一依赖版本管理 -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- Spring Boot BOM（可选） -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-bom</artifactId>
+                <version>${mybatis-plus.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- ✅ 插件和构建 -->
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!-- 编译插件 -->
+                <plugin>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>4.0.0-beta-3</version>
+
+                    <configuration>
+                        <release>25</release>  <!-- 或 17 / 21，根据你当前 JDK -->
+                        <encoding>UTF-8</encoding>
+                        <compilerArgs>
+                            <arg>-parameters</arg>
+                        </compilerArgs>
+                    </configuration>
+                </plugin>
+
+                <!-- Spring Boot 打包（只在 upm-start 模块中用） -->
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>4.0.0</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>repackage</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <!-- 上传私服 -->
+                <plugin>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>4.0.0-beta-2</version>
+                </plugin>
+
+            </plugins>
+        </pluginManagement>
+
+
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>${flatten-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <updatePomFile>true</updatePomFile>
+                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                </configuration>
+            </plugin>
+
+            <!-- Javadoc -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.12.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Source -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>4.0.0-beta-1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal> <!-- 不重新编译 -->
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+
+    </build>
+
+    <!-- ✅ 私服配置 -->
+    <distributionManagement>
+        <snapshotRepository>
+            <!--id的名字可以任意取，但是在setting文件中的属性<server>的ID与这里一致-->
+            <id>snapshots</id>
+            <!--指向仓库类型为host(宿主仓库）的储存类型为Release的仓库-->
+            <url>http://192.168.8.112:8081/repository/maven-snapshots/</url>
+        </snapshotRepository>
+        <repository>
+            <id>releases</id>
+            <!--指向仓库类型为host(宿主仓库）的储存类型为Snapshot的仓库-->
+            <url>http://192.168.8.112:8081/repository/maven-releases/</url>
+        </repository>
+    </distributionManagement>
+
+    <repositories>
+        <repository>
+            <id>releases</id>
+            <name>Company Release Repo</name>
+            <url>http://192.168.8.112:8081/repository/maven-releases/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+
+        <repository>
+            <id>snapshots</id>
+            <name>Company Snapshot Repo</name>
+            <url>http://192.168.8.112:8081/repository/maven-snapshots/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+</project>

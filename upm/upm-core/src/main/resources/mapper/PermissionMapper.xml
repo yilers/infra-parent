@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.github.yilers.upm.mapper.PermissionMapper">
+
+    <select id="findPermissionsByUserId" resultType="com.github.yilers.upm.entity.Permission">
+        SELECT DISTINCT
+        p.permission_name,p.id,p.parent_id,p.menu_url,p.menu_icon,p.permission_type,p.version,
+        p.permission_code,p.sort_number,p.operable,p.component,p.cache,p.link,p.usable,p.device
+        FROM upm_user u,upm_user_role ur,upm_permission p,upm_role_permission rp
+        <where>
+            u.id = ur.user_id AND ur.role_id = rp.role_id
+            AND rp.permission_id = p.id AND u.deleted = 0 and p.deleted = 0
+            AND p.device = #{device}
+            AND u.id = #{userId}
+            ORDER BY p.sort_number asc, p.id asc
+        </where>
+    </select>
+
+
+</mapper>

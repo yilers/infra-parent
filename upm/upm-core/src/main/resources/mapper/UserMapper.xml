@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.github.yilers.upm.mapper.UserMapper">
+
+
+    <select id="currentInfo" resultType="com.github.yilers.upm.response.UserInfoResponse">
+        SELECT u.id, u.user_type, u.account, u.nickname, u.dept_id, u.position_id, u.tenant_id,
+        u.name, u.gender, u.id_card, u.email, u.phone, u.photo, u.operable, d.dept_code, u.version,
+        d.dept_name, p.position_code, p.position_name, u.usable, u.create_time ,u.update_time
+        FROM upm_user u
+        LEFT JOIN upm_dept d ON u.dept_id = d.id
+        LEFT JOIN upm_position p ON u.position_id = p.id
+        <where>
+            u.id = #{userId}
+        </where>
+    </select>
+
+    <!-- 查询账户信息 -->
+    <select id="findByPage" resultType="com.github.yilers.upm.response.UserInfoResponse">
+        SELECT
+            u.id, u.user_type, u.account, u.nickname, u.dept_id, u.position_id, u.tenant_id,
+            u.name, u.gender, u.id_card, u.email, u.phone, u.photo, u.operable, d.dept_code, u.version,
+            d.dept_name, p.position_code, p.position_name, u.usable, u.create_time ,u.update_time
+        FROM upm_user u
+        LEFT JOIN upm_dept d ON u.dept_id = d.id
+        LEFT JOIN upm_position p ON u.position_id = p.id
+        <where>
+            <if test="request.data.name != null and request.data.name != '' ">
+                AND u.`name` LIKE concat('%', #{request.data.name}, '%')
+            </if>
+            <if test="request.data.account != null and request.data.account != '' ">
+                AND u.`account` LIKE concat('%', #{request.data.account}, '%')
+            </if>
+            <if test="request.data.nickname != null and request.data.nickname != '' ">
+                AND u.nickname LIKE concat('%', #{request.data.nickname}, '%')
+            </if>
+            <if test="request.data.usable != null ">
+                AND u.usable = #{request.data.usable}
+            </if>
+            <if test="request.data.phone != null and request.data.phone != '' ">
+                AND u.phone LIKE concat('%', #{request.data.phone}, '%')
+            </if>
+            <if test="request.data.idCard != null and request.data.idCard != '' ">
+                AND u.id_card LIKE concat('%', #{request.data.idCard}, '%')
+            </if>
+            <if test="request.data.email != null and request.data.email != '' ">
+                AND u.email LIKE concat('%', #{request.data.email}, '%')
+            </if>
+            <if test="request.data.deptIdList != null and request.data.deptIdList.size() > 0">
+                AND u.dept_id IN
+                <foreach item="item" collection="request.data.deptIdList" separator="," open="(" close=")" index="i">
+                    #{item}
+                </foreach>
+            </if>
+<!--            <if test="request.data.userType != null and request.data.userType != '' ">-->
+<!--                AND u.user_type = #{dto.userType}-->
+<!--            </if>-->
+            <if test="request.startTime != null and request.startTime != '' ">
+                AND u.create_time <![CDATA[ >= ]]> #{request.startTime}
+            </if>
+            <if test="request.endTime != null and request.endTime != '' ">
+                AND u.create_time <![CDATA[ <= ]]> #{request.endTime}
+            </if>
+                AND u.deleted = 0
+            <!-- 动态 ORDER BY -->
+            <choose>
+                <!-- 如果用户有传排序字段 -->
+                <when test="request.sortFieldList != null and request.sortFieldList.size() > 0">
+                    ORDER BY
+                    <foreach item="field" index="index" collection="request.sortFieldList" separator=",">
+                        <!-- 拼接字段名 + 对应排序方式 -->
+                        ${field}
+                        <if test="request.sortOrderList != null and request.sortOrderList.size() > index">
+                            ${request.sortOrderList[index]}
+                        </if>
+                    </foreach>
+                </when>
+                <!-- 如果用户没有传排序字段，使用默认排序 -->
+                <otherwise>
+                    ORDER BY u.id ASC
+                </otherwise>
+            </choose>
+        </where>
+
+    </select>
+</mapper>

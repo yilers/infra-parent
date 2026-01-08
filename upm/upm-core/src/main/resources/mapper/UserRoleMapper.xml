@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.github.yilers.upm.mapper.UserRoleMapper">
+
+    <select id="findRoleListByUserId" resultType="com.github.yilers.upm.entity.Role">
+        SELECT r.id,r.role_name,r.role_code,r.data_scope,r.operable,r.usable,r.create_time,r.update_time
+        FROM upm_role r INNER JOIN upm_user_role ur
+        ON r.id = ur.role_id
+        <where>
+            r.usable = 1
+            AND
+            ur.user_id = #{userId}
+        </where>
+    </select>
+
+    <select id="findRoleByUserIdList" resultType="com.github.yilers.upm.dto.UserRoleListDTO">
+        SELECT ur.user_id,r.id,r.role_name,r.role_code,r.data_scope,r.operable,r.usable,r.create_time,r.update_time
+        FROM upm_role r INNER JOIN upm_user_role ur
+        ON r.id = ur.role_id
+        <where>
+            r.usable = 1
+            AND
+            ur.user_id in
+            <foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </where>
+    </select>
+</mapper>

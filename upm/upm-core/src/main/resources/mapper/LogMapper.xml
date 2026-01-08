@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.github.yilers.upm.mapper.LogMapper">
+
+    <select id="findByPage" resultType="com.github.yilers.upm.response.LogInfoResponse">
+        SELECT
+            l.id,l.module,l.action,l.success,l.operator,u.`name` AS operatorName,l.method,l.params,l.ip,l.duration,
+            l.stack_trace,l.create_time,l.tenant_id,t.name AS tenantName,l.region
+        FROM upm_log l
+        LEFT JOIN upm_user u ON l.operator = u.id
+        LEFT JOIN upm_tenant t ON l.tenant_id = t.id
+        <where>
+            <if test="request.data.success != null ">
+                AND l.success = #{request.data.success}
+            </if>
+            <if test="request.data.action != null and request.data.action != '' ">
+                AND l.action = #{request.data.action}
+            </if>
+            <if test="request.data.operator != null and request.data.operator != '' ">
+                AND u.`name` LIKE concat('%', #{request.data.operator}, '%')
+            </if>
+            <if test="request.data.module != null and request.data.module != '' ">
+                AND l.module = #{request.data.module}
+            </if>
+            <if test="request.startTime != null and request.startTime != '' and request.endTime != null and request.endTime != ''">
+                AND l.create_time between #{request.startTime} AND #{request.endTime}
+            </if>
+            AND l.deleted = 0
+            <!-- 动态 ORDER BY -->
+            <choose>
+                <!-- 如果用户有传排序字段 -->
+                <when test="request.sortFieldList != null and request.sortFieldList.size() > 0">
+                    ORDER BY
+                    <foreach item="field" index="index" collection="request.sortFieldList" separator=",">
+                        <!-- 拼接字段名 + 对应排序方式 -->
+                        ${field}
+                        <if test="request.sortOrderList != null and request.sortOrderList.size() > index">
+                            ${request.sortOrderList[index]}
+                        </if>
+                    </foreach>
+                </when>
+                <!-- 如果用户没有传排序字段，使用默认排序 -->
+                <otherwise>
+                    ORDER BY l.create_time DESC, l.id ASC
+                </otherwise>
+            </choose>
+        </where>
+
+    </select>
+
+</mapper>

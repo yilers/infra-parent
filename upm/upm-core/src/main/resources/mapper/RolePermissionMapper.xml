@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.github.yilers.upm.mapper.RolePermissionMapper">
+
+    <select id="findPermissionListByRoleIdList" resultType="com.github.yilers.upm.entity.Permission">
+        SELECT
+            DISTINCT p.id, p.parent_id, p.permission_name, p.permission_code, p.permission_type, p.device,
+        p.operable, p.usable, p.menu_url, p.menu_icon, p.sort_number, p.deleted, p.create_time, p.update_time,
+        p.component, p.cache, p.link
+        FROM
+            upm_permission p
+        INNER JOIN upm_role_permission rp ON p.id = rp.permission_id
+        <where>
+            rp.role_id IN
+            <foreach collection="roleIdList" item="roleId" open="(" separator="," close=")">
+                #{roleId}
+            </foreach>
+        </where>
+    </select>
+</mapper>

@@ -1,0 +1,5 @@
+singleServerConfig:
+  address: redis://192.168.8.119:6379
+  password: redis-jzy.com
+  database: 10
+  timeout: 3000

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>#{title}</title>
+    <style>
+        body {
+          margin: 0;
+          padding: 0;
+          background: linear-gradient(135deg, #1d2b64, #f8cdda);
+          font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+
+        .container {
+          max-width: 600px;
+          margin: 40px auto;
+          background: #ffffff;
+          border-radius: 12px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+          padding: 30px;
+          text-align: center;
+        }
+
+        h1 {
+          color: #1d2b64;
+          font-size: 24px;
+          margin-bottom: 20px;
+        }
+
+        p {
+          font-size: 16px;
+          line-height: 1.6;
+          color: #555;
+        }
+
+        .code {
+          font-size: 32px;
+          font-weight: bold;
+          color: #e63946;
+          margin: 20px 0;
+        }
+
+        .button {
+          display: inline-block;
+          padding: 12px 25px;
+          margin-top: 20px;
+          background-color: #1d2b64;
+          color: white;
+          text-decoration: none;
+          border-radius: 8px;
+          font-weight: bold;
+        }
+
+        .footer {
+          margin-top: 40px;
+          font-size: 12px;
+          color: #aaa;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>#{title}</h1>
+    <p>您好，<strong>#{username}</strong></p>
+    <p>您的验证码为：</p>
+    <div class="code">#{code}</div>
+    <p>该验证码将在 <strong>#{minutes}</strong> 分钟后失效，请尽快使用。</p>
+    <a href="#{actionUrl}" class="button">前往操作</a>
+    <div class="footer">
+        此邮件由系统自动发送，请勿回复。<br/>
+        &copy; 2025 ZHANG HUI
+    </div>
+</div>
+</body>
+</html>

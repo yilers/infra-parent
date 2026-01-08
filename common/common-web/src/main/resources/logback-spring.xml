@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="false" scan="false">
+
+    <!-- spring属性 -->
+    <springProperty scope="context" name="spring.application.name" source="spring.application.name" defaultValue=""/>
+    <springProperty scope="context" name="spring.profiles.active" source="spring.profiles.active" defaultValue=""/>
+    <springProperty scope="context" name="logging.file.path" source="logging.file.path" defaultValue="./log"/>
+    <springProperty scope="context" name="logging.level.root" source="logging.level.root" defaultValue=""/>
+
+
+    <property name="log.path" value="${logging.file.path}/${spring.application.name}/${spring.profiles.active}"/>
+
+    <!-- 彩色日志格式 -->
+    <property name="CONSOLE_LOG_PATTERN"
+              value="${CONSOLE_LOG_PATTERN:-%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
+    <!-- 彩色日志依赖的渲染类 -->
+    <conversionRule conversionWord="clr"
+                    class="org.springframework.boot.logging.logback.ColorConverter"/>
+
+    <conversionRule conversionWord="wEx"
+                    class="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
+
+    <conversionRule conversionWord="wEx"
+                    class="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
+
+    <!-- Console appender -->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 日志文件滚动输出 -->
+    <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${log.path}/%d{yyyy-MM}/info.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+            <totalSizeCap>20GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="appFile" class="ch.qos.logback.core.FileAppender">
+        <file>${log.path}/app.log</file>
+        <append>true</append> <!-- 确保是追加，不清空 -->
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- Error日志文件滚动输出 -->
+    <appender name="error" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${log.path}/%d{yyyy-MM}/error.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- Error级别 HTML 日志 -->
+    <appender name="errorHtml" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${log.path}/%d{yyyy-MM}/error.%d{yyyy-MM-dd}.%i.html.gz</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+            <charset>UTF-8</charset>
+            <layout class="ch.qos.logback.classic.html.HTMLLayout">
+                <pattern>%date traceId=%X{traceId} spanId=%X{spanId} %level %logger{40} - %msg%n</pattern>
+            </layout>
+        </encoder>
+    </appender>
+
+    <!-- Info级别 HTML 日志 -->
+    <appender name="infoHtml" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${log.path}/%d{yyyy-MM}/info.%d{yyyy-MM-dd}.%i.html.gz</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+            <charset>UTF-8</charset>
+            <layout class="ch.qos.logback.classic.html.HTMLLayout">
+                <pattern>%date traceId=%X{traceId} spanId=%X{spanId} %level %logger{40} - %msg%n</pattern>
+            </layout>
+        </encoder>
+    </appender>
+
+    <!-- 异步包装器，避免日志阻塞 -->
+    <appender name="asyncFile" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="file"/>
+        <queueSize>8192</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>true</includeCallerData>
+    </appender>
+
+    <appender name="asyncError" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="error"/>
+        <queueSize>8192</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>true</includeCallerData>
+    </appender>
+
+    <appender name="asyncErrorHtml" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="errorHtml"/>
+        <queueSize>8192</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>true</includeCallerData>
+    </appender>
+
+    <appender name="asyncInfoHtml" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="infoHtml"/>
+        <queueSize>8192</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>true</includeCallerData>
+    </appender>
+
+    <appender name="asyncAppFile" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="appFile"/>
+        <queueSize>8192</queueSize>
+    </appender>
+
+    <!-- MyBatis等日志调试 -->
+    <logger name="com.apache.ibatis" level="TRACE" />
+    <logger name="java.sql.Connection" level="DEBUG" />
+    <logger name="java.sql.Statement" level="DEBUG" />
+    <logger name="java.sql.PreparedStatement" level="DEBUG" />
+
+    <!-- 不显示Spring Kafka的日志 -->
+    <logger name="org.springframework.kafka" level="OFF"/>
+
+    <!-- 多环境配置 按照active profile选择分支 -->
+    <springProfile name="dev|local">
+        <root level="${logging.level.root:-INFO}">
+            <appender-ref ref="console"/>
+            <appender-ref ref="asyncFile"/>
+            <appender-ref ref="asyncError"/>
+            <appender-ref ref="asyncErrorHtml"/>
+            <appender-ref ref="asyncInfoHtml"/>
+             <appender-ref ref="asyncAppFile"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="test|gray|pre|prod">
+        <root level="${logging.level.root:-INFO}">
+            <appender-ref ref="console"/>
+            <appender-ref ref="asyncFile"/>
+            <appender-ref ref="asyncError"/>
+             <appender-ref ref="asyncAppFile"/>
+        </root>
+    </springProfile>
+
+</configuration>
