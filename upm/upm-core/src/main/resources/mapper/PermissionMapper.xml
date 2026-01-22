@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.github.yilers.upm.mapper.PermissionMapper">
+<mapper namespace="io.github.yilers.upm.mapper.PermissionMapper">
 
-    <select id="findPermissionsByUserId" resultType="com.github.yilers.upm.entity.Permission">
+    <select id="findPermissionsByUserId" resultType="io.github.yilers.upm.entity.Permission">
         SELECT DISTINCT
         p.permission_name,p.id,p.parent_id,p.menu_url,p.menu_icon,p.permission_type,p.version,
         p.permission_code,p.sort_number,p.operable,p.component,p.cache,p.link,p.usable,p.device

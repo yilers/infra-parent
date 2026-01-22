@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.github.yilers</groupId>
+        <groupId>io.github.yilers</groupId>
         <artifactId>infra-parent</artifactId>
         <version>${revision}</version>
         <relativePath>../pom.xml</relativePath>

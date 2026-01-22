@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.github.yilers.upm.mapper.LogMapper">
+<mapper namespace="io.github.yilers.upm.mapper.LogMapper">
 
-    <select id="findByPage" resultType="com.github.yilers.upm.response.LogInfoResponse">
+    <select id="findByPage" resultType="io.github.yilers.upm.response.LogInfoResponse">
         SELECT
             l.id,l.module,l.action,l.success,l.operator,u.`name` AS operatorName,l.method,l.params,l.ip,l.duration,
             l.stack_trace,l.create_time,l.tenant_id,t.name AS tenantName,l.region

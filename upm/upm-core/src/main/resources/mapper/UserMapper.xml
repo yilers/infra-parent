@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.github.yilers.upm.mapper.UserMapper">
+<mapper namespace="io.github.yilers.upm.mapper.UserMapper">
 
 
-    <select id="currentInfo" resultType="com.github.yilers.upm.response.UserInfoResponse">
+    <select id="currentInfo" resultType="io.github.yilers.upm.response.UserInfoResponse">
         SELECT u.id, u.user_type, u.account, u.nickname, u.dept_id, u.position_id, u.tenant_id,
         u.name, u.gender, u.id_card, u.email, u.phone, u.photo, u.operable, d.dept_code, u.version,
         d.dept_name, p.position_code, p.position_name, u.usable, u.create_time ,u.update_time
@@ -17,7 +17,7 @@
     </select>
 
     <!-- 查询账户信息 -->
-    <select id="findByPage" resultType="com.github.yilers.upm.response.UserInfoResponse">
+    <select id="findByPage" resultType="io.github.yilers.upm.response.UserInfoResponse">
         SELECT
             u.id, u.user_type, u.account, u.nickname, u.dept_id, u.position_id, u.tenant_id,
             u.name, u.gender, u.id_card, u.email, u.phone, u.photo, u.operable, d.dept_code, u.version,

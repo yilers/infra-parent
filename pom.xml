@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.github.yilers</groupId>
+    <groupId>io.github.yilers</groupId>
     <artifactId>infra-parent</artifactId>
     <version>${revision}</version>
     <name>infra-parent</name>
@@ -14,6 +14,15 @@
         <module>common</module>
         <module>upm</module>
     </modules>
+
+    <url>https://github.com/yilers/infra-parent</url>
+
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
 
     <developers>
         <developer>
@@ -27,19 +36,21 @@
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
         <spring-boot.version>4.0.1</spring-boot.version>
         <hutool-v7.version>7.0.0-M2</hutool-v7.version>
         <redisson.version>4.1.0</redisson.version>
         <cglib.version>3.3.0</cglib.version>
         <sa-token.version>1.44.0</sa-token.version>
         <dynamic-tp.version>1.2.2</dynamic-tp.version>
-        <mybatis-plus.version>3.5.15</mybatis-plus.version>
+        <mybatis-plus.version>3.5.16</mybatis-plus.version>
         <knife4j.version>4.5.0</knife4j.version>
         <dynamic-datasource.version>4.5.0</dynamic-datasource.version>
         <powerjob.version>5.1.2</powerjob.version>
         <sms4j.version>3.3.5</sms4j.version>
         <jetcache.version>2.7.8</jetcache.version>
         <ip2region.version>3.3.4</ip2region.version>
+        <lombok.version>1.18.42</lombok.version>
 
         <spring-boot-admin.version>2.7.16</spring-boot-admin.version>
         <sleuth.version>3.1.11</sleuth.version>
@@ -68,6 +79,7 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
         </dependencies>
     </dependencyManagement>
 
@@ -77,15 +89,22 @@
             <plugins>
                 <!-- 编译插件 -->
                 <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>4.0.0-beta-3</version>
-
+                    <version>3.14.1</version>
                     <configuration>
                         <release>25</release>  <!-- 或 17 / 21，根据你当前 JDK -->
                         <encoding>UTF-8</encoding>
                         <compilerArgs>
                             <arg>-parameters</arg>
                         </compilerArgs>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>1.18.42</version>
+                            </path>
+                        </annotationProcessorPaths>
                     </configuration>
                 </plugin>
 
@@ -106,7 +125,6 @@
                 <!-- 上传私服 -->
                 <plugin>
                     <artifactId>maven-deploy-plugin</artifactId>
-                    <version>4.0.0-beta-2</version>
                 </plugin>
 
             </plugins>
@@ -152,7 +170,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>4.0.0-beta-1</version>
+                <version>3.3.1</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
