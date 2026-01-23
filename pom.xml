@@ -90,7 +90,7 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.14.1</version>
                     <configuration>
-                        <release>8</release>  <!-- 或 17 / 21，根据你当前 JDK -->
+                        <release>21</release>  <!-- 或 17 / 21，根据你当前 JDK -->
                         <encoding>UTF-8</encoding>
                         <compilerArgs>
                             <arg>-parameters</arg>
