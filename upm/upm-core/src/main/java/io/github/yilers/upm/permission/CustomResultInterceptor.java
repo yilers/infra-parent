@@ -1,143 +1,1 @@
-package io.github.yilers.upm.permission;
-
-import cn.dev33.satoken.stp.StpUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.v7.core.collection.CollUtil;
-import cn.hutool.v7.extra.spring.SpringUtil;
-import com.baomidou.mybatisplus.core.toolkit.PluginUtils;
-import com.baomidou.mybatisplus.extension.parser.JsqlParserGlobal;
-import com.baomidou.mybatisplus.extension.parser.JsqlParserSupport;
-import com.baomidou.mybatisplus.extension.plugins.inner.InnerInterceptor;
-import io.github.yilers.upm.entity.Role;
-import io.github.yilers.upm.entity.RoleColumn;
-import io.github.yilers.upm.service.RoleColumnService;
-import io.github.yilers.upm.service.UserRoleService;
-import lombok.extern.slf4j.Slf4j;
-import net.sf.jsqlparser.JSQLParserException;
-import net.sf.jsqlparser.schema.Table;
-import net.sf.jsqlparser.statement.Statement;
-import net.sf.jsqlparser.statement.select.FromItem;
-import net.sf.jsqlparser.statement.select.PlainSelect;
-import net.sf.jsqlparser.statement.select.Select;
-import net.sf.jsqlparser.statement.select.SelectItem;
-import org.apache.ibatis.executor.statement.StatementHandler;
-import org.apache.ibatis.mapping.MappedStatement;
-import org.apache.ibatis.mapping.SqlCommandType;
-
-import java.sql.Connection;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-@Slf4j
-public class CustomResultInterceptor extends JsqlParserSupport implements InnerInterceptor {
-
-    public void beforePrepare(StatementHandler sh, Connection connection, Integer transactionTimeout) {
-        PluginUtils.MPStatementHandler mpStatementHandler = PluginUtils.mpStatementHandler(sh);
-        MappedStatement ms = mpStatementHandler.mappedStatement();
-        SqlCommandType sct = ms.getSqlCommandType();
-        if (sct == SqlCommandType.SELECT) {
-            PluginUtils.MPBoundSql mpBs = mpStatementHandler.mPBoundSql();
-            String sql = mpBs.sql();
-            log.info("sql: " + mpBs.sql());
-            if (StrUtil.containsIgnoreCase(sql, "count")) {
-                return;
-            } else {
-                try {
-                    Statement parse = JsqlParserGlobal.parse(sql);
-                    if (parse instanceof Select) {
-                        PlainSelect plainSelect = ((Select) parse).getPlainSelect();
-                        System.out.println(plainSelect);
-                        processParser(plainSelect, 0, sql, null);
-                    }
-
-                } catch (JSQLParserException e) {
-                    throw new RuntimeException(e);
-                }
-
-            }
-
-        }
-    }
-
-    protected void processSelect(Select select, int index, String sql, Object obj) {
-        if (select instanceof PlainSelect plainSelect) {
-            List<SelectItem<?>> selectItems = plainSelect.getSelectItems();
-            FromItem fromItem = plainSelect.getFromItem();
-            String tableName = "";
-            if (fromItem instanceof Table) {
-                tableName = ((Table) fromItem).getName();
-            } else if (fromItem instanceof Select) {
-                Select subSelect = (Select) fromItem;
-                PlainSelect subSelectPlainSelect = subSelect.getPlainSelect();
-                // 递归地获取子查询的表名
-                FromItem subFromItem = subSelectPlainSelect.getFromItem();
-                if (subFromItem instanceof Table) {
-                    tableName = ((Table) subFromItem).getName();
-                } else {
-                    // 如果子查询的 FROM 子句不是表，则可能需要进一步处理或记录警告
-                    tableName = "UNKNOWN_TABLE_FROM_SUBQUERY"; // 或者其他适当的默认值
-                }
-            }
-            // 获取配置列自定义配置
-            String property = SpringUtil.getApplicationContext().getEnvironment().getProperty("permission.column.table");
-            if (StrUtil.isBlank(property)) {
-                return;
-            }
-            List<String> split = StrUtil.split(property, StrUtil.COMMA);
-            boolean flag = false;
-            for (String table : split) {
-                if (StrUtil.equalsIgnoreCase(table, tableName)) {
-                    flag = true;
-                    break;
-                }
-            }
-            if (!flag) {
-                return;
-            }
-            long userId = 0;
-            try {
-                userId = StpUtil.getLoginIdAsLong();
-            } catch (Exception e) {
-//                log.info("获取人员信息失败 不做列数据权限处理");
-                return;
-            }
-            // 要用缓存
-            UserRoleService userRoleService = SpringUtil.getBean(UserRoleService.class);
-            List<Role> roleList = userRoleService.findRoleListByUserId(userId);
-            if (CollUtil.isNotEmpty(roleList)) {
-                List<Long> roleIds = roleList.stream().map(Role::getId).collect(Collectors.toList());
-                RoleColumnService roleColumnService = SpringUtil.getBean(RoleColumnService.class);
-                List<RoleColumn> roleColumn = roleColumnService.findByRoleIdAndTableName(roleIds, tableName);
-                if (CollUtil.isNotEmpty(roleColumn)) {
-                    Set<String> columnSet = new LinkedHashSet<>();
-                    for (RoleColumn column : roleColumn) {
-                        String ignoreColumn = column.getIgnoreColumn();
-                        List<String> columnList = StrUtil.split(ignoreColumn, StrUtil.COMMA);
-                        columnSet.addAll(columnList);
-                    }
-
-                    List<SelectItem<?>> selectItemsNew = new ArrayList<>();
-                    for (SelectItem<?> selectItem : selectItems) {
-                        String currentColumn = selectItem.getExpression().toString();
-                        boolean isExist = false;
-                        for (String ignore : columnSet) {
-                            if (currentColumn.contains(ignore)) {
-                                isExist = true;
-                                break;
-                            }
-                        }
-                        if (!isExist) {
-                            selectItemsNew.add(selectItem);
-                        }
-                    }
-                    plainSelect.setSelectItems(selectItemsNew);
-                }
-            }
-        }
-
-    }
-
-}
+package io.github.yilers.upm.permission;import cn.dev33.satoken.stp.StpUtil;import cn.hutool.core.util.StrUtil;import cn.hutool.v7.core.collection.CollUtil;import cn.hutool.v7.extra.spring.SpringUtil;import com.baomidou.mybatisplus.core.toolkit.PluginUtils;import com.baomidou.mybatisplus.extension.parser.JsqlParserGlobal;import com.baomidou.mybatisplus.extension.parser.JsqlParserSupport;import com.baomidou.mybatisplus.extension.plugins.inner.InnerInterceptor;import io.github.yilers.upm.entity.Role;import io.github.yilers.upm.entity.RoleColumn;import io.github.yilers.upm.service.RoleColumnService;import io.github.yilers.upm.service.UserRoleService;import lombok.extern.slf4j.Slf4j;import net.sf.jsqlparser.JSQLParserException;import net.sf.jsqlparser.schema.Table;import net.sf.jsqlparser.statement.Statement;import net.sf.jsqlparser.statement.select.FromItem;import net.sf.jsqlparser.statement.select.PlainSelect;import net.sf.jsqlparser.statement.select.Select;import net.sf.jsqlparser.statement.select.SelectItem;import org.apache.ibatis.executor.statement.StatementHandler;import org.apache.ibatis.mapping.MappedStatement;import org.apache.ibatis.mapping.SqlCommandType;import java.sql.Connection;import java.util.ArrayList;import java.util.LinkedHashSet;import java.util.List;import java.util.Set;import java.util.stream.Collectors;@Slf4jpublic class CustomResultInterceptor extends JsqlParserSupport implements InnerInterceptor {    public void beforePrepare(StatementHandler sh, Connection connection, Integer transactionTimeout) {        PluginUtils.MPStatementHandler mpStatementHandler = PluginUtils.mpStatementHandler(sh);        MappedStatement ms = mpStatementHandler.mappedStatement();        SqlCommandType sct = ms.getSqlCommandType();        if (sct == SqlCommandType.SELECT) {            PluginUtils.MPBoundSql mpBs = mpStatementHandler.mPBoundSql();            String sql = mpBs.sql();            log.info("sql: " + mpBs.sql());            if (StrUtil.containsIgnoreCase(sql, "count")) {                return;            } else {                try {                    Statement parse = JsqlParserGlobal.parse(sql);                    if (parse instanceof Select) {                        PlainSelect plainSelect = ((Select) parse).getPlainSelect();                        System.out.println(plainSelect);                        processParser(plainSelect, 0, sql, null);                    }                } catch (JSQLParserException e) {                    throw new RuntimeException(e);                }            }        }    }    protected void processSelect(Select select, int index, String sql, Object obj) {        if (select instanceof PlainSelect) {            PlainSelect plainSelect = (PlainSelect) select;            List<SelectItem<?>> selectItems = plainSelect.getSelectItems();            FromItem fromItem = plainSelect.getFromItem();            String tableName = "";            if (fromItem instanceof Table) {                tableName = ((Table) fromItem).getName();            } else if (fromItem instanceof Select) {                Select subSelect = (Select) fromItem;                PlainSelect subSelectPlainSelect = subSelect.getPlainSelect();                // 递归地获取子查询的表名                FromItem subFromItem = subSelectPlainSelect.getFromItem();                if (subFromItem instanceof Table) {                    tableName = ((Table) subFromItem).getName();                } else {                    // 如果子查询的 FROM 子句不是表，则可能需要进一步处理或记录警告                    tableName = "UNKNOWN_TABLE_FROM_SUBQUERY"; // 或者其他适当的默认值                }            }            // 获取配置列自定义配置            String property = SpringUtil.getApplicationContext().getEnvironment().getProperty("permission.column.table");            if (StrUtil.isBlank(property)) {                return;            }            List<String> split = StrUtil.split(property, StrUtil.COMMA);            boolean flag = false;            for (String table : split) {                if (StrUtil.equalsIgnoreCase(table, tableName)) {                    flag = true;                    break;                }            }            if (!flag) {                return;            }            long userId = 0;            try {                userId = StpUtil.getLoginIdAsLong();            } catch (Exception e) {//                log.info("获取人员信息失败 不做列数据权限处理");                return;            }            // 要用缓存            UserRoleService userRoleService = SpringUtil.getBean(UserRoleService.class);            List<Role> roleList = userRoleService.findRoleListByUserId(userId);            if (CollUtil.isNotEmpty(roleList)) {                List<Long> roleIds = roleList.stream().map(Role::getId).collect(Collectors.toList());                RoleColumnService roleColumnService = SpringUtil.getBean(RoleColumnService.class);                List<RoleColumn> roleColumn = roleColumnService.findByRoleIdAndTableName(roleIds, tableName);                if (CollUtil.isNotEmpty(roleColumn)) {                    Set<String> columnSet = new LinkedHashSet<>();                    for (RoleColumn column : roleColumn) {                        String ignoreColumn = column.getIgnoreColumn();                        List<String> columnList = StrUtil.split(ignoreColumn, StrUtil.COMMA);                        columnSet.addAll(columnList);                    }                    List<SelectItem<?>> selectItemsNew = new ArrayList<>();                    for (SelectItem<?> selectItem : selectItems) {                        String currentColumn = selectItem.getExpression().toString();                        boolean isExist = false;                        for (String ignore : columnSet) {                            if (currentColumn.contains(ignore)) {                                isExist = true;                                break;                            }                        }                        if (!isExist) {                            selectItemsNew.add(selectItem);                        }                    }                    plainSelect.setSelectItems(selectItemsNew);                }            }        }    }}

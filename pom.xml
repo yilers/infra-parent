@@ -51,12 +51,9 @@
         <jetcache.version>2.7.8</jetcache.version>
         <ip2region.version>3.3.4</ip2region.version>
         <lombok.version>1.18.42</lombok.version>
-
-        <spring-boot-admin.version>2.7.16</spring-boot-admin.version>
-        <sleuth.version>3.1.11</sleuth.version>
-        <fastexcel.version>1.2.0</fastexcel.version>
-        <caffeine.version>3.2.0</caffeine.version>
-        <bcpkix-jdk18on.version>1.81</bcpkix-jdk18on.version>
+<!--        <fesod.version>1.2.0</fesod.version>-->
+<!--        <sleuth.version>3.1.11</sleuth.version>-->
+<!--        <caffeine.version>3.2.0</caffeine.version>-->
         <flatten-maven-plugin.version>1.7.3</flatten-maven-plugin.version>
     </properties>
 
@@ -93,7 +90,7 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.14.1</version>
                     <configuration>
-                        <release>25</release>  <!-- 或 17 / 21，根据你当前 JDK -->
+                        <release>8</release>  <!-- 或 17 / 21，根据你当前 JDK -->
                         <encoding>UTF-8</encoding>
                         <compilerArgs>
                             <arg>-parameters</arg>
