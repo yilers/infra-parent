@@ -80,7 +80,8 @@ CREATE TABLE upm_user (
     INDEX idx_account (account)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='用户表';
 
-INSERT INTO `upm_user` (`id`, `user_type`, `account`, `nickname`, `password`, `dept_id`, `position_id`, `name`, `gender`, `photo`, `id_card`, `email`, `phone`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `create_time`, `update_time`) VALUES (10, 'admin', 'platform@jzy.com', '超级管理员', '$2a$10$JarAnbZXpw85Af1unN3RR.O.L1PgxmO5iEY0MbRuX3/Tj3pIHvyEy', 10, 10, '超级管理员', 1, NULL, NULL, NULL, NULL, 0, 1, 0, 1, 1, '2025-06-05 10:42:24.565', '2025-06-05 10:46:31.524');
+INSERT INTO `upm`.`upm_user` (`id`, `user_type`, `account`, `nickname`, `password`, `dept_id`, `position_id`, `name`, `gender`, `photo`, `id_card`, `email`, `phone`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `create_id`, `expand`, `create_time`, `update_time`) VALUES (10, 'admin', 'platform@yilers.com', '超级管理员', '$2a$10$1FylLzVNqSTschwjVyADUOcDplWdLJk2cF1N/5pd8yrep9O2RTVQa', 10, 10, '超级管理员', 1, NULL, NULL, NULL, NULL, 1, 1, 0, 1, 1, 1, '{\"initPwd\":false}', '2025-06-05 10:42:24.565', '2026-01-23 15:52:13.989');
+INSERT INTO `upm`.`upm_user` (`id`, `user_type`, `account`, `nickname`, `password`, `dept_id`, `position_id`, `name`, `gender`, `photo`, `id_card`, `email`, `phone`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `create_id`, `expand`, `create_time`, `update_time`) VALUES (20, 'admin', 'admin@yilers.com', '租户管理员', '$2a$10$1FylLzVNqSTschwjVyADUOcDplWdLJk2cF1N/5pd8yrep9O2RTVQa', 10, 10, '租户管理员', 1, '', '', '', '', 1, 1, 0, 1, 23, 10, '', '2025-06-23 17:59:34.427', '2026-01-23 15:54:59.776');
 
 -- 角色表
 CREATE TABLE upm_role (
@@ -169,6 +170,7 @@ INSERT INTO `upm_permission` (`id`, `parent_id`, `menu_icon`, `menu_url`, `sort_
 INSERT INTO `upm_permission` (`id`, `parent_id`, `menu_icon`, `menu_url`, `sort_number`, `permission_code`, `permission_name`, `permission_type`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `create_time`, `update_time`, `component`, `cache`, `link`, `device`, `create_id`) VALUES (166, 160, NULL, NULL, 6, 'system:role:permission', '授权', 2, 0, 1, 0, 1, 1, '2025-06-10 11:03:04.015', '2025-06-20 09:36:12.944', '', 0, 0, 'web', 1);
 INSERT INTO `upm_permission` (`id`, `parent_id`, `menu_icon`, `menu_url`, `sort_number`, `permission_code`, `permission_name`, `permission_type`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `create_time`, `update_time`, `component`, `cache`, `link`, `device`, `create_id`) VALUES (170, 10, 'material-symbols:logo-dev-outline', 'log', 70, NULL, '日志管理', 1, 0, 1, 0, 1, 2, '2025-06-16 16:29:04.538', '2025-06-20 09:36:13.033', 'system/log/index', 1, 0, 'web', 1);
 INSERT INTO `upm_permission` (`id`, `parent_id`, `menu_icon`, `menu_url`, `sort_number`, `permission_code`, `permission_name`, `permission_type`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `create_time`, `update_time`, `component`, `cache`, `link`, `device`, `create_id`) VALUES (171, 170, NULL, NULL, 1, 'system:log:list', '列表', 2, 0, 1, 0, 1, 6, '2025-06-16 16:29:54.313', '2025-06-20 09:36:13.108', '', 0, 0, 'web', 1);
+INSERT INTO `upm`.`upm_permission` (`id`, `parent_id`, `menu_icon`, `component`, `cache`, `link`, `menu_url`, `sort_number`, `permission_code`, `permission_name`, `permission_type`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `device`, `create_id`, `create_time`, `update_time`) VALUES (180, 10, '', '', 0, 1, 'http://localhost:9003/doc.html', 80, '', '接口', 1, 1, 1, 0, 1, 48, 'web', 10, '2025-07-02 15:47:00.771', '2026-01-23 16:05:44.405');
 
 -- 角色权限关联表
 CREATE TABLE upm_role_permission (
@@ -180,43 +182,71 @@ CREATE TABLE upm_role_permission (
     UNIQUE INDEX uk_role_permission (role_id, permission_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='角色权限关联表';
 
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 10, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 110, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 111, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 112, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 113, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 114, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 115, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 116, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 120, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 121, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 122, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 123, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 124, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 130, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 131, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 132, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 133, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 134, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 140, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 141, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 142, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 143, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 144, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 150, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 151, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 152, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 153, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 154, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 160, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 161, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 162, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 163, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 164, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 165, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 166, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 170, 1, 'web');
-INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 171, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 10, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 110, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 111, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 112, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 113, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 114, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 115, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 116, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 120, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 121, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 122, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 123, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 124, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 130, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 131, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 132, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 133, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 134, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 140, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 141, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 142, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 143, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 144, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 150, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 151, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 152, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 153, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 154, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 160, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 161, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 162, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 163, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 164, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 165, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 166, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 170, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 171, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 180, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 10, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 110, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 111, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 112, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 113, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 114, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 115, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 116, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 130, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 131, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 132, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 133, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 134, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 140, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 141, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 142, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 143, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 144, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 160, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 161, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 162, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 163, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 164, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 165, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 166, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 170, 1, 'web');
+INSERT INTO `upm`.`upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 171, 1, 'web');
 
 -- 日志表
 CREATE TABLE upm_log (
@@ -301,7 +331,7 @@ CREATE TABLE upm_tenant (
     INDEX idx_code (code) COMMENT '租户编码索引'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='租户表';
 
-INSERT INTO `upm_tenant` (`id`, `name`, `code`, `description`, `expand`, `operable`, `usable`, `deleted`, `version`, `create_time`, `update_time`) VALUES (1, '默认租户', 'jzy.com', '默认租户', '', 0, 1, 0, 1, '2025-06-09 15:48:25', '2025-06-09 15:56:17');
+INSERT INTO `upm`.`upm_tenant` (`id`, `name`, `code`, `description`, `expand`, `operable`, `usable`, `deleted`, `version`, `create_time`, `update_time`) VALUES (1, '默认租户', 'yilers.com', '默认租户', '{\"logo\":\"https://files.authing.co/user-contents/photos/b97119c3-5772-4a2d-804b-b9727c4cd124.png\",\"name\":\"UPM\"}', 0, 1, 0, 1, '2025-06-09 15:48:25', '2026-01-23 15:51:35');
 
 -- 设备表
 CREATE TABLE upm_device (
@@ -322,6 +352,7 @@ CREATE TABLE upm_device (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='设备表';
 
 INSERT INTO `upm_device` (`id`, `name`, `code`, `description`, `expand`, `operable`, `usable`, `deleted`, `version`, `tenant_id`, `create_time`, `update_time`) VALUES (10, 'web端', 'web', '', '', 0, 1, 0, 1, 1, '2025-06-11 09:13:35', '2025-06-11 09:13:35');
+INSERT INTO `upm_device` (`id`, `name`, `code`, `description`, `expand`, `operable`, `usable`, `deleted`, `version`, `tenant_id`, `create_time`, `update_time`) VALUES (20, 'app端', 'app', '', '', 0, 1, 0, 1, 1, '2026-01-23 15:05:36', '2026-01-23 15:05:36');
 
 -- 用户仅自己数据权限
 CREATE TABLE upm_user_data_scope (
