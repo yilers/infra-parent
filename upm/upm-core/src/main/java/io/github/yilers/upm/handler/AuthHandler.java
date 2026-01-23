@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 @Component
 @Primary
 @RequiredArgsConstructor
+@SuppressWarnings("all")
 public class AuthHandler implements AuthService {
     private final UserService userService;
     private final TenantService tenantService;

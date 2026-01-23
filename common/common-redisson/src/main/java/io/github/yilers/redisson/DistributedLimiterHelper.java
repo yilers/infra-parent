@@ -3,6 +3,8 @@ package io.github.yilers.redisson;
 import lombok.experimental.UtilityClass;
 import org.redisson.api.*;
 
+import java.time.Duration;
+
 @UtilityClass
 public class DistributedLimiterHelper {
 
@@ -15,7 +17,7 @@ public class DistributedLimiterHelper {
     // 限流器，固定速率，permitsPerSecond 每秒允许多少个请求
     public void initRateLimiter(String name, long permitsPerSecond) {
         RRateLimiter rateLimiter = redissonClient.getRateLimiter(name);
-        rateLimiter.trySetRate(RateType.OVERALL, permitsPerSecond, 1, RateIntervalUnit.SECONDS);
+        rateLimiter.trySetRate(RateType.OVERALL, permitsPerSecond, Duration.ofSeconds(1L));
     }
 
     public boolean tryAcquireRateLimiter(String name) {
