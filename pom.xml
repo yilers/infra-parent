@@ -7,7 +7,6 @@
     <groupId>io.github.yilers</groupId>
     <artifactId>infra-parent</artifactId>
     <version>${revision}</version>
-    <name>infra-parent</name>
     <packaging>pom</packaging>
 
     <modules>
@@ -15,6 +14,8 @@
         <module>upm</module>
     </modules>
 
+    <name>infra-parent</name>
+    <description>基础服务</description>
     <url>https://github.com/yilers/infra-parent</url>
 
     <licenses>
@@ -31,14 +32,20 @@
         </developer>
     </developers>
 
+    <scm>
+        <connection>scm:git:https://github.com/yilers/infra-parent.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com:yilers/infra-parent.git</developerConnection>
+        <url>https://github.com/yilers/infra-parent</url>
+    </scm>
+
     <properties>
         <revision>1.0.0</revision>
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
-        <spring-boot.version>4.0.1</spring-boot.version>
-        <hutool-v7.version>7.0.0-M2</hutool-v7.version>
+        <spring-boot.version>4.0.2</spring-boot.version>
+        <hutool-v7.version>7.0.0-M4</hutool-v7.version>
         <redisson.version>4.1.0</redisson.version>
         <cglib.version>3.3.0</cglib.version>
         <sa-token.version>1.44.0</sa-token.version>
@@ -167,7 +174,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>3.3.1</version>
+                <version>3.4.0</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -178,49 +185,69 @@
                     </execution>
                 </executions>
             </plugin>
+
         </plugins>
 
     </build>
 
-    <!-- ✅ 私服配置 -->
-    <distributionManagement>
-        <snapshotRepository>
-            <!--id的名字可以任意取，但是在setting文件中的属性<server>的ID与这里一致-->
-            <id>snapshots</id>
-            <!--指向仓库类型为host(宿主仓库）的储存类型为Release的仓库-->
-            <url>http://192.168.8.112:8081/repository/maven-snapshots/</url>
-        </snapshotRepository>
-        <repository>
-            <id>releases</id>
-            <!--指向仓库类型为host(宿主仓库）的储存类型为Snapshot的仓库-->
-            <url>http://192.168.8.112:8081/repository/maven-releases/</url>
-        </repository>
-    </distributionManagement>
+    <!-- ================================================= -->
+    <!-- Profiles -->
+    <!-- ================================================= -->
+    <profiles>
+        <!-- ================= 公司 Nexus 私服 ================= -->
+        <profile>
+            <id>company</id>
+            <distributionManagement>
+                <snapshotRepository>
+                    <id>snapshots</id>
+                    <url>http://192.168.8.112:8081/repository/maven-snapshots/</url>
+                </snapshotRepository>
+                <repository>
+                    <id>releases</id>
+                    <url>http://192.168.8.112:8081/repository/maven-releases/</url>
+                </repository>
+            </distributionManagement>
 
-    <repositories>
-        <repository>
-            <id>releases</id>
-            <name>Company Release Repo</name>
-            <url>http://192.168.8.112:8081/repository/maven-releases/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
+            <repositories>
+                <repository>
+                    <id>company-releases</id>
+                    <url>http://192.168.8.112:8081/repository/maven-releases/</url>
+                    <releases><enabled>true</enabled></releases>
+                    <snapshots><enabled>false</enabled></snapshots>
+                </repository>
 
-        <repository>
-            <id>snapshots</id>
-            <name>Company Snapshot Repo</name>
-            <url>http://192.168.8.112:8081/repository/maven-snapshots/</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
+                <repository>
+                    <id>company-snapshots</id>
+                    <url>http://192.168.8.112:8081/repository/maven-snapshots/</url>
+                    <releases><enabled>false</enabled></releases>
+                    <snapshots><enabled>true</enabled></snapshots>
+                </repository>
+            </repositories>
+        </profile>
+
+        <!-- ================= Maven Central 发布（仅加 GPG） ================= -->
+        <profile>
+            <id>central</id>
+            <build>
+                <plugins>
+                    <!-- gpg -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.8</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals><goal>sign</goal></goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+
+        </profile>
+
+    </profiles>
 
 </project>
