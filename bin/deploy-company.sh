@@ -22,4 +22,4 @@ if [[ "$confirm" != "y" ]]; then
 fi
 
 # 执行部署命令
-mvn clean deploy -Drevision="$revision"
+mvn clean deploy -Pcompany -Drevision="$revision"
