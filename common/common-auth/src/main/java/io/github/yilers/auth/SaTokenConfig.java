@@ -29,7 +29,6 @@ public class SaTokenConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         List<String> url = ignoreProperties.getUrl();
-        url.add("/**/favicon.ico");
         url.add("/**/doc.html");
         url.add("/**/css/**");
         url.add("/**/js/**");
@@ -43,6 +42,8 @@ public class SaTokenConfig implements WebMvcConfigurer {
         url.add("/**/*.css");
         url.add("/**/*.woff");
         url.add("/**/*.ttf");
+        url.add("/**/*.ico");
+        url.add("/**/*.png");
         url.add("/static/**");
         url.add("/applications");
         url.add("/index.html");
