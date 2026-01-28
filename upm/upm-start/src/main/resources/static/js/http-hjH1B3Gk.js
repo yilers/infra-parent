@@ -1,0 +1,1 @@
+const s="请求出错，请稍候重试",t="操作成功",o="成功提示",c="错误提示",e="登录已过期, 请重新登录",n={apiRequestFailed:s,operationSuccess:t,successTip:o,errorTip:c,loginTimeout:e};export{s as apiRequestFailed,n as default,c as errorTip,e as loginTimeout,t as operationSuccess,o as successTip};

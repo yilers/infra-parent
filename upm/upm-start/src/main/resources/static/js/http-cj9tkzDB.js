@@ -1,0 +1,1 @@
+const e="Operation failed",o="Operation Success",s="Success Tip",t="Error Tip",i="Login timeout, please log in again",c={apiRequestFailed:e,operationSuccess:o,successTip:s,errorTip:t,loginTimeout:i};export{e as apiRequestFailed,c as default,t as errorTip,i as loginTimeout,o as operationSuccess,s as successTip};
