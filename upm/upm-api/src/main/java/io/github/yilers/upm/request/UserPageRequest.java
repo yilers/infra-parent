@@ -1,5 +1,6 @@
 package io.github.yilers.upm.request;
 
+import io.github.yilers.core.constant.CommonConst;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -30,4 +31,7 @@ public class UserPageRequest {
     private Integer usable;
 
     private List<Long> deptIdList;
+
+    @Schema(description = "是否查看平台用户 1-是 0-否", hidden = true)
+    private Integer lookPlatformUser = CommonConst.NO;
 }

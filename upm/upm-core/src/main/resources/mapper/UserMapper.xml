@@ -26,6 +26,15 @@
         LEFT JOIN upm_dept d ON u.dept_id = d.id
         LEFT JOIN upm_position p ON u.position_id = p.id
         <where>
+            <if test="request.data.lookPlatformUser != null and request.data.lookPlatformUser == 0 ">
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM upm_user_role ur
+                    INNER JOIN upm_role r ON ur.role_id = r.id
+                    WHERE ur.user_id = u.id
+                    AND r.role_code = 'platformAdmin'
+                    )
+            </if>
             <if test="request.data.name != null and request.data.name != '' ">
                 AND u.`name` LIKE concat('%', #{request.data.name}, '%')
             </if>
