@@ -15,6 +15,7 @@ import io.github.yilers.upm.service.UserService;
 import io.github.yilers.web.log.SysLog;
 import io.github.yilers.web.util.Ip2RegionUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -27,10 +28,7 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.lang.reflect.Method;
 import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -46,30 +44,30 @@ import java.util.concurrent.ThreadPoolExecutor;
 @RequiredArgsConstructor
 public class SysLogAspect {
     private final ThreadPoolExecutor commonExecutor;
-    private static final Map<Method, SysLog> SYS_LOG_CACHE = new ConcurrentHashMap<>();
+//    private static final Map<Method, SysLog> SYS_LOG_CACHE = new ConcurrentHashMap<>();
 
     /**
      * 切点
      */
-    @Pointcut("@annotation(com.jzy.log.SysLog)")
-    public void logPointCut() {
+    @Pointcut("@annotation(sysLog)")
+    public void logPointCut(SysLog sysLog) {
     }
 
     /**
      * 环绕通知
      * @param joinPoint
      */
-    @Around("logPointCut()")
-    public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
-        return saveLog(joinPoint);
+    @Around("logPointCut(sysLog)")
+    public Object around(ProceedingJoinPoint joinPoint, SysLog sysLog) throws Throwable {
+        return saveLog(joinPoint, sysLog);
     }
 
     /**
      * 保存日志
      * @param joinPoint
      */
-    private Object saveLog(ProceedingJoinPoint joinPoint) throws Throwable {
-        Log sysLog = new Log();
+    private Object saveLog(ProceedingJoinPoint joinPoint, @NotNull SysLog sysLog) throws Throwable {
+        Log saveLog = new Log();
         long startTime = System.currentTimeMillis();  // 开始时间
         try {
             MethodSignature signature = (MethodSignature) joinPoint.getSignature();
@@ -78,12 +76,15 @@ public class SysLogAspect {
             Object[] args = joinPoint.getArgs();
             String params = JSONUtil.toJsonStr(args);
 
-            Method method = signature.getMethod();
-            SysLog syslog = SYS_LOG_CACHE.computeIfAbsent(method, m -> m.getAnnotation(SysLog.class));
-
-            String action = syslog.value();
-            String module = syslog.module();
-            String[] hideFieldList = syslog.hideFieldList();
+//            Method method = signature.getMethod();
+//            SysLog syslog = SYS_LOG_CACHE.computeIfAbsent(method,
+//                    m -> AnnotationUtil.getAnnotation(m, SysLog.class));
+//            if (syslog == null) {
+//                return joinPoint.proceed();
+//            }
+            String action = sysLog.value();
+            String module = sysLog.module();
+            String[] hideFieldList = sysLog.hideFieldList();
 
             // 如果需要隐藏指定字段
             if (hideFieldList.length > 0) {
@@ -92,21 +93,21 @@ public class SysLogAspect {
             RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
             HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
             String ip = ServletUtil.getClientIP(request);
-            sysLog.setIp(ip);
-            sysLog.setRegion(Ip2RegionUtil.region(ip));
-            sysLog.setAction(action);
-            sysLog.setModule(module);
-            sysLog.setMethod(className + "." + methodName + "()");
-            sysLog.setParams(params);
-            sysLog.setDeleted(CommonConst.NO);
-            sysLog.setCreateTime(LocalDateTime.now());
+            saveLog.setIp(ip);
+            saveLog.setRegion(Ip2RegionUtil.region(ip));
+            saveLog.setAction(action);
+            saveLog.setModule(module);
+            saveLog.setMethod(className + "." + methodName + "()");
+            saveLog.setParams(params);
+            saveLog.setDeleted(CommonConst.NO);
+            saveLog.setCreateTime(LocalDateTime.now());
             try {
                 String userId = StpUtil.getLoginIdAsString();
                 UserService userService = SpringUtil.getBean(UserService.class);
                 User user = userService.findById(Long.parseLong(userId));
-                sysLog.setOperator(userId);
+                saveLog.setOperator(userId);
                 if (user != null) {
-                    sysLog.setDeptId(user.getDeptId());
+                    saveLog.setDeptId(user.getDeptId());
                 }
             } catch (Exception e) {
                 log.warn("获取不到用户信息");
@@ -118,28 +119,28 @@ public class SysLogAspect {
                     UserService userService = SpringUtil.getBean(UserService.class);
                     User user = userService.findByAccount(account);
                     if (user != null) {
-                        sysLog.setOperator(user.getId().toString());
-                        sysLog.setDeptId(user.getDeptId());
+                        saveLog.setOperator(user.getId().toString());
+                        saveLog.setDeptId(user.getDeptId());
                     }
                 }
             }
 
             Object proceed = joinPoint.proceed();
-            sysLog.setSuccess(CommonConst.YES);
+            saveLog.setSuccess(CommonConst.YES);
             String detail = String.format("(%s)访问:%s.%s() 传入:%s 执行:%s",
                     ip, className, methodName, params, action);
-            log.info(JSONUtil.toJsonStr(detail));
+            log.info(detail);
             return proceed;
         } catch (Exception e) {
-            sysLog.setSuccess(CommonConst.NO);
-            sysLog.setStackTrace(e.getMessage());
+            saveLog.setSuccess(CommonConst.NO);
+            saveLog.setStackTrace(e.getMessage());
             throw e;
         } finally {
             long cost = System.currentTimeMillis() - startTime;
-            sysLog.setDuration((int) cost);
+            saveLog.setDuration((int) cost);
             log.info("方法执行耗时:{}ms", cost);
             try {
-                commonExecutor.execute(sysLog::insert);
+                commonExecutor.execute(saveLog::insert);
             } catch (Exception e) {
                 log.error("保存日志失败", e);
             }
@@ -148,17 +149,20 @@ public class SysLogAspect {
 
     private String hideJsonFields(String json, String[] hideFieldList) {
         try {
-            Object jsonObj = JSONUtil.parse(json);
-            if (jsonObj instanceof JSONUtil) {
-                // 是数组，逐个处理
-                JSONArray array = (JSONArray) jsonObj;
-                for (int i = 0; i < array.size(); i++) {
-                    hideFieldsInJsonObject(array.getJSONObject(i), hideFieldList);
+            if (JSONUtil.isTypeJSON(json)) {
+                Object jsonObj = JSONUtil.parse(json);
+                if (jsonObj instanceof JSONArray) {
+                    // 是数组，逐个处理
+                    JSONArray array = (JSONArray) jsonObj;
+                    for (int i = 0; i < array.size(); i++) {
+                        hideFieldsInJsonObject(array.getJSONObject(i), hideFieldList);
+                    }
+                } else if (jsonObj instanceof JSONObject) {
+                    hideFieldsInJsonObject((JSONObject) jsonObj, hideFieldList);
                 }
-            } else if (jsonObj instanceof JSONObject) {
-                hideFieldsInJsonObject((JSONObject) jsonObj, hideFieldList);
+                return jsonObj.toString();
             }
-            return jsonObj.toString();
+            return json;
         } catch (Exception e) {
             log.warn("参数脱敏失败", e);
             return json;
