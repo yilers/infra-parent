@@ -1,1 +1,0 @@
-import{dx as t,cp as c,dK as s}from"./bootstrap-DjYyHEgg.js";import{u as p}from"../jse/index-index-rmdNY63r.js";function S(){const e=t(),{selectedShopId:o,checked:r}=c(e);return{checkShopSelected:()=>p(r)?!0:(s.error("请先选择店铺"),!1),selectedShopId:o}}export{S as u};
