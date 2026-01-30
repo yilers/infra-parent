@@ -72,17 +72,21 @@ public class CommonHandler {
                 User user = userService.findById(userId);
                 Long deptId = user.getDeptId();
                 if (DataScopeEnum.ALL.getValue().equals(dataScope)) {
+                    log.info("用户:{} 单独数据权限 看全部", user.getName());
                     return null;
-                } else if (DataScopeEnum.SELF_DEPT.getValue().equals(dataScope)) {
-                    return Collections.singletonList(deptId);
                 } else if (DataScopeEnum.SELF_DEPT_AND_CHILD.getValue().equals(dataScope)) {
+                    log.info("用户:{} 单独数据权限 看本部门及以下", user.getName());
                     Set<Long> deptIdSet = new HashSet<>();
                     List<Dept> deptList = deptService.findChildById(deptId);
                     Dept currentDept = deptService.findById(deptId);
                     deptList.forEach(dept -> deptIdSet.add(dept.getId()));
                     deptIdSet.add(currentDept.getId());
                     return new ArrayList<>(deptIdSet);
+                } else if (DataScopeEnum.SELF_DEPT.getValue().equals(dataScope)) {
+                    log.info("用户:{} 单独数据权限 看本部门", user.getName());
+                    return Collections.singletonList(deptId);
                 } else if (DataScopeEnum.CUSTOM.getValue().equals(dataScope)) {
+                    log.info("用户:{} 单独数据权限 看自定义本部门", user.getName());
                     // 自定义时 拓展字段用逗号分割
                     String expand = userDataScope.getExpand();
                     return StrUtil.split(expand, StrUtil.COMMA)
@@ -90,6 +94,7 @@ public class CommonHandler {
                             .map(Long::valueOf)
                             .collect(Collectors.toList());
                 } else if (DataScopeEnum.MY_SELF.getValue().equals(dataScope)) {
+                    log.info("用户:{} 单独数据权限 看仅自己", user.getName());
                     return Collections.singletonList(-1L);
                 }
             }
