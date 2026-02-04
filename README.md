@@ -51,50 +51,55 @@ Page<LogInfoResponse> findByPage(@Param("page") Page<?> p,
 ```
 .
 ├── bin
-│   ├── install.sh
-│   ├── deploy.sh
-├── pom.xml
-├── README.md
-├── upm
-│   ├── upm-core
-│   │   ├── target
-│   │   ├── pom.xml
-│   │   ├── src
-│   ├── upm-api
-│   │   ├── target
-│   │   ├── pom.xml
-│   │   ├── src
-│   ├── pom.xml
-│   ├── upm-start
-│   │   ├── target
-│   │   ├── pom.xml
-│   │   ├── src
+│   ├── deploy-central.sh
+│   ├── deploy-company.sh
+│   └── install.sh
 ├── common
-│   ├── common-web
-│   │   ├── target
-│   │   ├── pom.xml
-│   │   ├── src
-│   ├── pom.xml
-│   ├── common-auth
-│   │   ├── target
-│   │   ├── pom.xml
-│   │   ├── src
-│   ├── common-core
-│   │   ├── target
-│   │   ├── pom.xml
-│   │   ├── src
-│   ├── common-redisson
-│   │   ├── target
-│   │   ├── pom.xml
-│   │   ├── src
+│   ├── common-auth
+│   │   ├── src
+│   │   │   └── main
+│   │   └── pom.xml
+│   ├── common-core
+│   │   ├── src
+│   │   │   └── main
+│   │   └── pom.xml
+│   ├── common-redisson
+│   │   ├── src
+│   │   │   └── main
+│   │   └── pom.xml
+│   ├── common-web
+│   │   ├── src
+│   │   │   └── main
+│   │   └── pom.xml
+│   └── pom.xml
 ├── sql
+│   └── 01.初始化.sql
+├── upm
+│   ├── upm-api
+│   │   ├── src
+│   │   │   └── main
+│   │   └── pom.xml
+│   ├── upm-core
+│   │   ├── src
+│   │   │   ├── main
+│   │   │   └── test
+│   │   └── pom.xml
+│   ├── upm-start
+│   │   ├── src
+│   │   │   ├── main
+│   │   │   └── test
+│   │   └── pom.xml
+│   └── pom.xml
+├── LICENSE
+├── README.md
+└── pom.xml
 
 ```
 
 ```bash
 brew install tree
 
-tree -L 3 -I "node_modules|.git|target|.idea" --dirsfirst
+tree -L 4 -I "node_modules|.git|target|.idea|log|img" --dirsfirst
 
 find . -maxdepth 3 \
   -not -path "./.git*" \
