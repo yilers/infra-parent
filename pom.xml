@@ -28,7 +28,7 @@
     <developers>
         <developer>
             <name>zhanghui</name>
-            <email>jwtpermission@gmail.com</email>
+            <email>yilers95@gmail.com</email>
         </developer>
     </developers>
 
@@ -44,8 +44,8 @@
         <maven.compiler.target>25</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
-        <spring-boot.version>4.0.3</spring-boot.version>
-        <hutool-v7.version>7.0.0-M4</hutool-v7.version>
+        <spring-boot.version>4.0.5</spring-boot.version>
+        <hutool-v7.version>7.0.0-M5</hutool-v7.version>
         <redisson.version>4.1.0</redisson.version>
         <cglib.version>3.3.0</cglib.version>
         <sa-token.version>1.45.0</sa-token.version>
