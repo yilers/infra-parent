@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.v7.core.bean.BeanUtil;
 import cn.hutool.v7.core.collection.CollUtil;
 import cn.hutool.v7.core.data.id.IdUtil;
+import cn.hutool.v7.core.data.id.Snowflake;
 import cn.hutool.v7.crypto.SecureUtil;
 import cn.hutool.v7.crypto.digest.BCrypt;
 import cn.hutool.v7.extra.spring.cglib.CglibUtil;
@@ -19,6 +20,7 @@ import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -160,6 +162,7 @@ public class CommonHandler {
         }
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void addTenant(TenantRequest dto) {
         Tenant tenant = tenantService.findByCode(dto.getCode());
         if (tenant != null) {
@@ -184,6 +187,7 @@ public class CommonHandler {
         BeanUtil.copyProperties(platformRole, newPlatformRole);
         newPlatformRole.setTenantId(tenantId);
         newPlatformRole.setId(null);
+        newPlatformRole.setVersion(1);
         roleService.save(newPlatformRole);
         List<Permission> permissionList = rolePermissionService.findPermissionListByRoleId(platformRole.getId());
         List<Permission> tenantPermissionList = rolePermissionService.findPermissionListByRoleId(tenantRole.getId());
@@ -191,10 +195,24 @@ public class CommonHandler {
         List<Permission> newPlatformList = new ArrayList<>();
         List<Permission> newTenantList = new ArrayList<>();
         Map<Long, Permission> newPermissionMap = new HashMap<>();
-        Set<Permission> unionDistinct = CollUtil.unionDistinct(permissionList, tenantPermissionList);
+        Set<Long> platformPermIds = permissionList.stream().map(Permission::getId).collect(Collectors.toSet());
+        Set<Long> tenantPermIds = tenantPermissionList.stream().map(Permission::getId).collect(Collectors.toSet());
+        Set<Long> ids = CollUtil.unionDistinct(platformPermIds, tenantPermIds);
+        Set<Permission> unionDistinct = new LinkedHashSet<>();
+        for (Long id : ids) {
+            Optional<Permission> optional = permissionList.stream().filter(item -> item.getId().equals(id)).findAny();
+            if (optional.isPresent()) {
+                Permission permission = optional.get();
+                unionDistinct.add(permission);
+            } else {
+                Permission permission = tenantPermissionList.stream().filter(item -> item.getId().equals(id)).findFirst().get();
+                unionDistinct.add(permission);
+            }
+        }
         // 第一步：复制数据，生成新ID，构建映射
+        Snowflake snowflake = IdUtil.getSnowflake(1, 1);
         for (Permission oldPerm : unionDistinct) {
-            long newId = IdUtil.getSnowflakeNextId();
+            long newId = snowflake.next();
             Permission newPerm = BeanUtil.copyProperties(oldPerm, Permission.class);
             newPerm.setId(newId);
             newPerm.setTenantId(tenantId);
@@ -213,10 +231,10 @@ public class CommonHandler {
                 newPerm.setParentId(0L);
             }
             newAllList.add(newPerm);
-            if (permissionList.contains(oldPerm)) {
+            if (platformPermIds.contains(oldPerm.getId())) {
                 newPlatformList.add(newPerm);
             }
-            if (tenantPermissionList.contains(oldPerm)) {
+            if (tenantPermIds.contains(oldPerm.getId())) {
                 newTenantList.add(newPerm);
             }
         }
@@ -244,11 +262,12 @@ public class CommonHandler {
         user.setGender(CommonConst.YES);
         user.setNickname(name);
         user.setTenantId(tenantId);
+        user.setVersion(1);
         userService.save(user);
         // 添加角色用户关联
         UserRole userRole = new UserRole();
         userRole.setUserId(user.getId());
-        userRole.setRoleId(platformRole.getId());
+        userRole.setRoleId(newPlatformRole.getId());
         userRole.setTenantId(tenantId);
         userRoleService.save(userRole);
 
@@ -257,6 +276,7 @@ public class CommonHandler {
         BeanUtil.copyProperties(tenantRole, newTenantRole);
         newTenantRole.setTenantId(tenantId);
         newTenantRole.setId(null);
+        newTenantRole.setVersion(1);
         roleService.save(newTenantRole);
         List<RolePermission> tenantCollect = newTenantList.stream().map(item -> {
             RolePermission rolePermission = new RolePermission();
@@ -281,11 +301,12 @@ public class CommonHandler {
         tenantUser.setGender(CommonConst.YES);
         tenantUser.setNickname(name);
         tenantUser.setTenantId(tenantId);
+        tenantUser.setVersion(1);
         userService.save(tenantUser);
         // 添加角色用户关联
         UserRole tenantUserRole = new UserRole();
         tenantUserRole.setUserId(tenantUser.getId());
-        tenantUserRole.setRoleId(tenantRole.getId());
+        tenantUserRole.setRoleId(newTenantRole.getId());
         tenantUserRole.setTenantId(tenantId);
         userRoleService.save(tenantUserRole);
     }
