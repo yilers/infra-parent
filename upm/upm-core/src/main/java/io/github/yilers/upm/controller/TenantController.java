@@ -3,6 +3,7 @@ package io.github.yilers.upm.controller;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import io.github.yilers.core.util.Result;
 import io.github.yilers.upm.entity.Tenant;
+import io.github.yilers.upm.handler.CommonHandler;
 import io.github.yilers.upm.request.TenantRequest;
 import io.github.yilers.upm.service.TenantService;
 import io.github.yilers.web.log.SysLog;
@@ -25,6 +26,7 @@ import java.util.List;
 @Tag(name = "租户")
 public class TenantController {
     private final TenantService tenantService;
+    private final CommonHandler commonHandler;
 
     @Operation(summary = "查询所有租户")
     @GetMapping("/findAll")
@@ -38,7 +40,7 @@ public class TenantController {
     @SysLog(module = "租户模块", value = "保存租户")
     @SaCheckPermission("system:tenant:add")
     public Result<?> save(@Validated(Add.class) @RequestBody TenantRequest dto) {
-        tenantService.addTenant(dto);
+        commonHandler.addTenant(dto);
         return Result.ok();
     }
 

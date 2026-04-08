@@ -2,12 +2,17 @@ package io.github.yilers.upm.handler;
 
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.v7.core.bean.BeanUtil;
 import cn.hutool.v7.core.collection.CollUtil;
+import cn.hutool.v7.core.data.id.IdUtil;
+import cn.hutool.v7.crypto.SecureUtil;
+import cn.hutool.v7.crypto.digest.BCrypt;
+import cn.hutool.v7.extra.spring.cglib.CglibUtil;
+import io.github.yilers.core.constant.CommonConst;
 import io.github.yilers.core.enums.DataScopeEnum;
-import io.github.yilers.upm.entity.Dept;
-import io.github.yilers.upm.entity.Role;
-import io.github.yilers.upm.entity.User;
-import io.github.yilers.upm.entity.UserDataScope;
+import io.github.yilers.core.enums.UserTypeEnum;
+import io.github.yilers.upm.entity.*;
+import io.github.yilers.upm.request.TenantRequest;
 import io.github.yilers.upm.service.*;
 import io.github.yilers.upm.service.*;
 import io.github.yilers.web.exception.CommonException;
@@ -35,6 +40,12 @@ public class CommonHandler {
     private final RoleDeptService roleDeptService;
     private final UserRoleService userRoleService;
     private final UserDataScopeService userDataScopeService;
+    private final PermissionService permissionService;
+    private final TenantService tenantService;
+    private final RoleService roleService;
+    private final DeviceService deviceService;
+    private final RolePermissionService rolePermissionService;
+
 
     public List<Dept> currentDept() {
         long userId = StpUtil.getLoginIdAsLong();
@@ -147,6 +158,162 @@ public class CommonHandler {
                 throw new CommonException("越权操作");
             }
         }
+    }
+
+    public void addTenant(TenantRequest dto) {
+        Tenant tenant = tenantService.findByCode(dto.getCode());
+        if (tenant != null) {
+            throw new CommonException("租户编码已存在");
+        }
+        Tenant copy = CglibUtil.copy(dto, Tenant.class);
+        copy.setOperable(CommonConst.YES);
+        tenantService.save(copy);
+        Long tenantId = copy.getId();
+        // 创建设备端
+        Device device = initDevice(copy);
+        // 创建部门
+        Dept dept = initDept(copy);
+        // 创建平台角色
+        initAdmin(tenantId, copy, dept);
+    }
+
+    private void initAdmin(Long tenantId, Tenant tenant, Dept dept) {
+        Role platformRole = roleService.findByRoleCode(CommonConst.PLATFORM_ADMIN_ROLE_CODE);
+        Role tenantRole = roleService.findByRoleCode(CommonConst.TENANT_ADMIN_ROLE_CODE);
+        Role newPlatformRole = new Role();
+        BeanUtil.copyProperties(platformRole, newPlatformRole);
+        newPlatformRole.setTenantId(tenantId);
+        newPlatformRole.setId(null);
+        roleService.save(newPlatformRole);
+        List<Permission> permissionList = rolePermissionService.findPermissionListByRoleId(platformRole.getId());
+        List<Permission> tenantPermissionList = rolePermissionService.findPermissionListByRoleId(tenantRole.getId());
+        List<Permission> newAllList = new ArrayList<>();
+        List<Permission> newPlatformList = new ArrayList<>();
+        List<Permission> newTenantList = new ArrayList<>();
+        Map<Long, Permission> newPermissionMap = new HashMap<>();
+        Set<Permission> unionDistinct = CollUtil.unionDistinct(permissionList, tenantPermissionList);
+        // 第一步：复制数据，生成新ID，构建映射
+        for (Permission oldPerm : unionDistinct) {
+            long newId = IdUtil.getSnowflakeNextId();
+            Permission newPerm = BeanUtil.copyProperties(oldPerm, Permission.class);
+            newPerm.setId(newId);
+            newPerm.setTenantId(tenantId);
+            // parentId 先暂时保留为旧ID，后面再统一更新
+            newPermissionMap.put(oldPerm.getId(), newPerm);
+        }
+        // 第二步：修正 parentId
+        for (Permission oldPerm : unionDistinct) {
+            Permission newPerm = newPermissionMap.get(oldPerm.getId());
+            Long oldParentId = oldPerm.getParentId();
+            if (oldParentId != null && newPermissionMap.containsKey(oldParentId)) {
+                // 设置为新 parentId
+                newPerm.setParentId(newPermissionMap.get(oldParentId).getId());
+            } else {
+                // 原本是顶级节点
+                newPerm.setParentId(0L);
+            }
+            newAllList.add(newPerm);
+            if (permissionList.contains(oldPerm)) {
+                newPlatformList.add(newPerm);
+            }
+            if (tenantPermissionList.contains(oldPerm)) {
+                newTenantList.add(newPerm);
+            }
+        }
+        permissionService.saveBatch(newAllList);
+        List<RolePermission> collect = newPlatformList.stream().map(item -> {
+            RolePermission rolePermission = new RolePermission();
+            rolePermission.setRoleId(newPlatformRole.getId());
+            rolePermission.setPermissionId(item.getId());
+            rolePermission.setTenantId(tenantId);
+            rolePermission.setDevice(item.getDevice());
+            return rolePermission;
+        }).collect(Collectors.toList());
+        rolePermissionService.saveBatch(collect);
+        // 创建人
+        String name = "平台管理员";
+        User user = new User();
+        user.setTenantId(tenantId);
+        user.setAccount("platform@" + tenant.getCode());
+        user.setName(name);
+        user.setPassword(BCrypt.hashpw(SecureUtil.md5(CommonConst.INIT_PWD)));
+        user.setUsable(CommonConst.YES);
+        user.setUserType(UserTypeEnum.ADMIN.getCode());
+        user.setDeptId(dept.getId());
+        user.setOperable(CommonConst.NO);
+        user.setGender(CommonConst.YES);
+        user.setNickname(name);
+        user.setTenantId(tenantId);
+        userService.save(user);
+        // 添加角色用户关联
+        UserRole userRole = new UserRole();
+        userRole.setUserId(user.getId());
+        userRole.setRoleId(platformRole.getId());
+        userRole.setTenantId(tenantId);
+        userRoleService.save(userRole);
+
+        // 租户管理员
+        Role newTenantRole = new Role();
+        BeanUtil.copyProperties(tenantRole, newTenantRole);
+        newTenantRole.setTenantId(tenantId);
+        newTenantRole.setId(null);
+        roleService.save(newTenantRole);
+        List<RolePermission> tenantCollect = newTenantList.stream().map(item -> {
+            RolePermission rolePermission = new RolePermission();
+            rolePermission.setRoleId(newTenantRole.getId());
+            rolePermission.setPermissionId(item.getId());
+            rolePermission.setTenantId(tenantId);
+            rolePermission.setDevice(item.getDevice());
+            return rolePermission;
+        }).collect(Collectors.toList());
+        rolePermissionService.saveBatch(tenantCollect);
+        // 创建人
+        String tenantName = "租户管理员";
+        User tenantUser = new User();
+        tenantUser.setTenantId(tenantId);
+        tenantUser.setAccount("admin@" + tenant.getCode());
+        tenantUser.setName(tenantName);
+        tenantUser.setPassword(BCrypt.hashpw(SecureUtil.md5(CommonConst.INIT_PWD)));
+        tenantUser.setUsable(CommonConst.YES);
+        tenantUser.setUserType(UserTypeEnum.ADMIN.getCode());
+        tenantUser.setDeptId(dept.getId());
+        tenantUser.setOperable(CommonConst.NO);
+        tenantUser.setGender(CommonConst.YES);
+        tenantUser.setNickname(name);
+        tenantUser.setTenantId(tenantId);
+        userService.save(tenantUser);
+        // 添加角色用户关联
+        UserRole tenantUserRole = new UserRole();
+        tenantUserRole.setUserId(tenantUser.getId());
+        tenantUserRole.setRoleId(tenantRole.getId());
+        tenantUserRole.setTenantId(tenantId);
+        userRoleService.save(tenantUserRole);
+    }
+
+    private Dept initDept(Tenant copy) {
+        Dept dept = new Dept();
+        dept.setTenantId(copy.getId());
+        dept.setDeptCode(copy.getCode());
+        dept.setDeptName(copy.getName());
+        dept.setDeptDeep(1);
+        dept.setSortNumber(1);
+        dept.setParentId(0L);
+        dept.setOperable(CommonConst.NO);
+        dept.setUsable(CommonConst.YES);
+        deptService.save(dept);
+        return dept;
+    }
+
+    private Device initDevice(Tenant copy) {
+        // 创建租户的设备端
+        Device device = new Device();
+        device.setTenantId(copy.getId());
+        device.setName("web端");
+        device.setCode("web");
+        device.setOperable(CommonConst.NO);
+        device.setUsable(CommonConst.YES);
+        deviceService.save(device);
+        return device;
     }
 
 }

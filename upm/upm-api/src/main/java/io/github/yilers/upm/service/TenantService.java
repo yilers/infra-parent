@@ -6,8 +6,6 @@ import io.github.yilers.upm.request.TenantRequest;
 
 public interface TenantService extends IService<Tenant> {
 
-    void addTenant(TenantRequest dto);
-
     Tenant findByCode(String code);
 
     void updateTenant(TenantRequest dto);
