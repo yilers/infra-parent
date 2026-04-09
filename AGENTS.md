@@ -15,7 +15,7 @@ infra-parent 是一个基于 Spring Boot 4.0.3 和 JDK 25 的基础服务项目�
 
 ### 技术栈
 - **Java 版本**: JDK 25
-- **Spring Boot**: 4.0.3
+- **Spring Boot**: 4.0.5
 - **数据库**: MySQL（使用 MyBatis Plus 3.5.16）
 - **缓存**: Redis（使用 Redisson 4.1.0）
 - **认证授权**: Sa-Token 1.44.0
