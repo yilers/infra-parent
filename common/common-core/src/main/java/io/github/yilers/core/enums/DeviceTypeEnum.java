@@ -1,11 +1,16 @@
 package io.github.yilers.core.enums;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
 /**
  * 设备枚举
  * @author zhanghui
  * @since 2023/8/2 15:54
  */
 
+@Getter
+@RequiredArgsConstructor
 public enum DeviceTypeEnum {
 
     WEB("web", "web端"),
@@ -16,18 +21,18 @@ public enum DeviceTypeEnum {
 
     private final String code;
     private final String desc;
-
-    public String getCode() {
-        return this.code;
-    }
-
-    public String getDesc() {
-        return this.desc;
-    }
-
-    DeviceTypeEnum(final String code, final String desc) {
-        this.code = code;
-        this.desc = desc;
-    }
+//
+//    public String getCode() {
+//        return this.code;
+//    }
+//
+//    public String getDesc() {
+//        return this.desc;
+//    }
+//
+//    DeviceTypeEnum(final String code, final String desc) {
+//        this.code = code;
+//        this.desc = desc;
+//    }
 
 }

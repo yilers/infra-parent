@@ -1,6 +1,10 @@
 package io.github.yilers.core.enums;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
+@Getter
+@RequiredArgsConstructor
 public enum DataScopeEnum {
 
     ALL(1, "全部"),
@@ -18,17 +22,17 @@ public enum DataScopeEnum {
     private final Integer value;
     private final String name;
 
-    public Integer getValue() {
-        return this.value;
-    }
-
-    public String getDesc() {
-        return this.name;
-    }
-
-    DataScopeEnum(final Integer value, final String name) {
-        this.value = value;
-        this.name = name;
-    }
+//    public Integer getValue() {
+//        return this.value;
+//    }
+//
+//    public String getDesc() {
+//        return this.name;
+//    }
+//
+//    DataScopeEnum(final Integer value, final String name) {
+//        this.value = value;
+//        this.name = name;
+//    }
 
 }
