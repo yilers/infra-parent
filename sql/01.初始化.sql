@@ -300,14 +300,16 @@ CREATE TABLE upm_role_column (
 CREATE TABLE upm_user_third (
     id BIGINT NOT NULL COMMENT '主键ID',
     user_id BIGINT NOT NULL COMMENT '用户ID',
-  	platform varchar(10) DEFAULT 'wx' COMMENT '平台',
+  	platform varchar(30) DEFAULT 'wx' COMMENT '平台',
     open_id varchar(60) DEFAULT '' COMMENT 'openId',
     union_id varchar(60) DEFAULT '' COMMENT 'unionId',
-    session_key varchar(60) DEFAULT '' COMMENT 'sessionKey',
-    expand varchar(500) DEFAULT '' COMMENT '扩展字段',
+    session_key varchar(100) DEFAULT '' COMMENT 'sessionKey',
+    expand varchar(1000) DEFAULT '' COMMENT '扩展字段',
     tenant_id BIGINT DEFAULT 1 COMMENT '租户ID',
-    PRIMARY KEY (id),
-    UNIQUE INDEX uk_open_id (open_id) COMMENT '唯一索引'
+    deleted TINYINT DEFAULT 0 COMMENT '是否删除 1-是 0-否',
+    create_time DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+    update_time DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间',
+    PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='用户第三方关联表';
 
 -- 租户表
