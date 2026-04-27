@@ -7,8 +7,10 @@ public interface UserThirdService extends IService<UserThird> {
 
     UserThird findByOpenId(String openId);
 
+    UserThird findByOpenIdAndPlatform(String openId, String platform);
+
     UserThird findByUnionId(String unionId);
 
-    UserThird findByUserId(Long userId);
+    UserThird findByUserIdAndPlatform(Long userId, String platform);
 
 }

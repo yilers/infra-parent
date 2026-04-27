@@ -1,5 +1,6 @@
 package io.github.yilers.upm.service;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -23,16 +24,26 @@ public class UserThirdServiceImpl extends ServiceImpl<UserThirdMapper, UserThird
     }
 
     @Override
+    public UserThird findByOpenIdAndPlatform(String openId, String platform) {
+        LambdaQueryWrapper<UserThird> query = Wrappers.lambdaQuery(UserThird.class);
+        query.eq(UserThird::getOpenId, openId);
+        query.eq(StrUtil.isNotBlank(platform), UserThird::getPlatform, platform);
+        return userThirdMapper.selectOne(query);
+    }
+
+    @Override
     public UserThird findByUnionId(String unionId) {
         LambdaQueryWrapper<UserThird> query = Wrappers.lambdaQuery(UserThird.class);
         query.eq(UserThird::getUnionId, unionId);
         return userThirdMapper.selectOne(query);
     }
 
+
     @Override
-    public UserThird findByUserId(Long userId) {
+    public UserThird findByUserIdAndPlatform(Long userId, String platform) {
         LambdaQueryWrapper<UserThird> query = Wrappers.lambdaQuery(UserThird.class);
         query.eq(UserThird::getUserId, userId);
+        query.eq(StrUtil.isNotBlank(platform), UserThird::getPlatform, platform);
         return userThirdMapper.selectOne(query);
     }
 }

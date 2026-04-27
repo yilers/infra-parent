@@ -1,6 +1,7 @@
 package io.github.yilers.upm.init;
 
 import cn.hutool.v7.extra.spring.SpringUtil;
+import io.github.yilers.core.util.VersionUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -22,9 +23,6 @@ import java.net.InetAddress;
 @RequiredArgsConstructor
 public class StartupRunner implements CommandLineRunner {
 
-    @Value("${app.version}")
-    private String version;
-
     private void printBanner() {
         String banner = "\n" +
                 "  _    _ _____  __  __ \n" +
@@ -33,7 +31,9 @@ public class StartupRunner implements CommandLineRunner {
                 " | |  | |  ___/| |\\/| |\n" +
                 " | |__| | |    | |  | |\n" +
                 "  \\____/|_|    |_|  |_|\n"
-                + "\r\n" + version+ "\r\n";;
+                + " :: UPM :: \n"
+                + " :: " + VersionUtil.getVersion() + " :: \n"
+                + " :: " + VersionUtil.getTime() + " :: \n";
         log.info(banner);
     }
 

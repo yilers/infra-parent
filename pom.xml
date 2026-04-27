@@ -44,7 +44,9 @@
         <maven.compiler.target>25</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
-        <spring-boot.version>4.0.5</spring-boot.version>
+        <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>
+        <spring-boot.version>4.0.6</spring-boot.version>
+        <aop.version>4.0.0-M2</aop.version>
         <hutool-v7.version>7.0.0-M5</hutool-v7.version>
         <redisson.version>4.1.0</redisson.version>
         <cglib.version>3.3.0</cglib.version>
@@ -91,6 +93,30 @@
 
     <!-- ✅ 插件和构建 -->
     <build>
+        <resources>
+            <!-- 1️⃣ 需要过滤的（properties/yml） -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/*.properties</include>
+                    <include>**/*.yml</include>
+                    <include>**/*.yaml</include>
+                </includes>
+            </resource>
+
+            <!-- 2️⃣ 不过滤的（二进制） -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>**/*.properties</exclude>
+                    <exclude>**/*.yml</exclude>
+                    <exclude>**/*.yaml</exclude>
+                </excludes>
+            </resource>
+        </resources>
+
         <pluginManagement>
             <plugins>
                 <!-- 编译插件 -->
