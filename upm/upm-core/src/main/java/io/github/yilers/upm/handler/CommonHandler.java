@@ -54,7 +54,7 @@ public class CommonHandler {
         // 全部则默认为所在部门及下级
         if (deptIdList == null) {
             return deptService.list();
-        } else if (deptIdList.size() == 1 && deptIdList.get(0) == -1L) {
+        } else if (deptIdList.size() == 1 && deptIdList.getFirst() == -1L) {
             User user = userService.findById(userId);
             Long deptId = user.getDeptId();
             return Collections.singletonList(deptService.getById(deptId));

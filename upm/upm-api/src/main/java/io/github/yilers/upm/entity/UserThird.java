@@ -1,7 +1,6 @@
 package io.github.yilers.upm.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.activerecord.Model;
 import io.github.yilers.web.base.BaseDomain;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

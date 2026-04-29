@@ -24,7 +24,7 @@ public class SaTokenConfig implements WebMvcConfigurer {
 
     /**
      * 注册 Sa-Token 拦截器，打开注解式鉴权功能
-     * @param registry
+     * @param registry 注册
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
