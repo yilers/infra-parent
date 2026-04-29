@@ -52,7 +52,12 @@ public class SaTokenConfig implements WebMvcConfigurer {
                 StpUtil.checkLogin()))
                 .addPathPatterns("/**")
                 .excludePathPatterns(ignoreProperties.getUrl());
-        log.info("SaTokenConfig拦截器注入成功");
+        log.info("=========== 权限拦截器注册 ===========");
+        log.info("默认配置忽略鉴权的url");
+        for (int i = 0; i < url.size(); i++) {
+            log.info("第{}个:{}", i+1, url.get(i));
+        }
+        log.info("=========== SaTokenConfig拦截器注入成功 ===========");
     }
 
 }
