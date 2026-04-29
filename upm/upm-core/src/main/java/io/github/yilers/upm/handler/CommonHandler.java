@@ -48,7 +48,6 @@ public class CommonHandler {
     private final DeviceService deviceService;
     private final RolePermissionService rolePermissionService;
 
-
     public List<Dept> currentDept() {
         long userId = StpUtil.getLoginIdAsLong();
         List<Long> deptIdList = findDataScopeByUserId(userId, null);
@@ -65,15 +64,23 @@ public class CommonHandler {
 
     }
 
-
     public List<Long> findDataScopeByUserId(Long userId, String requestPath) {
+        // 获取请求路径（安全）
         if (StrUtil.isBlank(requestPath)) {
-            ServletRequestAttributes servletRequestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            requestPath = servletRequestAttributes.getRequest().getServletPath();
+            ServletRequestAttributes attrs =
+                    (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attrs != null) {
+                requestPath = attrs.getRequest().getServletPath();
+            }
         }
-        log.info("数据权限处理 当前请求路径为:{}", requestPath);
-        // 查询有没有单独配置数据权限
-        List<UserDataScope> userDataScopeList = userDataScopeService.findByUserId(userId);
+        List<UserDataScope> userDataScopeList = null;
+        if (StrUtil.isBlank(requestPath)) {
+            log.warn("请求路径为空 不用查单独配置 userId={}", userId);
+        } else {
+            log.info("数据权限处理 当前请求路径为:{}", requestPath);
+            // 查询有没有单独配置数据权限
+            userDataScopeList = userDataScopeService.findByUserId(userId);
+        }
         if (CollUtil.isNotEmpty(userDataScopeList)) {
             String finalRequestPath = requestPath;
             Optional<UserDataScope> matched = userDataScopeList.stream()

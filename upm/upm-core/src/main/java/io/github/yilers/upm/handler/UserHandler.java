@@ -49,7 +49,6 @@ public class UserHandler {
     private final CommonHandler commonHandler;
     private final AuthHandler authHandler;
 
-
     public UserInfoResponse currentInfo() {
         try {
             InterceptorIgnoreHelper.handle(IgnoreStrategy.builder().tenantLine(true).build());
@@ -71,17 +70,34 @@ public class UserHandler {
 
     /**
      * 查询用户数据权限
-     * null为全部权限 其他返回部门ids
-     * @param userId
-     * @return
+     * null为全部权限 仅自己返回 -1 其他返回部门ids
+     * @param userId 用户id
+     * @return null/-1/ids
      */
     public List<Long> findDataScopeByUserId(Long userId) {
         return commonHandler.findDataScopeByUserId(userId, null);
     }
 
     /**
+     * 重载方法
+     * 配置 context-path: /api
+     * 访问 <a href="http://localhost:9000/api/user/list">...</a>
+     * getContextPath()	/api
+     * getServletPath()	/user/list
+     * getRequestURI()	/api/user/list
+     * getRequestURL()	<a href="http://localhost:9000/api/user/list">...</a>
+     *
+     * @param userId 用户id
+     * @param requestPath 传入的请求接口 eg: /user/list
+     * @return 权限
+     */
+    public List<Long> findDataScopeByUserId(Long userId, String requestPath) {
+        return commonHandler.findDataScopeByUserId(userId, requestPath);
+    }
+
+    /**
      * 新增用户
-     * @param request
+     * @param request 用户信息
      */
     @Transactional(rollbackFor = Exception.class)
     public Long addUser(UserRequest request) {
@@ -95,8 +111,8 @@ public class UserHandler {
         addUser.setUserType(UserTypeEnum.ADMIN.getCode());
         // md5的数据
         String password = request.getPassword();
-        String hashpw = BCrypt.hashpw(password);
-        addUser.setPassword(hashpw);
+        String pwd = BCrypt.hashpw(password);
+        addUser.setPassword(pwd);
         UserExpandDTO userExpandDTO = new UserExpandDTO();
         userExpandDTO.setInitPwd(Boolean.TRUE);
         addUser.setExpand(JSONUtil.toJsonStr(userExpandDTO));
@@ -124,8 +140,8 @@ public class UserHandler {
         if (StrUtil.isNotBlank(request.getPassword())) {
             // md5的数据
             String password = request.getPassword();
-            String hashpw = BCrypt.hashpw(password);
-            oldUser.setPassword(hashpw);
+            String pwd = BCrypt.hashpw(password);
+            oldUser.setPassword(pwd);
         }
         boolean b = userService.updateById(oldUser);
         if (b) {
@@ -218,10 +234,10 @@ public class UserHandler {
         if (!BCrypt.checkpw(oldPwd, user.getPassword())) {
             throw new CommonException("旧密码错误");
         }
-        String hashpw = BCrypt.hashpw(newPwd);
+        String pwd = BCrypt.hashpw(newPwd);
         User updateUser = new User();
         updateUser.setId(userId);
-        updateUser.setPassword(hashpw);
+        updateUser.setPassword(pwd);
         // 设置不为初始密码了
         UserExpandDTO userExpandDTO = new UserExpandDTO();
         userExpandDTO.setInitPwd(Boolean.FALSE);
