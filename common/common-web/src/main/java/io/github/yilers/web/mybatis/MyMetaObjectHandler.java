@@ -1,6 +1,7 @@
 package io.github.yilers.web.mybatis;
 
 import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import io.github.yilers.web.context.RequestContextHolder;
 import lombok.extern.slf4j.Slf4j;
@@ -21,12 +22,16 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
 //        // 或者
 //        this.fillStrategy(metaObject, "createTime", LocalDateTime.now()); // 也可以使用(3.3.0 该方法有bug)
         this.strictInsertFill(metaObject, "tenantId", Long.class, RequestContextHolder.getTenantId());
-
         if (metaObject.hasSetter("createId")) {
             try {
+                Object createId = this.getFieldValByName("createId", metaObject);
+                // 已有值不填充
+                if (ObjectUtil.isNotNull(createId)) {
+                    return;
+                }
                 this.strictInsertFill(metaObject, "createId", Long.class, StpUtil.getLoginIdAsLong());
             } catch (Exception ignored) {
-                log.error("获取用户ID失败");
+                log.warn("自动填充创建人 获取用户ID失败");
             }
         }
     }
