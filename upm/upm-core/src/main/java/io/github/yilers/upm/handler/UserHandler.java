@@ -238,6 +238,7 @@ public class UserHandler {
         User updateUser = new User();
         updateUser.setId(userId);
         updateUser.setPassword(pwd);
+        updateUser.setVersion(user.getVersion());
         // 设置不为初始密码了
         UserExpandDTO userExpandDTO = new UserExpandDTO();
         userExpandDTO.setInitPwd(Boolean.FALSE);
