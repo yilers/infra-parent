@@ -1,30 +1,17 @@
 package io.github.yilers.upm.service;
 
-import cn.hutool.v7.core.bean.BeanUtil;
-import cn.hutool.v7.core.data.id.IdUtil;
-import cn.hutool.v7.crypto.SecureUtil;
-import cn.hutool.v7.crypto.digest.BCrypt;
 import cn.hutool.v7.extra.spring.cglib.CglibUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import io.github.yilers.core.constant.CommonConst;
-import io.github.yilers.core.enums.UserTypeEnum;
-import io.github.yilers.upm.entity.*;
-import io.github.yilers.upm.entity.*;
+import io.github.yilers.upm.entity.Tenant;
 import io.github.yilers.upm.mapper.TenantMapper;
 import io.github.yilers.upm.request.TenantRequest;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
