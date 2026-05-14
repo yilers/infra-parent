@@ -9,6 +9,7 @@ import org.dromara.dynamictp.spring.annotation.EnableDynamicTp;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
+import org.springframework.resilience.annotation.EnableResilientMethods;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -28,6 +29,7 @@ import java.util.TimeZone;
 @EnableScheduling
 //@EnableAdminServer
 @EnableGlobalException
+@EnableResilientMethods
 @EnableTransactionManagement
 @EnableMethodCache(basePackages = "io.github")
 @SpringBootApplication(scanBasePackages = {"io.github"})
