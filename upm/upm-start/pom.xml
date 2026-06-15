@@ -25,6 +25,12 @@
             <artifactId>upm-core</artifactId>
             <version>${revision}</version>
         </dependency>
+
+        <dependency>
+            <groupId>io.github.yilers</groupId>
+            <artifactId>ai-chatbot</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
 
     <build>

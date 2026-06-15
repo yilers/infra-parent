@@ -46,32 +46,38 @@
         <dependency>
             <groupId>cn.smartjavaai</groupId>
             <artifactId>ocr</artifactId>
-            <version>1.1.1</version>
+            <version>1.1.2</version>
         </dependency>
 
         <!--PyTorch离线平台依赖-->
-        <dependency>
-            <groupId>ai.djl.pytorch</groupId>
-            <artifactId>pytorch-native-cpu</artifactId>
-            <version>2.1.1</version> <!-- ⚠️ 不要用2.7.1 -->
-            <classifier>osx-x86_64</classifier> <!-- ✅ Intel -->
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>ai.djl.pytorch</groupId>-->
+<!--            <artifactId>pytorch-native-cpu</artifactId>-->
+<!--            <version>2.1.1</version> &lt;!&ndash; ⚠️ 不要用2.7.1 &ndash;&gt;-->
+<!--            <classifier>osx-x86_64</classifier> &lt;!&ndash; ✅ Intel &ndash;&gt;-->
+<!--        </dependency>-->
 
-        <dependency>
-            <groupId>ai.djl.pytorch</groupId>
-            <artifactId>pytorch-jni</artifactId>
-            <version>2.7.1-0.34.0</version>
-            <scope>runtime</scope>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>ai.djl.pytorch</groupId>-->
+<!--            <artifactId>pytorch-jni</artifactId>-->
+<!--            <version>2.7.1-0.34.0</version>-->
+<!--            <scope>runtime</scope>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>ai.djl.pytorch</groupId>-->
+<!--            <artifactId>pytorch-engine</artifactId>-->
+<!--            <version>0.29.0</version>-->
+<!--            <scope>runtime</scope>-->
+<!--        </dependency>-->
 
         <!--tensorflow离线平台依赖-->
-        <dependency>
-            <groupId>ai.djl.tensorflow</groupId>
-            <artifactId>tensorflow-native-cpu</artifactId>
-            <classifier>osx-x86_64</classifier>
-            <scope>runtime</scope>
-            <version>2.16.1</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>ai.djl.tensorflow</groupId>-->
+<!--            <artifactId>tensorflow-native-cpu</artifactId>-->
+<!--            <classifier>osx-x86_64</classifier>-->
+<!--            <scope>runtime</scope>-->
+<!--            <version>2.16.1</version>-->
+<!--        </dependency>-->
 
         <!--mxnet离线平台依赖-->
 <!--        <dependency>-->

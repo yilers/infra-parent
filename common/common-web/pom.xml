@@ -114,7 +114,7 @@
         <dependency>
             <groupId>com.baizhukui</groupId>
             <artifactId>knife4j-openapi3-boot4-spring-boot-starter</artifactId>
-            <version>5.0.2</version>
+            <version>${knife4j-next.version}</version>
         </dependency>
 
         <dependency>
@@ -135,31 +135,31 @@
             <version>${ip2region.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>tech.powerjob</groupId>
-            <artifactId>powerjob-worker-spring-boot-starter</artifactId>
-            <version>${powerjob.version}</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>org.scala-lang</artifactId>
-                    <groupId>scala-library</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>com.typesafe.akka</artifactId>
-                    <groupId>akka-actor-typed_2.13</groupId>
-                </exclusion>
-                <exclusion>
-                    <groupId>io.vertx</groupId>
-                    <artifactId>vertx-core</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>tech.powerjob</groupId>-->
+<!--            <artifactId>powerjob-worker-spring-boot-starter</artifactId>-->
+<!--            <version>${powerjob.version}</version>-->
+<!--            <exclusions>-->
+<!--                <exclusion>-->
+<!--                    <artifactId>org.scala-lang</artifactId>-->
+<!--                    <groupId>scala-library</groupId>-->
+<!--                </exclusion>-->
+<!--                <exclusion>-->
+<!--                    <artifactId>com.typesafe.akka</artifactId>-->
+<!--                    <groupId>akka-actor-typed_2.13</groupId>-->
+<!--                </exclusion>-->
+<!--                <exclusion>-->
+<!--                    <groupId>io.vertx</groupId>-->
+<!--                    <artifactId>vertx-core</artifactId>-->
+<!--                </exclusion>-->
+<!--            </exclusions>-->
+<!--        </dependency>-->
 
-        <dependency>
-            <groupId>tech.powerjob</groupId>
-            <artifactId>powerjob-client</artifactId>
-            <version>${powerjob.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>tech.powerjob</groupId>-->
+<!--            <artifactId>powerjob-client</artifactId>-->
+<!--            <version>${powerjob.version}</version>-->
+<!--        </dependency>-->
 
         <!-- https://mvnrepository.com/artifact/com.alicp.jetcache/jetcache-starter-redisson -->
         <dependency>

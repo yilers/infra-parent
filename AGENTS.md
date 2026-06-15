@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-infra-parent 是一个基于 Spring Boot 4.0.3 和 JDK 25 的基础服务项目，主要提供完整的 RBAC（基于角色的访问控制）权限管理系统。该项目设计为独立部署的基础服务，可与业务服务分离，也可作为模块集成到业务服务中。
+infra-parent 是一个基于 Spring Boot 4.1.0 和 JDK 25 的基础服务项目，主要提供完整的 RBAC（基于角色的访问控制）权限管理系统。该项目设计为独立部署的基础服务，可与业务服务分离，也可作为模块集成到业务服务中。
 
 ### 核心功能
 - 租户管理（多租户支持）
@@ -15,16 +15,16 @@ infra-parent 是一个基于 Spring Boot 4.0.3 和 JDK 25 的基础服务项目�
 
 ### 技术栈
 - **Java 版本**: JDK 25
-- **Spring Boot**: 4.0.5
+- **Spring Boot**: 4.1.0
 - **数据库**: MySQL（使用 MyBatis Plus 3.5.16）
-- **缓存**: Redis（使用 Redisson 4.1.0）
-- **认证授权**: Sa-Token 1.44.0
-- **工具库**: Hutool v7.0.0-M4
+- **缓存**: Redis（使用 Redisson 4.4.0）
+- **认证授权**: Sa-Token 1.45.0
+- **工具库**: Hutool v7.0.0-M6
 - **API 文档**: Knife4j 4.5.0
 - **动态线程池**: Dynamic-TP 1.2.2
 - **任务调度**: PowerJob 5.1.2
 - **缓存框架**: JetCache 2.7.8
-- **IP 地域查询**: ip2region 3.3.4
+- **IP 地域查询**: ip2region 3.3.7
 
 ## 项目结构
 
@@ -108,8 +108,8 @@ upm-start
 5. **访问应用**
    - 前端地址：http://localhost:9000/index.html
    - API 文档：http://localhost:9000/doc.html（Knife4j）
-   - 平台管理员账号：`admin@yilers.com` / `yilers@123`
-   - 租户管理员账号：`platform@yilers.com`
+   - 平台管理员账号：`platform@yilers.com` / `yilers@123`
+   - 租户管理员账号：`admin@yilers.com`
 
 ### 打包部署
 
@@ -240,7 +240,7 @@ mvn help:effective-pom
 2. **测试跳过**：默认配置跳过测试（`<skipTests>true</skipTests>`），如需运行测试需修改配置
 3. **JDK 兼容性**：项目使用 JDK 25，确保开发环境 JDK 版本正确
 4. **租户同步**：新增菜单后需要在租户同步逻辑中处理，否则新租户看不到新菜单
-5. **Spring Boot 升级**：当前使用 Spring Boot 4.0.3（最新版本），等待常用依赖服务支持后再发布到中央仓库
+5. **Spring Boot 升级**：当前使用 Spring Boot 4.0.6（最新版本），等待常用依赖服务支持后再发布到中央仓库
 
 ## 许可证
 
@@ -248,5 +248,5 @@ Apache License 2.0
 
 ## 开发者
 
-- zhanghui <jwtpermission@gmail.com>
+- zhanghui <yilers95@gmail.com>
 - GitHub: https://github.com/yilers/infra-parent
