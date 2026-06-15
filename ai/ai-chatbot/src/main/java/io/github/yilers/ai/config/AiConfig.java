@@ -7,6 +7,7 @@ import org.springaicommunity.agent.tools.task.TaskTool;
 import org.springaicommunity.agent.tools.task.claude.ClaudeSubagentExecutor;
 import org.springaicommunity.agent.tools.task.claude.ClaudeSubagentReferences;
 import org.springaicommunity.agent.tools.task.claude.ClaudeSubagentResolver;
+import org.springaicommunity.agent.tools.task.claude.ClaudeSubagentType;
 import org.springaicommunity.agent.utils.CommandLineQuestionHandler;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -40,8 +41,9 @@ public class AiConfig {
         String skillsDir = "/Users/jzy/IdeaProjects/infra-parent/ai/ai-chatbot/src/main/resources/skills";
         ChatClient.Builder builder = ChatClient.builder(chatModel)
                 .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
-                .defaultAdvisors(ToolCallAdvisor.builder().conversationHistoryEnabled(false).build());
-
+//                .defaultAdvisors(ToolCallAdvisor.builder().conversationHistoryEnabled(false).build()
+//                );
+;
         return
                 builder
                 // custom skills
@@ -49,11 +51,11 @@ public class AiConfig {
                                 .questionHandler(new CommandLineQuestionHandler())
                                 .build())
 
-                .defaultTools(toolSpec -> toolSpec.callbacks(SkillsTool.builder()
+                .defaultTools(SkillsTool.builder()
                         .addSkillsResource(resourceLoader.getResource("classpath:/skills"))
-                        .build()))
+                        .build())
 
-                .defaultTools(toolSpec -> toolSpec.callbacks(TaskTool.builder()
+                .defaultTools(TaskTool.builder()
                         .subagentReferences(ClaudeSubagentReferences.fromResource(resourceLoader.getResource("classpath:/agents")))
                         .subagentTypes(new SubagentType(
                                 new ClaudeSubagentResolver(),
@@ -62,7 +64,7 @@ public class AiConfig {
                                         List.of(skillsDir)
                                 ))
                         )
-                        .build()))
+                        .build())
 //                .defaultTools(TodoWriteTool.builder().build())
                 // defaultTools
                 .defaultTools(FileSystemTools.builder().build())
