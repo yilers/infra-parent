@@ -2,7 +2,7 @@
 
 ```
 JDK25
-SpringBoot4.0.6
+SpringBoot4.1.0
 
 1. 租户
 2. 菜单
