@@ -13,6 +13,7 @@ import lombok.EqualsAndHashCode;
 import java.time.LocalDateTime;
 
 /**
+ * 系统操作日志。
  *
  * @author hui.zhang
  * @since 2021/1/27 4:44 下午
@@ -61,6 +62,9 @@ public class Log extends Model<Log> {
      */
     private String ip;
 
+    /**
+     * IP 归属地。
+     */
     private String region;
 
     /**
@@ -74,14 +78,23 @@ public class Log extends Model<Log> {
     @TableLogic
     private Integer deleted;
 
+    /**
+     * 租户 ID。
+     */
     private Long tenantId;
 
+    /**
+     * 创建时间。
+     */
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
 
     @Schema(description = "异常堆栈")
     private String stackTrace;
 
+    /**
+     * 部门 ID。
+     */
     private Long deptId;
 
 }

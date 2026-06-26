@@ -13,7 +13,8 @@ public class UserThird extends BaseDomain<UserThird> {
     private Long userId;
 
     /**
-     * @see io.github.yilers.core.enums.PlatformEnum
+     * 平台枚举，对应 PlatformEnum。
+     * {@link io.github.yilers.core.enums.PlatformEnum}
      */
     private String platform;
 
