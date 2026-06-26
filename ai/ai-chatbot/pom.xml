@@ -22,12 +22,12 @@
         <dependency>
             <groupId>io.github.yilers</groupId>
             <artifactId>common-auth</artifactId>
-            <version>1.0.0</version>
+            <version>${revision}</version>
         </dependency>
         <dependency>
             <groupId>io.github.yilers</groupId>
             <artifactId>common-web</artifactId>
-            <version>1.0.0</version>
+            <version>${revision}</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.dtflys.forest</groupId>
@@ -136,6 +136,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <skip>true</skip>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>

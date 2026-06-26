@@ -29,7 +29,7 @@
         <dependency>
             <groupId>io.github.yilers</groupId>
             <artifactId>ai-chatbot</artifactId>
-            <version>1.0.0</version>
+            <version>${revision}</version>
         </dependency>
     </dependencies>
 

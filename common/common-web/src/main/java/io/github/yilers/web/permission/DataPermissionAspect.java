@@ -27,7 +27,7 @@ public class DataPermissionAspect {
     private static final ExpressionParser PARSER = new SpelExpressionParser();
     private static final ConcurrentMap<MethodSignature, Method> METHOD_SIGNATURE_CACHE = new ConcurrentHashMap<>();
 
-    @Pointcut("@annotation(com.jzy.permission.DataPermission) || @annotation(com.jzy.permission.DataScope)")
+    @Pointcut("@annotation(io.github.yilers.web.permission.DataPermission) || @annotation(io.github.yilers.web.permission.DataScope)")
     public void pointcut() {}
 
     @Around("pointcut()")
