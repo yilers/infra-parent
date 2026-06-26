@@ -55,7 +55,7 @@
         <!-- https://mvnrepository.com/artifact/com.dtflys.forest/forest-spring-boot-starter -->
         <forest.version>1.8.1</forest.version>
         <!-- https://mvnrepository.com/artifact/org.redisson/redisson-spring-boot-starter -->
-        <redisson.version>4.4.0</redisson.version>
+        <redisson.version>4.6.1</redisson.version>
         <!-- https://mvnrepository.com/artifact/cn.dev33/sa-token-spring-boot-starter -->
         <sa-token.version>1.45.0</sa-token.version>
         <!-- https://mvnrepository.com/artifact/org.dromara.dynamictp/dynamic-tp-spring-boot-starter-common -->
@@ -65,7 +65,7 @@
         <!-- https://mvnrepository.com/artifact/com.github.xiaoymin/knife4j-openapi3-jakarta-spring-boot-starter -->
         <knife4j.version>4.5.0</knife4j.version>
         <!-- https://mvnrepository.com/artifact/com.baizhukui/knife4j-openapi3-boot4-spring-boot-starter -->
-        <knife4j-next.version>5.0.10</knife4j-next.version>
+        <knife4j-next.version>5.0.11</knife4j-next.version>
         <!-- https://mvnrepository.com/artifact/com.baomidou/dynamic-datasource-spring-boot-starter -->
         <dynamic-datasource.version>4.5.0</dynamic-datasource.version>
         <!-- https://mvnrepository.com/artifact/tech.powerjob/powerjob-worker-spring-boot-starter -->
