@@ -33,7 +33,7 @@ public class StpInterfaceImpl implements StpInterface {
         List<Long> roleIdList = findRoleIdListByUserId(Long.parseLong(loginId.toString()));
         List<String> permissionCodeList = new ArrayList<>();
         for (Long roleId : roleIdList) {
-            String key = cn.hutool.v7.core.text.StrUtil.format(CommonConst.ROLE_PERMISSION_CACHE_KEY, roleId);
+            String key = StrUtil.format(CommonConst.ROLE_PERMISSION_CACHE_KEY, roleId);
             List<String> itemPermissionCodeList = (List<String>) SaManager.getSaTokenDao().getObject(key);
             if (itemPermissionCodeList == null) {
                 itemPermissionCodeList = authService.getPermissionCodeListByRoleId(roleId);
