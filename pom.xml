@@ -41,8 +41,8 @@
 
     <properties>
         <revision>1.0.0</revision>
-        <maven.compiler.source>25</maven.compiler.source>
-        <maven.compiler.target>25</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>
@@ -65,7 +65,7 @@
         <!-- https://mvnrepository.com/artifact/com.github.xiaoymin/knife4j-openapi3-jakarta-spring-boot-starter -->
         <knife4j.version>4.5.0</knife4j.version>
         <!-- https://mvnrepository.com/artifact/com.baizhukui/knife4j-openapi3-boot4-spring-boot-starter -->
-        <knife4j-next.version>5.0.11</knife4j-next.version>
+        <knife4j-next.version>5.0.13</knife4j-next.version>
         <!-- https://mvnrepository.com/artifact/com.baomidou/dynamic-datasource-spring-boot-starter -->
         <dynamic-datasource.version>4.5.0</dynamic-datasource.version>
         <!-- https://mvnrepository.com/artifact/tech.powerjob/powerjob-worker-spring-boot-starter -->

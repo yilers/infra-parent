@@ -16,8 +16,6 @@
     </modules>
 
     <properties>
-        <maven.compiler.source>25</maven.compiler.source>
-        <maven.compiler.target>25</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-starter-model-openai -->
         <spring-ai.version>2.0.0</spring-ai.version>

@@ -12,8 +12,6 @@
     <artifactId>ai-chatbot</artifactId>
 
     <properties>
-        <maven.compiler.source>25</maven.compiler.source>
-        <maven.compiler.target>25</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -28,12 +26,12 @@
             <groupId>io.github.yilers</groupId>
             <artifactId>common-web</artifactId>
             <version>${revision}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.dtflys.forest</groupId>
-                    <artifactId>forest-spring-boot-starter</artifactId>
-                </exclusion>
-            </exclusions>
+<!--            <exclusions>-->
+<!--                <exclusion>-->
+<!--                    <groupId>com.dtflys.forest</groupId>-->
+<!--                    <artifactId>forest-spring-boot-starter</artifactId>-->
+<!--                </exclusion>-->
+<!--            </exclusions>-->
         </dependency>
 
         <!-- webflux -->
