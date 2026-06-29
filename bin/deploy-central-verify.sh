@@ -13,7 +13,7 @@ if [[ -z "$revision" ]]; then
 fi
 
 # 确认执行
-echo "即将执行: mvn clean deploy -Drevision=$revision -Dgpg.keyname=223F63D22AE99F1E"
+echo "即将执行: mvn clean verify -Pcentral -DskipTests -Drevision=$revision -Dgpg.keyname=223F63D22AE99F1E"
 read -p "是否确认执行？(y/n): " confirm
 
 if [[ "$confirm" != "y" ]]; then
@@ -22,4 +22,4 @@ if [[ "$confirm" != "y" ]]; then
 fi
 
 # 执行部署命令
-mvn clean deploy -Pcentral -Drevision="$revision" -Dgpg.keyname=223F63D22AE99F1E
+mvn clean verify -Pcentral -Drevision="$revision" -Dgpg.keyname=223F63D22AE99F1E
