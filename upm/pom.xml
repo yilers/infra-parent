@@ -12,6 +12,7 @@
     </parent>
 
     <artifactId>upm</artifactId>
+    <name>infra-upm</name>
     <version>${revision}</version>
     <packaging>pom</packaging>
 

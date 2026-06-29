@@ -12,6 +12,7 @@
     </parent>
 
     <artifactId>common</artifactId>
+    <name>infra-common</name>
     <version>${revision}</version>
     <packaging>pom</packaging>
 

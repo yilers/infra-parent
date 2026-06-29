@@ -10,7 +10,10 @@
     </parent>
 
     <artifactId>ai</artifactId>
+    <name>infra-ai</name>
+    <version>${revision}</version>
     <packaging>pom</packaging>
+
     <modules>
         <module>ai-chatbot</module>
     </modules>

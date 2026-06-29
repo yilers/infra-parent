@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>ai-chatbot</artifactId>
+    <name>ai-chatbot</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

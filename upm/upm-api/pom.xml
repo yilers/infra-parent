@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>upm-api</artifactId>
+    <name>upm-api</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>upm-start</artifactId>
+    <name>upm-start</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
