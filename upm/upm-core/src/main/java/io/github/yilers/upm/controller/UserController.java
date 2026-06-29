@@ -3,6 +3,7 @@ package io.github.yilers.upm.controller;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.github.yilers.core.util.Result;
 import io.github.yilers.upm.handler.UserHandler;
 import io.github.yilers.upm.request.UserPageRequest;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/user")
 @RequiredArgsConstructor
 @Tag(name = "用户")
+@ApiSupport(order = 8, author = "yilers")
 public class UserController {
     private final UserService userService;
     private final UserHandler userHandler;

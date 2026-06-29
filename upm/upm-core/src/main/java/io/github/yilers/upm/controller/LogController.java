@@ -2,6 +2,7 @@ package io.github.yilers.upm.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.github.yilers.core.util.Result;
 import io.github.yilers.upm.entity.Log;
 import io.github.yilers.upm.response.LogInfoResponse;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/log")
 @RequiredArgsConstructor
 @Tag(name = "日志")
+@ApiSupport(order = 11, author = "yilers")
 public class LogController {
     private final LogService logService;
 

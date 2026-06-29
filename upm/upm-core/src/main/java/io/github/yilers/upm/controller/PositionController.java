@@ -2,6 +2,7 @@ package io.github.yilers.upm.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.github.yilers.core.util.Result;
 import io.github.yilers.upm.entity.Position;
 import io.github.yilers.upm.request.PositionRequest;
@@ -22,6 +23,7 @@ import java.util.List;
 @RequestMapping("/position")
 @RequiredArgsConstructor
 @Tag(name = "职位")
+@ApiSupport(order = 5, author = "yilers")
 public class PositionController {
     private final PositionService positionService;
 

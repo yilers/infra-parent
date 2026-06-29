@@ -2,6 +2,7 @@ package io.github.yilers.upm.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
+import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.github.yilers.core.util.Result;
 import io.github.yilers.upm.entity.Dept;
 import io.github.yilers.upm.handler.DeptHandler;
@@ -25,6 +26,7 @@ import java.util.List;
 @RequestMapping("/dept")
 @RequiredArgsConstructor
 @Tag(name = "部门")
+@ApiSupport(order = 6, author = "yilers")
 public class DeptController {
     private final DeptService deptService;
     private final DeptHandler deptHandler;

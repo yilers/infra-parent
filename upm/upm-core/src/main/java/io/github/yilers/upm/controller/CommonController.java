@@ -6,6 +6,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
+import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.github.yilers.core.util.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/common")
 @Tag(name = "公共")
+@ApiSupport(order = 2, author = "yilers")
 public class CommonController {
     private final RequestMappingHandlerMapping handlerMapping;
     public CommonController(@Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping) {

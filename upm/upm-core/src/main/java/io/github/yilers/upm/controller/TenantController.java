@@ -1,6 +1,7 @@
 package io.github.yilers.upm.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.github.yilers.core.util.Result;
 import io.github.yilers.upm.entity.Tenant;
 import io.github.yilers.upm.handler.CommonHandler;
@@ -24,6 +25,7 @@ import java.util.List;
 @RequestMapping("/tenant")
 @RequiredArgsConstructor
 @Tag(name = "租户")
+@ApiSupport(order = 3, author = "yilers")
 public class TenantController {
     private final TenantService tenantService;
     private final CommonHandler commonHandler;

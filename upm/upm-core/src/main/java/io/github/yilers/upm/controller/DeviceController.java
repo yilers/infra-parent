@@ -1,6 +1,7 @@
 package io.github.yilers.upm.controller;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.github.yilers.upm.entity.Device;
 import io.github.yilers.upm.service.DeviceService;
 import io.github.yilers.web.base.BaseController;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/device")
 @RequiredArgsConstructor
 @Tag(name = "设备")
+@ApiSupport(order = 7, author = "yilers")
 public class DeviceController extends BaseController<Device> {
     private final DeviceService deviceService;
 

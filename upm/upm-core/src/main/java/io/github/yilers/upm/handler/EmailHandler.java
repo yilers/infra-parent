@@ -2,9 +2,9 @@ package io.github.yilers.upm.handler;
 
 public class EmailHandler {
 
-    public void init() {
-
-    }
+//    public void init() {
+//
+//    }
 
 //    public static void main(String[] args) throws Exception {
 //        MailSmtpConfig.MailSmtpConfigBuilder builder = MailSmtpConfig.builder();
@@ -57,6 +57,35 @@ public class EmailHandler {
 ////                .zipName("压缩文件名称")
 //                .build();
 //        qqMailClient.send(message);
+//
+//    }
+//    public static void main(String[] args) {
+//        System.setProperty(
+//                "ai.djl.default_engine",
+//                "OnnxRuntime"
+//        );
+//        OcrRecModelConfig recModelConfig = new OcrRecModelConfig();
+//        recModelConfig.setRecModelEnum(CommonRecModelEnum.PP_OCR_V5_MOBILE_REC_MODEL);
+//        recModelConfig.setRecModelPath("/Users/jzy/IdeaProjects/infra-parent/upm/upm-core/src/main/resources/PP-OCRv5_mobile_rec_infer/PP-OCRv5_mobile_det_infer.onnx");
+//        recModelConfig.setDevice(DeviceEnum.CPU);
+////        recModelConfig.setTextDetModel(getDetectionModel());
+////        recModelConfig.setDirectionModel(getDirectionModel());
+//        OcrCommonRecModel recModel = OcrModelFactory.getInstance().getRecModel(recModelConfig);
+//        OcrRecOptions ocrRecOptions = new OcrRecOptions();
+//        OcrInfo recognize = recModel.recognize("/Users/jzy/Desktop/ocr.png", ocrRecOptions);
+//        System.out.println(recognize);
+//    }
+//    public static void main(String[] args) {
+//        Map<String, Object> expire = MapUtil.<String, Object>builder().put(JWT.ISSUER, "Java").put(JWT.EXPIRES_AT, System.currentTimeMillis() + 1000 * 60).build();
+//        String token = JWTUtil.createToken(expire, "123".getBytes());
+//
+//        System.out.println(token);
+//
+//        JWT jwt = JWTUtil.parseToken(token);
+//        System.out.println(jwt.getPayload());
+//
+//        JWTValidator jwtValidator = JWTValidator.of(token).validateDate();
+//        System.out.println(jwtValidator.validateDate());
 //
 //    }
 }

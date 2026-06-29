@@ -2,6 +2,7 @@ package io.github.yilers.upm.controller;
 
 import cn.dev33.satoken.annotation.SaIgnore;
 import cn.dev33.satoken.stp.StpUtil;
+import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.github.yilers.core.util.Result;
 import io.github.yilers.upm.handler.AuthHandler;
 import io.github.yilers.upm.request.LoginRequest;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 @Tag(name = "认证")
+@ApiSupport(order = 1, author = "yilers")
 public class AuthController {
     private final AuthHandler authHandler;
 

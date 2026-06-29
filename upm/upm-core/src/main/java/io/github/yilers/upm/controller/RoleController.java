@@ -3,6 +3,7 @@ package io.github.yilers.upm.controller;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
+import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.github.yilers.core.util.Result;
 import io.github.yilers.upm.handler.RoleHandler;
 import io.github.yilers.upm.request.RolePermissionRequest;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/role")
 @RequiredArgsConstructor
 @Tag(name = "角色")
+@ApiSupport(order = 9, author = "yilers")
 public class RoleController {
     private final RoleHandler roleHandler;
 

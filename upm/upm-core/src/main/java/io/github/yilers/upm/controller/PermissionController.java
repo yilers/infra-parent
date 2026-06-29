@@ -3,6 +3,7 @@ package io.github.yilers.upm.controller;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.dev33.satoken.annotation.SaCheckRole;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
+import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.github.yilers.core.constant.CommonConst;
 import io.github.yilers.core.util.Result;
 import io.github.yilers.upm.entity.Permission;
@@ -27,6 +28,7 @@ import java.util.List;
 @RequestMapping("/permission")
 @RequiredArgsConstructor
 @Tag(name = "权限")
+@ApiSupport(order = 4, author = "yilers")
 public class PermissionController {
     private final PermissionHandler permissionHandler;
 

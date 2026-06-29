@@ -1,5 +1,6 @@
 package io.github.yilers.upm.controller;
 
+import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.github.yilers.core.util.Result;
 import io.github.yilers.upm.entity.UserDataScope;
 import io.github.yilers.upm.request.UserDataScopeRequest;
@@ -19,6 +20,7 @@ import java.util.List;
 @RequestMapping("/userDataScope")
 @RequiredArgsConstructor
 @Tag(name = "用户数据权限")
+@ApiSupport(order = 10, author = "yilers")
 public class UserDataScopeController {
     private final UserDataScopeService userDataScopeService;
 

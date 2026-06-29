@@ -25,7 +25,7 @@ import java.util.TimeZone;
 @RestController
 @RequestMapping("/")
 @Tag(name = "测试")
-@ApiSupport(order = 1, author = "张辉")
+@ApiSupport(order = 0, author = "张辉")
 public class HomeController {
 
     @SaIgnore
