@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/role")
 @RequiredArgsConstructor
 @Tag(name = "角色")
-@ApiSupport(order = 9, author = "yilers")
+@ApiSupport(order = 90, author = "yilers")
 public class RoleController {
     private final RoleHandler roleHandler;
 

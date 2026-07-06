@@ -22,7 +22,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-starter-model-openai -->
         <spring-ai.version>2.0.0</spring-ai.version>
-        <spring-ai-alibaba.version>1.1.2.3</spring-ai-alibaba.version>
+        <spring-ai-alibaba.version>2.0.0-M1.1</spring-ai-alibaba.version>
         <spring-ai-agent-utils.version>0.10.0</spring-ai-agent-utils.version>
     </properties>
 

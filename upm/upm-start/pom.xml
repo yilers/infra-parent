@@ -150,6 +150,12 @@
                 <profiles.active>gray</profiles.active>
             </properties>
         </profile>
+        <profile>
+            <id>prod</id>
+            <properties>
+                <profiles.active>prod</profiles.active>
+            </properties>
+        </profile>
     </profiles>
 
 </project>

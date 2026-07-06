@@ -28,7 +28,7 @@ import java.util.List;
 @RequestMapping("/permission")
 @RequiredArgsConstructor
 @Tag(name = "权限")
-@ApiSupport(order = 4, author = "yilers")
+@ApiSupport(order = 80, author = "yilers")
 public class PermissionController {
     private final PermissionHandler permissionHandler;
 

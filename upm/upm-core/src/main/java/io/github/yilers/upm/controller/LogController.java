@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/log")
 @RequiredArgsConstructor
 @Tag(name = "日志")
-@ApiSupport(order = 11, author = "yilers")
+@ApiSupport(order = 120, author = "yilers")
 public class LogController {
     private final LogService logService;
 

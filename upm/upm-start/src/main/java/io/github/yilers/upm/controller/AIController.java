@@ -1,13 +1,14 @@
-package io.github.yilers.ai.controller;
+package io.github.yilers.upm.controller;
 
 import cn.dev33.satoken.annotation.SaIgnore;
 import cn.hutool.v7.core.io.resource.Resource;
 import cn.hutool.v7.core.io.resource.ResourceUtil;
-import io.github.yilers.ai.tool.CustomTool;
+import io.github.yilers.upm.tool.CustomTool;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.document.Document;
@@ -24,6 +25,7 @@ import reactor.core.publisher.Flux;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestController
 @RequestMapping("/ai")
 @Tag(name = "ai")
@@ -130,9 +132,10 @@ public class AIController {
     @SneakyThrows
     @Operation(summary = "Chat with AI Code Reviewer")
     public String agentChat(String chatId, String message) {
+        String conversationId = chatId == null || chatId.isBlank() ? "agent-default" : chatId;
 
         // Prompt
-        Resource resource = ResourceUtil.getResource("classpath:/agents/code-reviewer.md");
+        Resource resource = ResourceUtil.getResource("classpath:/agents/review-coordinator.md");
         String prompt = resource.readUtf8Str();
 
         return chatClient
@@ -141,7 +144,7 @@ public class AIController {
                 .user(message)
                 .advisors(a -> a.param(
                         ChatMemory.CONVERSATION_ID,
-                        chatId
+                        conversationId
                 ))
                 .tools(new CustomTool())
                 .call()
@@ -166,5 +169,27 @@ public class AIController {
                                 .builder(content)
                                 .build()
                 );
+    }
+
+    @SaIgnore
+    @PostMapping(value = "/chat/recharge")
+    @SneakyThrows
+    @Operation(summary = "recharge")
+    public String rechargeChat(String chatId, String message) {
+        String content = chatClient
+                .prompt()
+                .system("你是一个供货商充值余额预测助手 用recharge-predict skill回答问题")
+                .user(message)
+                .advisors(a -> a.param(
+                        ChatMemory.CONVERSATION_ID,
+                        chatId
+                ))
+                .tools(new CustomTool())
+                .call()
+                .content();
+        log.info("rechargeChat content={}", content);
+        return content;
+
+
     }
 }

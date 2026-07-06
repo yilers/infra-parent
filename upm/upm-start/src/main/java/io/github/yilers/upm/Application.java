@@ -27,7 +27,6 @@ import java.util.TimeZone;
 @EnableRedisson
 @EnableDynamicTp
 @EnableScheduling
-//@EnableAdminServer
 @EnableGlobalException
 @EnableResilientMethods
 @EnableTransactionManagement

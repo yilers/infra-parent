@@ -23,7 +23,7 @@ import java.util.List;
 @RequestMapping("/position")
 @RequiredArgsConstructor
 @Tag(name = "职位")
-@ApiSupport(order = 5, author = "yilers")
+@ApiSupport(order = 60, author = "yilers")
 public class PositionController {
     private final PositionService positionService;
 

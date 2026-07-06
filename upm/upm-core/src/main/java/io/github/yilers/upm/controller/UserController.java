@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/user")
 @RequiredArgsConstructor
 @Tag(name = "用户")
-@ApiSupport(order = 8, author = "yilers")
+@ApiSupport(order = 100, author = "yilers")
 public class UserController {
     private final UserService userService;
     private final UserHandler userHandler;

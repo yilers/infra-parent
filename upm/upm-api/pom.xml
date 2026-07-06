@@ -20,9 +20,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.github.yilers</groupId>
-            <artifactId>common-web</artifactId>
-            <version>${revision}</version>
+            <groupId>com.baizhukui</groupId>
+            <artifactId>knife4j-core</artifactId>
+            <version>${knife4j-next.version}</version>
         </dependency>
     </dependencies>
 

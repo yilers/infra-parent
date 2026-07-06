@@ -60,7 +60,7 @@ infra-parent
 ### 初始化数据库
 
 ```bash
-mysql -u root -p < sql/01.初始化.sql
+mysql -u root -p < sql/init/01.mysql.sql
 ```
 
 ### 修改配置

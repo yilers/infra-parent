@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/device")
 @RequiredArgsConstructor
 @Tag(name = "设备")
-@ApiSupport(order = 7, author = "yilers")
+@ApiSupport(order = 50, author = "yilers")
 public class DeviceController extends BaseController<Device> {
     private final DeviceService deviceService;
 

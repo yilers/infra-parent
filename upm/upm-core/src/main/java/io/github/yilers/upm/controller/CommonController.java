@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/common")
 @Tag(name = "公共")
-@ApiSupport(order = 2, author = "yilers")
+@ApiSupport(order = 20, author = "yilers")
 public class CommonController {
     private final RequestMappingHandlerMapping handlerMapping;
     public CommonController(@Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping) {

@@ -20,7 +20,7 @@ import java.util.List;
 @RequestMapping("/userDataScope")
 @RequiredArgsConstructor
 @Tag(name = "用户数据权限")
-@ApiSupport(order = 10, author = "yilers")
+@ApiSupport(order = 110, author = "yilers")
 public class UserDataScopeController {
     private final UserDataScopeService userDataScopeService;
 

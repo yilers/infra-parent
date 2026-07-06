@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 @Tag(name = "认证")
-@ApiSupport(order = 1, author = "yilers")
+@ApiSupport(order = 30, author = "yilers")
 public class AuthController {
     private final AuthHandler authHandler;
 

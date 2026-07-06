@@ -25,7 +25,7 @@ import java.util.List;
 @RequestMapping("/tenant")
 @RequiredArgsConstructor
 @Tag(name = "租户")
-@ApiSupport(order = 3, author = "yilers")
+@ApiSupport(order = 40, author = "yilers")
 public class TenantController {
     private final TenantService tenantService;
     private final CommonHandler commonHandler;

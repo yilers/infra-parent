@@ -75,7 +75,7 @@ upm-start
 1. **初始化数据库**
    ```bash
    # 执行数据库初始化脚本
-   mysql -u root -p < sql/01.初始化.sql
+   mysql -u root -p < sql/init/01.mysql.sql
    ```
 
 2. **修改配置文件**

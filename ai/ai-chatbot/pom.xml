@@ -18,23 +18,6 @@
 
     <dependencies>
 
-        <dependency>
-            <groupId>io.github.yilers</groupId>
-            <artifactId>common-auth</artifactId>
-            <version>${revision}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.github.yilers</groupId>
-            <artifactId>common-web</artifactId>
-            <version>${revision}</version>
-<!--            <exclusions>-->
-<!--                <exclusion>-->
-<!--                    <groupId>com.dtflys.forest</groupId>-->
-<!--                    <artifactId>forest-spring-boot-starter</artifactId>-->
-<!--                </exclusion>-->
-<!--            </exclusions>-->
-        </dependency>
-
         <!-- webflux -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -47,6 +30,10 @@
             <artifactId>spring-ai-starter-model-openai</artifactId>
             <version>${spring-ai.version}</version>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.ai</groupId>-->
+<!--            <artifactId>spring-ai-starter-model-ollama</artifactId>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-vector-store</artifactId>
@@ -63,15 +50,6 @@
             <version>${spring-ai-agent-utils.version}</version>
             <scope>compile</scope>
         </dependency>
-
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.ai</groupId>-->
-<!--            <artifactId>spring-ai-starter-vector-store-redis</artifactId>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>redis.clients</groupId>-->
-<!--            <artifactId>jedis</artifactId>-->
-<!--        </dependency>-->
     </dependencies>
 
     <build>
@@ -184,6 +162,12 @@
             <id>gray</id>
             <properties>
                 <profiles.active>gray</profiles.active>
+            </properties>
+        </profile>
+        <profile>
+            <id>prod</id>
+            <properties>
+                <profiles.active>prod</profiles.active>
             </properties>
         </profile>
     </profiles>

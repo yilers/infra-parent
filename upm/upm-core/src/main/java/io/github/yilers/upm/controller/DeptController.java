@@ -26,7 +26,7 @@ import java.util.List;
 @RequestMapping("/dept")
 @RequiredArgsConstructor
 @Tag(name = "部门")
-@ApiSupport(order = 6, author = "yilers")
+@ApiSupport(order = 70, author = "yilers")
 public class DeptController {
     private final DeptService deptService;
     private final DeptHandler deptHandler;

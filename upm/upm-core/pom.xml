@@ -16,18 +16,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- 构建时间 -->
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>
-        <javacv.version>1.5.10</javacv.version>
-
-<!--        <javacv.platform.macosx-arm64>macosx-arm64</javacv.platform.macosx-arm64>-->
-<!--        <javacv.platform.linux-x86_64>linux-x86_64</javacv.platform.linux-x86_64>-->
-<!--        <javacv.platform.linux-arm64>linux-arm64</javacv.platform.linux-arm64>-->
-<!--        <javacv.platform.windows-x86_64>windows-x86_64</javacv.platform.windows-x86_64>-->
-
-
-<!--        <djl.platform.windows-x86_64>win-x86_64</djl.platform.windows-x86_64>-->
-<!--        <djl.platform.linux-x86_64>linux-x86_64</djl.platform.linux-x86_64>-->
-<!--        <djl.platform.linux-aarch64>linux-aarch64</djl.platform.linux-aarch64>-->
-        <djl.platform.osx-aarch64>osx-aarch64</djl.platform.osx-aarch64>
     </properties>
 
     <dependencies>
@@ -36,56 +24,19 @@
             <artifactId>common-auth</artifactId>
             <version>${revision}</version>
         </dependency>
+
+        <dependency>
+            <groupId>io.github.yilers</groupId>
+            <artifactId>common-web</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
         <dependency>
             <groupId>io.github.yilers</groupId>
             <artifactId>upm-api</artifactId>
             <version>${revision}</version>
         </dependency>
 
-        <dependency>
-            <groupId>cn.smartjavaai</groupId>
-            <artifactId>ocr</artifactId>
-            <version>1.1.2</version>
-        </dependency>
-
-        <!--PyTorch离线平台依赖-->
-<!--        <dependency>-->
-<!--            <groupId>ai.djl.pytorch</groupId>-->
-<!--            <artifactId>pytorch-native-cpu</artifactId>-->
-<!--            <version>2.1.1</version> &lt;!&ndash; ⚠️ 不要用2.7.1 &ndash;&gt;-->
-<!--            <classifier>osx-x86_64</classifier> &lt;!&ndash; ✅ Intel &ndash;&gt;-->
-<!--        </dependency>-->
-
-<!--        <dependency>-->
-<!--            <groupId>ai.djl.pytorch</groupId>-->
-<!--            <artifactId>pytorch-jni</artifactId>-->
-<!--            <version>2.7.1-0.34.0</version>-->
-<!--            <scope>runtime</scope>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>ai.djl.pytorch</groupId>-->
-<!--            <artifactId>pytorch-engine</artifactId>-->
-<!--            <version>0.29.0</version>-->
-<!--            <scope>runtime</scope>-->
-<!--        </dependency>-->
-
-        <!--tensorflow离线平台依赖-->
-<!--        <dependency>-->
-<!--            <groupId>ai.djl.tensorflow</groupId>-->
-<!--            <artifactId>tensorflow-native-cpu</artifactId>-->
-<!--            <classifier>osx-x86_64</classifier>-->
-<!--            <scope>runtime</scope>-->
-<!--            <version>2.16.1</version>-->
-<!--        </dependency>-->
-
-        <!--mxnet离线平台依赖-->
-<!--        <dependency>-->
-<!--            <groupId>ai.djl.mxnet</groupId>-->
-<!--            <artifactId>mxnet-native-mkl</artifactId>-->
-<!--            <classifier>${djl.platform.osx-aarch64}</classifier>-->
-<!--            <scope>runtime</scope>-->
-<!--            <version>1.9.1</version>-->
-<!--        </dependency>-->
     </dependencies>
 
     <build>
