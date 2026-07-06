@@ -27,12 +27,6 @@
 
         <dependency>
             <groupId>io.github.yilers</groupId>
-            <artifactId>common-web</artifactId>
-            <version>${revision}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.github.yilers</groupId>
             <artifactId>upm-api</artifactId>
             <version>${revision}</version>
         </dependency>

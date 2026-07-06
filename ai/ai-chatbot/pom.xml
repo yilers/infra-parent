@@ -18,6 +18,12 @@
 
     <dependencies>
 
+        <dependency>
+            <groupId>io.github.yilers</groupId>
+            <artifactId>common-web</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
         <!-- webflux -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
