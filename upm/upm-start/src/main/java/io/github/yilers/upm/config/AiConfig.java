@@ -20,13 +20,18 @@ import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.vectorstore.SimpleVectorStore;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
@@ -36,40 +41,66 @@ import java.util.*;
 public class AiConfig {
     private final ResourceLoader resourceLoader;
 
-
     @Bean
-    @SneakyThrows
-    public ChatClient chatClient(ChatModel chatModel, ChatMemory chatMemory) {
+    public ChatClient chatClient(
+            ChatModel chatModel,
+            ChatMemory chatMemory,
+            ObjectProvider<SkillsTool> skillsToolProvider) {
+
         ChatClient.Builder builder = ChatClient.builder(chatModel)
                 .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
-                .defaultTools(SkillsTool.builder()
-                        .addSkillsResource(resourceLoader.getResource("classpath:/skills"))
-                        .build())
                 .defaultTools(TodoWriteTool.builder().build());
 
+        // skills 可选加载
+        skillsToolProvider.ifAvailable(tool -> {
+            builder.defaultTools(tool);
+            log.info("已加载 SkillsTool");
+        });
+
+        // agents 可选加载
         registerTaskToolIfAgentsPresent(builder, chatModel);
+
         return builder.build();
     }
 
-    @SneakyThrows
+    @Bean
+    @ConditionalOnProperty(prefix = "ai.skills", name = "enabled", havingValue = "true")
+    public ToolCallback skillsTool() throws IOException {
+        Resource skillsResource = resourceLoader.getResource("classpath:/skills");
+        if (!skillsResource.exists()) {
+            throw new FileNotFoundException("skills 资源不存在: " + skillsResource.getDescription());
+        }
+        return SkillsTool.builder()
+                .addSkillsResource(skillsResource)
+                .build();
+    }
+
     private void registerTaskToolIfAgentsPresent(ChatClient.Builder builder, ChatModel chatModel) {
         Resource agentsResource = resourceLoader.getResource("classpath:/agents");
         List<SubagentReference> subagentReferences;
-        try {
-            subagentReferences = ClaudeSubagentReferences.fromResource(agentsResource);
-        } catch (Exception ex) {
-            log.info("未加载 TaskTool，agents 资源不存在或为空: {}", agentsResource.getDescription());
-            return;
-        }
-
+        subagentReferences = ClaudeSubagentReferences.fromResource(agentsResource);
         if (subagentReferences.isEmpty()) {
             log.info("未加载 TaskTool，agents 下没有 subagent 定义文件");
             return;
         }
 
-        Enumeration<URL> skillResources = resourceLoader.getClassLoader().getResources("skills");
+        Enumeration<URL> skillResources;
+        try {
+            skillResources = resourceLoader.getClassLoader().getResources("skills");
+        } catch (IOException e) {
+            log.warn("获取 skills 资源失败，使用空列表: {}", e.getMessage());
+            skillResources = Collections.emptyEnumeration();
+        }
+
         ChatClient.Builder subagentBuilder = ChatClient.builder(chatModel)
-                .defaultTools(TaskOutputTool.builder().taskRepository(new DefaultTaskRepository()).build());
+                .defaultTools(TaskOutputTool.builder()
+                        .taskRepository(new DefaultTaskRepository())
+                        .build());
+
+        List<String> skillPaths = Collections.list(skillResources).stream()
+                .map(URL::getPath)
+                .toList();
+
         Object taskTool = TaskTool.builder()
                 .subagentReferences(subagentReferences)
                 .subagentTypes(new SubagentType(
@@ -77,9 +108,7 @@ public class AiConfig {
                         new ClaudeSubagentExecutor(
                                 Map.of("default", subagentBuilder),
                                 new ArrayList<>(),
-                                Collections.list(skillResources).stream()
-                                        .map(URL::getPath)
-                                        .toList()
+                                skillPaths
                         )
                 ))
                 .build();
