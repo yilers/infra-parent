@@ -65,7 +65,7 @@
         <!-- https://mvnrepository.com/artifact/com.github.xiaoymin/knife4j-openapi3-jakarta-spring-boot-starter -->
 <!--        <knife4j.version>4.5.0</knife4j.version>-->
         <!-- https://mvnrepository.com/artifact/com.baizhukui/knife4j-openapi3-boot4-spring-boot-starter -->
-        <knife4j-next.version>5.0.13</knife4j-next.version>
+        <knife4j-next.version>5.0.14</knife4j-next.version>
         <!-- https://mvnrepository.com/artifact/com.baomidou/dynamic-datasource-spring-boot-starter -->
         <dynamic-datasource.version>4.5.0</dynamic-datasource.version>
         <!-- https://mvnrepository.com/artifact/tech.powerjob/powerjob-worker-spring-boot-starter -->
@@ -73,7 +73,7 @@
         <!-- https://mvnrepository.com/artifact/org.dromara.sms4j/sms4j-spring-boot-starter -->
         <sms4j.version>3.3.5</sms4j.version>
         <!-- https://mvnrepository.com/artifact/com.alicp.jetcache/jetcache-starter-redisson -->
-        <jetcache.version>2.7.9</jetcache.version>
+        <jetcache.version>2.8.0.RC</jetcache.version>
         <!-- https://mvnrepository.com/artifact/org.lionsoul/ip2region -->
         <ip2region.version>3.3.7</ip2region.version>
         <!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
