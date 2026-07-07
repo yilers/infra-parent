@@ -28,7 +28,9 @@
 
     <developers>
         <developer>
+            <id>yilers</id>
             <name>hui.zhang</name>
+            <url>https://yilers.github.io/infra-parent/</url>
             <email>yilers95@gmail.com</email>
         </developer>
     </developers>
@@ -40,7 +42,7 @@
     </scm>
 
     <properties>
-        <revision>1.0.1</revision>
+        <revision>1.0.2</revision>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
