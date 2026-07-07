@@ -1,7 +1,7 @@
 package io.github.yilers.upm.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
-import io.github.yilers.web.base.BaseAllColumnDomain;
+import io.github.yilers.api.base.BaseAllColumnDomain;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

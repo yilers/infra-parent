@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.github.yilers.upm.entity.User;
 import io.github.yilers.upm.request.UserPageRequest;
 import io.github.yilers.upm.response.UserInfoResponse;
-import io.github.yilers.web.base.BasePageRequest;
+import io.github.yilers.api.base.BasePageRequest;
 import io.github.yilers.web.mybatis.CustomMapper;
 import io.github.yilers.web.permission.DataPermission;
 import org.apache.ibatis.annotations.Param;

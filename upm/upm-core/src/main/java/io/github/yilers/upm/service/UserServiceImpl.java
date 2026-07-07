@@ -12,7 +12,7 @@ import io.github.yilers.upm.entity.User;
 import io.github.yilers.upm.mapper.UserMapper;
 import io.github.yilers.upm.request.UserPageRequest;
 import io.github.yilers.upm.response.UserInfoResponse;
-import io.github.yilers.web.base.BasePageRequest;
+import io.github.yilers.api.base.BasePageRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

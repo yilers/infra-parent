@@ -1,4 +1,4 @@
-package io.github.yilers.web.base;
+package io.github.yilers.api.base;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;

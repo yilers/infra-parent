@@ -7,7 +7,7 @@ import io.github.yilers.core.util.Result;
 import io.github.yilers.upm.entity.Log;
 import io.github.yilers.upm.response.LogInfoResponse;
 import io.github.yilers.upm.service.LogService;
-import io.github.yilers.web.base.BasePageRequest;
+import io.github.yilers.api.base.BasePageRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

@@ -1,7 +1,7 @@
 package io.github.yilers.upm.request;
 
-import io.github.yilers.web.validated.Add;
-import io.github.yilers.web.validated.Update;
+import io.github.yilers.api.validated.Add;
+import io.github.yilers.api.validated.Update;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.Data;

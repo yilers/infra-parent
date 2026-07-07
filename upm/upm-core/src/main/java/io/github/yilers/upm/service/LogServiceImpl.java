@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import io.github.yilers.upm.entity.Log;
 import io.github.yilers.upm.mapper.LogMapper;
 import io.github.yilers.upm.response.LogInfoResponse;
-import io.github.yilers.web.base.BasePageRequest;
+import io.github.yilers.api.base.BasePageRequest;
 import io.github.yilers.web.context.RequestContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

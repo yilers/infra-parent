@@ -1,12 +1,20 @@
 package io.github.yilers.upm.response;
 
-import cn.dev33.satoken.stp.SaTokenInfo;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class LoginResponse extends SaTokenInfo {
+public class LoginResponse {
+    public String tokenName;
+    public String tokenValue;
+    public Boolean isLogin;
+    public Object loginId;
+    public String loginType;
+    public long tokenTimeout;
+    public long sessionTimeout;
+    public long tokenSessionTimeout;
+    public long tokenActiveTimeout;
+    public String loginDeviceType;
+    public String tag;
 
     private String name;
 

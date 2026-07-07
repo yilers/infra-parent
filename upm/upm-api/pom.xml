@@ -21,7 +21,7 @@
     <dependencies>
         <dependency>
             <groupId>io.github.yilers</groupId>
-            <artifactId>common-web</artifactId>
+            <artifactId>common-api</artifactId>
             <version>${revision}</version>
         </dependency>
     </dependencies>

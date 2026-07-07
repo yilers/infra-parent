@@ -1,5 +1,4 @@
-package io.github.yilers.web.validated;
-
+package io.github.yilers.api.validated;
 
 import jakarta.validation.groups.Default;
 
