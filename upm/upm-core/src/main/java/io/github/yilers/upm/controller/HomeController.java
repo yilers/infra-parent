@@ -1,6 +1,5 @@
 package io.github.yilers.upm.controller;
 
-import cn.dev33.satoken.annotation.SaCheckRole;
 import cn.dev33.satoken.annotation.SaIgnore;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
@@ -23,7 +22,7 @@ import java.util.TimeZone;
 
 @Slf4j
 @RestController
-@RequestMapping("/")
+@RequestMapping("/upm")
 @Tag(name = "测试")
 @ApiSupport(order = 10, author = "张辉")
 public class HomeController {
@@ -40,10 +39,9 @@ public class HomeController {
         return format;
     }
 
-//    @SaIgnore
+    @SaIgnore
     @GetMapping("/pwd")
-    @Operation(summary = "获取密码")
-    @SaCheckRole("admin")
+    @Operation(summary = "获取明文md5")
     public String pwd(String pwd) {
         String md5 = SecureUtil.md5(pwd);
         String hashpw = BCrypt.hashpw(md5);
