@@ -171,12 +171,17 @@ public class CommonHandler {
 
     @Transactional(rollbackFor = Exception.class)
     public void addTenant(TenantRequest dto) {
+        log.info("添加租户");
         Tenant tenant = tenantService.findByCode(dto.getCode());
         if (tenant != null) {
             throw new CommonException("租户编码已存在");
         }
+        List<Tenant> list = tenantService.findAll();
         Tenant copy = CglibUtil.copy(dto, Tenant.class);
         copy.setOperable(CommonConst.YES);
+        int id = list.size() * 10 + 10;
+        copy.setId((long) id);
+        copy.setVersion(1);
         tenantService.save(copy);
         Long tenantId = copy.getId();
         // 创建设备端
@@ -188,6 +193,7 @@ public class CommonHandler {
     }
 
     private void initAdmin(Long tenantId, Tenant tenant, Dept dept) {
+        log.info("初始化平台管理员");
         Role platformRole = roleService.findByRoleCode(CommonConst.PLATFORM_ADMIN_ROLE_CODE);
         Role tenantRole = roleService.findByRoleCode(CommonConst.TENANT_ADMIN_ROLE_CODE);
         Role newPlatformRole = new Role();
@@ -319,6 +325,7 @@ public class CommonHandler {
     }
 
     private Dept initDept(Tenant copy) {
+        log.info("初始化部门信息");
         Dept dept = new Dept();
         dept.setTenantId(copy.getId());
         dept.setDeptCode(copy.getCode());
@@ -333,8 +340,12 @@ public class CommonHandler {
     }
 
     private Device initDevice(Tenant copy) {
+        log.info("初始化设备信息");
         // 创建租户的设备端
+        List<Device> list = deviceService.findAll();
+        int id = list.size() * 10 + 10;
         Device device = new Device();
+        device.setId((long) id);
         device.setTenantId(copy.getId());
         device.setName("web端");
         device.setCode("web");

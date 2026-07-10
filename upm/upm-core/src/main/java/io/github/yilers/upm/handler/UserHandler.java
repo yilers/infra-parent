@@ -243,6 +243,9 @@ public class UserHandler {
         UserExpandDTO userExpandDTO = new UserExpandDTO();
         userExpandDTO.setInitPwd(Boolean.FALSE);
         updateUser.setExpand(JSONUtil.toJsonStr(userExpandDTO));
-        userService.updateById(updateUser);
+        boolean b = userService.updateById(updateUser);
+        if (!b) {
+            throw new CommonException("修改密码失败 刷新重试");
+        }
     }
 }

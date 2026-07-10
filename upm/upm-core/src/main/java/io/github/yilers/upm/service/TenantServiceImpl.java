@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -34,6 +36,14 @@ public class TenantServiceImpl extends ServiceImpl<TenantMapper, Tenant> impleme
         }
         Tenant copy = CglibUtil.copy(dto, Tenant.class);
         copy.setOperable(CommonConst.YES);
-        tenantMapper.updateById(copy);
+        int i = tenantMapper.updateById(copy);
+        if (i == 0) {
+            throw new CommonException("更新失败 刷新重试");
+        }
+    }
+
+    @Override
+    public List<Tenant> findAll() {
+        return tenantMapper.findAll();
     }
 }

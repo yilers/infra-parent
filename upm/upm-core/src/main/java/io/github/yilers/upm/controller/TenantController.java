@@ -30,7 +30,7 @@ public class TenantController {
     private final TenantService tenantService;
     private final CommonHandler commonHandler;
 
-    @Operation(summary = "查询所有租户")
+    @Operation(summary = "查询所有租户(没有删除的)")
     @GetMapping("/findAll")
     @SaCheckPermission("system:tenant:list")
     public Result<List<Tenant>> findAll() {
