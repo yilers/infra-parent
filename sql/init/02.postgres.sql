@@ -586,7 +586,7 @@ CREATE TRIGGER trg_upm_user_third_update_time
 
 -- 租户表 (id 自增)
 CREATE TABLE upm_tenant (
-    id BIGSERIAL,
+    id BIGINT NOT NULL,
     name VARCHAR(30) NOT NULL,
     code VARCHAR(30) NOT NULL,
     description VARCHAR(500) DEFAULT '',
@@ -631,7 +631,7 @@ VALUES (1, '默认租户', 'yilers.com', '默认租户', '{"logo":"https://files
 
 -- 设备表 (id 自增)
 CREATE TABLE upm_device (
-    id BIGSERIAL,
+    id BIGINT NOT NULL,
     name VARCHAR(30) NOT NULL,
     code VARCHAR(30) NOT NULL,
     description VARCHAR(500) DEFAULT '',
