@@ -1,6 +1,6 @@
 package io.github.yilers.upm.controller;
 
-import com.baomidou.mybatisplus.extension.service.IService;
+import com.baomidou.mybatisplus.spring.service.IService;
 import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.github.yilers.upm.entity.Device;
 import io.github.yilers.upm.service.DeviceService;

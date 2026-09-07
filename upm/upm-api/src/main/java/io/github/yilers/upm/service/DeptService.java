@@ -2,7 +2,7 @@ package io.github.yilers.upm.service;
 
 import com.alicp.jetcache.anno.CacheType;
 import com.alicp.jetcache.anno.Cached;
-import com.baomidou.mybatisplus.extension.service.IService;
+import com.baomidou.mybatisplus.spring.service.IService;
 import io.github.yilers.upm.entity.Dept;
 
 import java.util.List;

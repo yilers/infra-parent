@@ -1,6 +1,6 @@
 package io.github.yilers.web.base;
 
-import com.baomidou.mybatisplus.extension.service.IService;
+import com.baomidou.mybatisplus.spring.service.IService;
 import io.github.yilers.core.util.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.annotation.Resource;

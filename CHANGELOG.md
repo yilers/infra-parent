@@ -17,3 +17,9 @@
 1. 添加common-api模块解耦api依赖web
 2. 升级knife4j-next、jetcache
 3. web服务去除依赖common-redisson
+
+## 1.1.0(2026-09-01)
+1. 升级hutool mybatis-plus sa-token knife4j-next等多个依赖
+2. mybatis-plus升级包名更换导致业务包名大更换
+3. 原租户单隔离改为 租户下创建应用 多应用下不同菜单
+4. 

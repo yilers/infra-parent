@@ -3,7 +3,7 @@ package io.github.yilers.upm.service;
 import cn.hutool.v7.extra.spring.cglib.CglibUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import io.github.yilers.core.constant.CommonConst;
 import io.github.yilers.upm.entity.Tenant;
 import io.github.yilers.upm.mapper.TenantMapper;

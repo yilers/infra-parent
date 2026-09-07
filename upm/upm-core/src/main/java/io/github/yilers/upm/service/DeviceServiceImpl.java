@@ -1,6 +1,6 @@
 package io.github.yilers.upm.service;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import io.github.yilers.upm.entity.Device;
 import io.github.yilers.upm.mapper.DeviceMapper;
 import lombok.RequiredArgsConstructor;

@@ -1,6 +1,6 @@
 # infra-parent
 
-infra-parent 是一个基于 Spring Boot 4.1.0 的基础服务项目，核心提供 RBAC 权限管理、多租户、数据权限、日志、缓存、文档和基础 Web 能力。项目既可以作为独立基础服务部署，也可以作为模块集成到业务服务中。
+infra-parent 是一个基于 Spring Boot 4.x 的基础服务项目，核心提供 RBAC 权限管理、多租户、数据权限、日志、缓存、文档和基础 Web 能力。项目既可以作为独立基础服务部署，也可以作为模块集成到业务服务中。
 
 ## 功能
 
@@ -16,18 +16,18 @@ infra-parent 是一个基于 Spring Boot 4.1.0 的基础服务项目，核心提
 
 ## 技术栈
 
-| 类型 | 技术 |
-| --- | --- |
-| JDK | 25 |
-| Web 框架 | Spring Boot 4.1.0 |
-| ORM | MyBatis Plus 3.5.16 |
-| 数据库 | MySQL 8.0+ |
+| 类型 | 技术                      |
+| --- |-------------------------|
+| JDK | 25                      |
+| Web 框架 | Spring Boot 4.x         |
+| ORM | MyBatis Plus 3.5.x      |
+| 数据库 | MySQL 8.0+              |
 | 缓存 | Redis、Redisson、JetCache |
-| 权限认证 | Sa-Token |
-| API 文档 | Knife4j |
-| 线程池 | Dynamic-TP |
-| 任务调度 | PowerJob |
-| AI | Spring AI |
+| 权限认证 | Sa-Token                |
+| API 文档 | Knife4j                 |
+| 线程池 | Dynamic-TP              |
+| 任务调度 | PowerJob                |
+| AI | Spring AI               |
 
 ## 模块
 
