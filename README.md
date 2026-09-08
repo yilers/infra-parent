@@ -60,8 +60,10 @@ infra-parent
 ### 初始化数据库
 
 ```bash
-mysql -u root -p < sql/init/01.mysql.sql
+mysql -u root -p infra < sql/full/mysql.sql
 ```
+
+将 `infra` 替换为实际数据库名。新库只执行全量脚本；已有数据库使用 `sql/migration/` 中尚未执行的增量脚本，不能执行全量初始化。PostgreSQL 及部分迁移失败的处理见 [SQL 执行说明](sql/README.md)。
 
 ### 修改配置
 

@@ -15,13 +15,12 @@ import io.github.yilers.core.enums.UserTypeEnum;
 import io.github.yilers.upm.entity.*;
 import io.github.yilers.upm.request.TenantRequest;
 import io.github.yilers.upm.service.*;
-import io.github.yilers.upm.service.*;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.context.request.RequestContextHolder;
+import io.github.yilers.web.context.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.*;
@@ -47,6 +46,7 @@ public class CommonHandler {
     private final RoleService roleService;
     private final DeviceService deviceService;
     private final RolePermissionService rolePermissionService;
+    private final ApplicationService applicationService;
 
     public List<Dept> currentDept() {
         long userId = StpUtil.getLoginIdAsLong();
@@ -68,7 +68,7 @@ public class CommonHandler {
         // 获取请求路径（安全）
         if (StrUtil.isBlank(requestPath)) {
             ServletRequestAttributes attrs =
-                    (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+                    (ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
             if (attrs != null) {
                 requestPath = attrs.getRequest().getServletPath();
             }
@@ -184,15 +184,36 @@ public class CommonHandler {
         copy.setVersion(1);
         tenantService.save(copy);
         Long tenantId = copy.getId();
-        // 创建设备端
-        Device device = initDevice(copy);
-        // 创建部门
-        Dept dept = initDept(copy);
-        // 创建平台角色
-        initAdmin(tenantId, copy, dept);
+        Long previousTenantId = RequestContextHolder.getTenantId();
+        try {
+            // 新租户始终以租户1为模板，复制后独立维护。
+            RequestContextHolder.setTenantId(1L);
+            initDevice(copy);
+            Dept dept = initDept(copy);
+            Map<Long, Long> applicationIdMap = initApplication(tenantId);
+            initAdmin(tenantId, copy, dept, applicationIdMap);
+        } finally {
+            RequestContextHolder.setTenantId(previousTenantId);
+        }
     }
 
-    private void initAdmin(Long tenantId, Tenant tenant, Dept dept) {
+    private Map<Long, Long> initApplication(Long tenantId) {
+        Map<Long, Long> applicationIdMap = new HashMap<>();
+        for (Application source : applicationService.list()) {
+            Application application = BeanUtil.copyProperties(source, Application.class);
+            application.setId(null);
+            application.setTenantId(tenantId);
+            application.setVersion(1);
+            application.setCreateId(null);
+            application.setCreateTime(null);
+            application.setUpdateTime(null);
+            applicationService.save(application);
+            applicationIdMap.put(source.getId(), application.getId());
+        }
+        return applicationIdMap;
+    }
+
+    private void initAdmin(Long tenantId, Tenant tenant, Dept dept, Map<Long, Long> applicationIdMap) {
         log.info("初始化平台管理员");
         Role platformRole = roleService.findByRoleCode(CommonConst.PLATFORM_ADMIN_ROLE_CODE);
         Role tenantRole = roleService.findByRoleCode(CommonConst.TENANT_ADMIN_ROLE_CODE);
@@ -210,38 +231,39 @@ public class CommonHandler {
         Map<Long, Permission> newPermissionMap = new HashMap<>();
         Set<Long> platformPermIds = permissionList.stream().map(Permission::getId).collect(Collectors.toSet());
         Set<Long> tenantPermIds = tenantPermissionList.stream().map(Permission::getId).collect(Collectors.toSet());
-        Set<Long> ids = CollUtil.unionDistinct(platformPermIds, tenantPermIds);
-        Set<Permission> unionDistinct = new LinkedHashSet<>();
-        for (Long id : ids) {
-            Optional<Permission> optional = permissionList.stream().filter(item -> item.getId().equals(id)).findAny();
-            if (optional.isPresent()) {
-                Permission permission = optional.get();
-                unionDistinct.add(permission);
-            } else {
-                Permission permission = tenantPermissionList.stream().filter(item -> item.getId().equals(id)).findFirst().get();
-                unionDistinct.add(permission);
-            }
-        }
+        // 菜单复制不依赖角色授权，停用菜单和未授权菜单也要保留。
+        List<Permission> templatePermissions = permissionService.list();
         // 第一步：复制数据，生成新ID，构建映射
         Snowflake snowflake = IdUtil.getSnowflake(1, 1);
-        for (Permission oldPerm : unionDistinct) {
+        for (Permission oldPerm : templatePermissions) {
             long newId = snowflake.next();
             Permission newPerm = BeanUtil.copyProperties(oldPerm, Permission.class);
             newPerm.setId(newId);
             newPerm.setTenantId(tenantId);
+            Long appId = applicationIdMap.get(oldPerm.getAppId());
+            if (appId == null) {
+                throw new CommonException("模板菜单所属应用不存在");
+            }
+            newPerm.setAppId(appId);
+            newPerm.setVersion(1);
+            newPerm.setCreateId(null);
+            newPerm.setCreateTime(null);
+            newPerm.setUpdateTime(null);
             // parentId 先暂时保留为旧ID，后面再统一更新
             newPermissionMap.put(oldPerm.getId(), newPerm);
         }
         // 第二步：修正 parentId
-        for (Permission oldPerm : unionDistinct) {
+        for (Permission oldPerm : templatePermissions) {
             Permission newPerm = newPermissionMap.get(oldPerm.getId());
             Long oldParentId = oldPerm.getParentId();
             if (oldParentId != null && newPermissionMap.containsKey(oldParentId)) {
                 // 设置为新 parentId
                 newPerm.setParentId(newPermissionMap.get(oldParentId).getId());
-            } else {
+            } else if (oldParentId == null || oldParentId == 0L) {
                 // 原本是顶级节点
                 newPerm.setParentId(0L);
+            } else {
+                throw new CommonException("模板菜单父级不存在");
             }
             newAllList.add(newPerm);
             if (platformPermIds.contains(oldPerm.getId())) {
@@ -339,20 +361,18 @@ public class CommonHandler {
         return dept;
     }
 
-    private Device initDevice(Tenant copy) {
+    private void initDevice(Tenant copy) {
         log.info("初始化设备信息");
         // 创建租户的设备端
-        List<Device> list = deviceService.findAll();
-        int id = list.size() * 10 + 10;
-        Device device = new Device();
-        device.setId((long) id);
-        device.setTenantId(copy.getId());
-        device.setName("web端");
-        device.setCode("web");
-        device.setOperable(CommonConst.NO);
-        device.setUsable(CommonConst.YES);
-        deviceService.save(device);
-        return device;
+        for (Device source : deviceService.list()) {
+            Device device = BeanUtil.copyProperties(source, Device.class);
+            device.setId(null);
+            device.setTenantId(copy.getId());
+            device.setVersion(1);
+            device.setCreateTime(null);
+            device.setUpdateTime(null);
+            deviceService.save(device);
+        }
     }
 
 }

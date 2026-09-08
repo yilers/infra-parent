@@ -16,6 +16,9 @@ import lombok.Data;
 @Data
 public class PermissionRequest {
 
+    @NotNull(message = "应用id不能为空", groups = {Add.class, Update.class})
+    private Long appId;
+
     @NotNull(message = "id不能为空", groups = Update.class)
     @Schema(description = "修改时传id")
     private Long id;

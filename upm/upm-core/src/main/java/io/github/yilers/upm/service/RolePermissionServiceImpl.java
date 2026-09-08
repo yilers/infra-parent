@@ -1,8 +1,6 @@
 package io.github.yilers.upm.service;
 
 import com.alicp.jetcache.anno.CacheInvalidate;
-import com.alicp.jetcache.anno.CacheType;
-import com.alicp.jetcache.anno.Cached;
 import com.baomidou.mybatisplus.annotation.InterceptorIgnore;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -25,14 +23,24 @@ public class RolePermissionServiceImpl extends ServiceImpl<RolePermissionMapper,
     private final RolePermissionMapper rolePermissionMapper;
 
     @Override
-    @Cached(name="rolePermission:", key="#roleId", cacheType = CacheType.REMOTE, expire = 3600)
     public List<Permission> findPermissionListByRoleId(Long roleId) {
         return findPermissionListByRoleIdList(Collections.singletonList(roleId));
     }
 
     @Override
     public List<Permission> findPermissionListByRoleIdList(List<Long> roleIdList) {
+        if (roleIdList == null || roleIdList.isEmpty()) {
+            return Collections.emptyList();
+        }
         return rolePermissionMapper.findPermissionListByRoleIdList(roleIdList);
+    }
+
+    @Override
+    public void deleteByRoleIdAndPermissionIds(Long roleId, List<Long> permissionIds) {
+        if (!permissionIds.isEmpty()) {
+            rolePermissionMapper.delete(Wrappers.<RolePermission>lambdaUpdate()
+                    .eq(RolePermission::getRoleId, roleId).in(RolePermission::getPermissionId, permissionIds));
+        }
     }
 
     @Override

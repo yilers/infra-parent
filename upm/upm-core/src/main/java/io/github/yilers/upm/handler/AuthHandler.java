@@ -22,6 +22,7 @@ import io.github.yilers.upm.service.TenantService;
 import io.github.yilers.upm.service.UserRoleService;
 import io.github.yilers.upm.service.UserService;
 import io.github.yilers.web.exception.CommonException;
+import io.github.yilers.web.context.RequestContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
@@ -41,6 +42,7 @@ public class AuthHandler implements AuthService {
     private final UserRoleService userRoleService;
     private final RolePermissionService rolePermissionService;
     private final CacheManager cacheManager;
+    private final ApplicationAccessHandler applicationAccessHandler;
 
     public LoginResponse login(LoginRequest loginRequest) {
         String account = loginRequest.getAccount();
@@ -58,6 +60,13 @@ public class AuthHandler implements AuthService {
                 Integer usable = user.getUsable();
                 if (ObjUtil.isEmpty(usable) || CommonConst.NO.equals(usable)) {
                     throw new CommonException("账号暂不可用");
+                }
+                Long previousTenantId = RequestContextHolder.getTenantId();
+                try {
+                    RequestContextHolder.setTenantId(user.getTenantId());
+                    applicationAccessHandler.currentApplication();
+                } finally {
+                    RequestContextHolder.setTenantId(previousTenantId);
                 }
                 StpUtil.login(user.getId(), device);
                 SaTokenInfo tokenInfo = StpUtil.getTokenInfo();
@@ -97,22 +106,18 @@ public class AuthHandler implements AuthService {
 
     @Override
     public List<String> getPermissionList(Long loginId, String loginType) {
-        List<Long> roleIdList = getRoleIdListByUserId(loginId);
-        List<Permission> permissionList = rolePermissionService.findPermissionListByRoleIdList(roleIdList);
-        return permissionList.stream().filter(permission -> permission.getDevice().equals(loginType))
-                .map(Permission::getPermissionCode).collect(Collectors.toList());
+        return applicationAccessHandler.currentPermissions(loginId).stream()
+                .map(Permission::getPermissionCode).filter(StrUtil::isNotBlank).distinct().toList();
     }
 
     @Override
     public List<String> getPermissionCodeListByRoleId(Long roleId) {
-        String key = StrUtil.format(CommonConst.ROLE_PERMISSION_CACHE_KEY, roleId);
-        List<String> permissionCodeList = (List<String>) SaManager.getSaTokenDao().getObject(key);
-        if (permissionCodeList == null) {
-            List<Permission> permissionList = rolePermissionService.findPermissionListByRoleId(roleId);
-            permissionCodeList = permissionList.stream().map(Permission::getPermissionCode).collect(Collectors.toList());
-            SaManager.getSaTokenDao().setObject(key, permissionCodeList, CommonConst.KEY_EXPIRE);
-        }
-        return permissionCodeList;
+        Long appId = applicationAccessHandler.currentApplication().getId();
+        return rolePermissionService.findPermissionListByRoleId(roleId).stream()
+                .filter(permission -> appId.equals(permission.getAppId()))
+                .filter(permission -> CommonConst.YES.equals(permission.getUsable()))
+                .filter(permission -> StpUtil.getLoginDeviceType().equals(permission.getDevice()))
+                .map(Permission::getPermissionCode).filter(StrUtil::isNotBlank).distinct().toList();
     }
 
     public void logout(Long userId) {

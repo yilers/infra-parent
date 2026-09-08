@@ -44,7 +44,8 @@ infra-parent/
 │   ├── deploy-central.sh    # 部署到中央仓库脚本
 │   └── deploy-company.sh    # 部署到公司私服脚本
 ├── sql/                       # 数据库脚本
-│   └── 01.初始化.sql         # 数据库初始化脚本
+│   ├── full/                 # 空数据库全量初始化（已含最新结构和初始数据）
+│   └── migration/            # 已有数据库按版本增量升级
 └── pom.xml                   # 父 POM 文件
 ```
 
@@ -75,8 +76,10 @@ upm-start
 1. **初始化数据库**
    ```bash
    # 执行数据库初始化脚本
-   mysql -u root -p < sql/init/01.mysql.sql
+   mysql -u root -p infra < sql/full/mysql.sql
    ```
+
+   新库只执行对应全量脚本；已有数据库使用 `sql/migration/`，不要重复执行全量或已应用的增量。执行说明见 `sql/README.md`。
 
 2. **修改配置文件**
    - 编辑 `upm/upm-start/src/main/resources/application-dev.properties`

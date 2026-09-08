@@ -18,29 +18,32 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
     private final PermissionMapper permissionMapper;
 
     @Override
-    public List<Permission> findPermissionsByUserId(Long userId, String device) {
-        return permissionMapper.findPermissionsByUserId(userId, device);
+    public List<Permission> findPermissionsByUserId(Long userId, String device, Long appId) {
+        return permissionMapper.findPermissionsByUserId(userId, device, appId);
     }
 
     @Override
-    public Permission findByPermissionCode(String permissionCode) {
+    public Permission findByPermissionCode(String permissionCode, Long appId) {
         LambdaQueryWrapper<Permission> query = Wrappers.lambdaQuery(Permission.class);
         query.eq(Permission::getPermissionCode, permissionCode);
+        query.eq(Permission::getAppId, appId);
         return permissionMapper.selectOne(query);
     }
 
     @Override
-    public List<Permission> findAllByDevice(String device) {
+    public List<Permission> findAllByDevice(String device, Long appId) {
         LambdaQueryWrapper<Permission> query = Wrappers.lambdaQuery(Permission.class);
         query.eq(Permission::getDevice, device);
+        query.eq(Permission::getAppId, appId);
         return permissionMapper.selectList(query);
     }
 
     @Override
-    public List<Permission> findByParentId(Long parentId, Integer usable) {
+    public List<Permission> findByParentId(Long parentId, String device, Long appId) {
         LambdaQueryWrapper<Permission> query = Wrappers.lambdaQuery(Permission.class);
         query.eq(Permission::getParentId, parentId);
-        query.eq(usable != null, Permission::getUsable, usable);
+        query.eq(Permission::getDevice, device);
+        query.eq(Permission::getAppId, appId);
         return permissionMapper.selectList(query);
     }
 }

@@ -17,7 +17,7 @@ public class UserDataScope extends Model<UserDataScope> {
 
     private String interfacePath;
 
-    @Schema(description = "数据权限类型 1-全部 2-本部门及以下 3-本部门 4-自定义部门")
+    @Schema(description = "数据权限类型 1-全部 2-本部门及以下 3-本部门 4-自定义部门 5-仅本人")
     private Integer dataScope;
 
     @Schema(description = "扩展字段")

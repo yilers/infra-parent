@@ -48,24 +48,14 @@ public class UserHandler {
     private final RolePermissionService rolePermissionService;
     private final CommonHandler commonHandler;
     private final AuthHandler authHandler;
+    private final ApplicationAccessHandler applicationAccessHandler;
 
     public UserInfoResponse currentInfo() {
-        try {
-            InterceptorIgnoreHelper.handle(IgnoreStrategy.builder().tenantLine(true).build());
-            long userId = StpUtil.getLoginIdAsLong();
-            UserInfoResponse userInfo = userService.currentInfo(userId);
-            List<Role> roleList = userRoleService.findRoleListByUserId(userId);
-            userInfo.setRoleList(roleList);
-            if (CollUtil.isNotEmpty(roleList)) {
-                List<Long> roleIdList = roleList.stream().map(Role::getId).collect(Collectors.toList());
-                List<Permission> permissionList = rolePermissionService.findPermissionListByRoleIdList(roleIdList);
-                userInfo.setPermissionList(permissionList);
-            }
-            return userInfo;
-        } finally {
-            InterceptorIgnoreHelper.clearIgnoreStrategy();
-        }
-
+        long userId = StpUtil.getLoginIdAsLong();
+        UserInfoResponse userInfo = CglibUtil.copy(userService.currentInfo(userId), UserInfoResponse.class);
+        userInfo.setRoleList(userRoleService.findRoleListByUserId(userId));
+        userInfo.setPermissionList(applicationAccessHandler.currentPermissions(userId));
+        return userInfo;
     }
 
     /**

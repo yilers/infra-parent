@@ -7,11 +7,11 @@ import java.util.List;
 
 public interface PermissionService extends IService<Permission> {
 
-    List<Permission> findPermissionsByUserId(Long userId, String device);
+    List<Permission> findPermissionsByUserId(Long userId, String device, Long appId);
 
-    Permission findByPermissionCode(String permissionCode);
+    Permission findByPermissionCode(String permissionCode, Long appId);
 
-    List<Permission> findAllByDevice(String device);
+    List<Permission> findAllByDevice(String device, Long appId);
 
-    List<Permission> findByParentId(Long parentId, Integer usable);
+    List<Permission> findByParentId(Long parentId, String device, Long appId);
 }

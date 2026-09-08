@@ -9,5 +9,6 @@ import java.util.List;
 public interface PermissionMapper extends CustomMapper<Permission> {
 
     List<Permission> findPermissionsByUserId(@Param("userId") Long userId,
-                                             @Param("device") String device);
+                                             @Param("device") String device,
+                                             @Param("appId") Long appId);
 }

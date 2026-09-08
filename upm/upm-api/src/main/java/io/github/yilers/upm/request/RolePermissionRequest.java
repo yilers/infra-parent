@@ -11,6 +11,10 @@ public class RolePermissionRequest {
     @NotNull(message = "角色id不能为空")
     private Long roleId;
 
+    @NotNull(message = "应用id不能为空")
+    private Long appId;
+
+    @NotNull(message = "权限列表不能为空")
     private List<Long> permissionIdList;
 
     @NotBlank(message = "设备类型不能为空")

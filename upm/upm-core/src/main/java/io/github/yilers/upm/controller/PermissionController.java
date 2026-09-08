@@ -75,8 +75,8 @@ public class PermissionController {
     @GetMapping("/current")
     @Operation(summary = "获取当前人的权限列表")
     @ApiOperationSupport(order = 6)
-    public Result<List<Permission>> currentInfo(String device) {
-        List<Permission> permissionList = permissionHandler.currentInfo(device);
+    public Result<List<Permission>> currentInfo(String device, Long appId) {
+        List<Permission> permissionList = permissionHandler.currentInfo(device, appId);
         return Result.ok(permissionList);
     }
 
@@ -84,8 +84,8 @@ public class PermissionController {
     @Operation(summary = "平台管理员获取所有权限列表")
     @ApiOperationSupport(order = 7)
     @SaCheckRole(CommonConst.PLATFORM_ADMIN_ROLE_CODE)
-    public Result<List<Permission>> findAll(String device) {
-        List<Permission> permissionList = permissionHandler.findAll(device);
+    public Result<List<Permission>> findAll(String device, Long appId) {
+        List<Permission> permissionList = permissionHandler.findAll(device, appId);
         return Result.ok(permissionList);
     }
 

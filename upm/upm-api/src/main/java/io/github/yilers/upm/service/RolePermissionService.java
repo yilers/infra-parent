@@ -17,4 +17,6 @@ public interface RolePermissionService extends IService<RolePermission> {
     void deleteByRoleId(Long roleId);
 
     void deleteByRoleIdAndDevice(Long roleId, String device);
+
+    void deleteByRoleIdAndPermissionIds(Long roleId, List<Long> permissionIds);
 }

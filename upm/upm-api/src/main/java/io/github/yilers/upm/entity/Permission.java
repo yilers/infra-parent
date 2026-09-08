@@ -11,6 +11,9 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class Permission extends BaseAllColumnDomain<Permission> {
 
+    @Schema(description = "所属应用id")
+    private Long appId;
+
     @Schema(description = "父id")
     private Long parentId;
 

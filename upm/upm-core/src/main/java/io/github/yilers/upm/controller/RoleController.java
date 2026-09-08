@@ -7,6 +7,7 @@ import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.github.yilers.core.util.Result;
 import io.github.yilers.upm.handler.RoleHandler;
 import io.github.yilers.upm.request.RolePermissionRequest;
+import io.github.yilers.upm.request.RolePermissionBatchRequest;
 import io.github.yilers.upm.request.RoleRequest;
 import io.github.yilers.upm.request.RoleUserRequest;
 import io.github.yilers.upm.response.RoleInfoResponse;
@@ -68,12 +69,21 @@ public class RoleController {
     @Operation(summary = "角色资源绑定")
     @ApiOperationSupport(order = 5)
     @SysLog(module = "角色模块", value = "角色资源绑定")
-    @SaCheckPermission("system:role:edit")
+    @SaCheckPermission("system:role:permission")
     public Result<?> bindPermission(@Validated @RequestBody RolePermissionRequest dto) {
         roleHandler.bindPermission(dto);
         return Result.ok();
     }
 
+
+    @PostMapping("/bindPermissions")
+    @Operation(summary = "批量保存角色应用权限")
+    @SysLog(module = "角色模块", value = "批量保存角色应用权限")
+    @SaCheckPermission("system:role:permission")
+    public Result<?> bindPermissions(@Validated @RequestBody RolePermissionBatchRequest dto) {
+        roleHandler.bindPermissions(dto);
+        return Result.ok();
+    }
 
     @PostMapping("/usable")
     @Operation(summary = "切换角色可用状态")

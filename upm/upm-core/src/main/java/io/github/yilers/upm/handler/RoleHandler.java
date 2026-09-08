@@ -13,8 +13,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.github.yilers.core.constant.CommonConst;
 import io.github.yilers.core.enums.DataScopeEnum;
 import io.github.yilers.upm.entity.*;
-import io.github.yilers.upm.entity.*;
 import io.github.yilers.upm.request.RolePermissionRequest;
+import io.github.yilers.upm.request.RolePermissionBatchRequest;
+import io.github.yilers.upm.service.PermissionService;
 import io.github.yilers.upm.request.RoleRequest;
 import io.github.yilers.upm.request.RoleUserRequest;
 import io.github.yilers.upm.response.RoleInfoResponse;
@@ -42,6 +43,8 @@ public class RoleHandler {
     private final UserRoleService userRoleService;
     private final RolePermissionService rolePermissionService;
     private final RoleDeptService roleDeptService;
+    private final PermissionService permissionService;
+    private final ApplicationHandler applicationHandler;
 
     @Transactional(rollbackFor = Exception.class)
     public void save(RoleRequest roleRequest) {
@@ -143,23 +146,54 @@ public class RoleHandler {
         List<Long> permissionIdList = dto.getPermissionIdList();
         String device = dto.getDevice();
 
-        // 删除所有旧的
-        rolePermissionService.deleteByRoleIdAndDevice(roleId, device);
+        Role role = roleService.getOne(Wrappers.<Role>lambdaQuery().eq(Role::getId, roleId).last("FOR UPDATE"));
+        if (role == null) {
+            throw new CommonException("角色不存在");
+        }
+        boolean platformAdmin = StpUtil.hasRole(CommonConst.PLATFORM_ADMIN_ROLE_CODE);
+        if (!platformAdmin && CommonConst.NO.equals(role.getOperable())) {
+            throw new CommonException("该角色不可操作");
+        }
+        applicationHandler.findById(dto.getAppId());
+        List<Permission> scope = platformAdmin
+                ? permissionService.findAllByDevice(device, dto.getAppId())
+                : permissionService.findPermissionsByUserId(StpUtil.getLoginIdAsLong(), device, dto.getAppId());
+        List<Long> scopeIds = scope.stream().map(Permission::getId).toList();
+        if (permissionIdList == null || !new HashSet<>(scopeIds).containsAll(permissionIdList)) {
+            throw new CommonException("权限不属于当前应用、设备端或超出可授权范围");
+        }
+        // 仅替换明确提交且可管理的范围，其余应用和设备端的授权保持不变。
+        rolePermissionService.deleteByRoleIdAndPermissionIds(roleId, scopeIds);
         // 缓存删除
         String key = StrUtil.format(CommonConst.ROLE_PERMISSION_CACHE_KEY, roleId);
         SaManager.getSaTokenDao().delete(key);
 
         // 新增新的
         Set<RolePermission> rolePermissionSet = new LinkedHashSet<>();
-        for (Long permissionId : permissionIdList) {
+        for (Long permissionId : new LinkedHashSet<>(permissionIdList)) {
             RolePermission rolePermission = new RolePermission();
             rolePermission.setPermissionId(permissionId);
             rolePermission.setRoleId(roleId);
             rolePermission.setDevice(device);
             rolePermissionSet.add(rolePermission);
         }
-        rolePermissionService.saveBatch(rolePermissionSet);
+        if (!rolePermissionSet.isEmpty()) {
+            rolePermissionService.saveBatch(rolePermissionSet);
+        }
 
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void bindPermissions(RolePermissionBatchRequest dto) {
+        Set<String> scopes = new HashSet<>();
+        for (RolePermissionRequest scope : dto.getScopes()) {
+            if (!dto.getRoleId().equals(scope.getRoleId()) || !scopes.add(scope.getAppId() + ":" + scope.getDevice())) {
+                throw new CommonException("角色或权限范围不正确");
+            }
+        }
+        for (RolePermissionRequest scope : dto.getScopes()) {
+            bindPermission(scope);
+        }
     }
 
     public RoleInfoResponse findById(Long roleId) {
