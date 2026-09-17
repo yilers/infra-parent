@@ -180,10 +180,11 @@ mvn dependency:tree
 
 ![loading](./img/01.png)
 ![登录页](./img/02.png)
-![首页](./img/03.png)
-![角色分配菜单权限](./img/04.png)
-![用户单独授权数据权限](./img/05.png)
-![日志列表](./img/06.png)
+![应用](./img/03.png)
+![应用菜单](img/04.png)
+![角色分配菜单权限](img/05.png)
+![用户单独授权数据权限](img/06.png)
+![日志列表](img/07.png)
 
 ## 许可证
 
