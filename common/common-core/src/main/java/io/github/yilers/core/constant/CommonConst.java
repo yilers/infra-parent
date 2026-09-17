@@ -33,14 +33,6 @@ public class CommonConst {
     public static final String INNER = "inner";
 
     /**
-     * Tenant-Id
-     */
-    public static final String HEADER_TENANT_ID = "Tenant-Id";
-    /**
-     * Device
-     */
-    public static final String HEADER_DEVICE = "Device";
-    /**
      * User-Id
      */
     public static final String HEADER_USER_ID = "User-Id";

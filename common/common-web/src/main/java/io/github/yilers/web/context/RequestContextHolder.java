@@ -38,6 +38,15 @@ public class RequestContextHolder {
         return context != null ? context.getDeviceType() : null;
     }
 
+    public void setUserId(Long userId) {
+        getOrCreate().setUserId(userId);
+    }
+
+    public Long getUserId() {
+        RequestContext context = CONTEXT.get();
+        return context != null ? context.getUserId() : null;
+    }
+
     private RequestContext getOrCreate() {
         RequestContext ctx = CONTEXT.get();
         if (ctx == null) {
