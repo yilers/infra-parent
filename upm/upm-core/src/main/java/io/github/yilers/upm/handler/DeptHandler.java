@@ -51,6 +51,7 @@ public class DeptHandler {
         }
         dept.setOperable(CommonConst.YES);
         dept.setDeleted(CommonConst.NO);
+        dept.setVersion(1);
         dept.setCreateTime(LocalDateTime.now());
         dept.setUpdateTime(LocalDateTime.now());
         deptService.save(dept);
@@ -123,13 +124,11 @@ public class DeptHandler {
         if (!fDept.getParentId().equals(sDept.getParentId())) {
             throw new CommonException("不同父级不能移动");
         }
-        Dept dept = new Dept();
-        dept.setId(fId);
-        dept.setSortNumber(sDept.getSortNumber());
-        deptService.updateById(dept);
-
-        dept.setId(sId);
-        dept.setSortNumber(fDept.getSortNumber());
-        deptService.updateById(dept);
+        Integer fSortNumber = fDept.getSortNumber();
+        fDept.setSortNumber(sDept.getSortNumber());
+        sDept.setSortNumber(fSortNumber);
+        if (!deptService.updateById(fDept) || !deptService.updateById(sDept)) {
+            throw new CommonException("排序失败 数据已经变更");
+        }
     }
 }

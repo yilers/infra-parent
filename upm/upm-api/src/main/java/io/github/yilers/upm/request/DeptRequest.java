@@ -37,7 +37,7 @@ public class DeptRequest {
     @Schema(description = "层级/深度")
     private Integer parentDeptDeep;
 
-    @NotNull(message = "版本号不能为空")
+    @NotNull(message = "版本号不能为空", groups = Update.class)
     private Integer version;
 
     @Schema(description = "排序")

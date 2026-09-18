@@ -54,7 +54,7 @@ public class PermissionRequest {
 
     private Integer usable;
 
-    @NotNull(message = "版本号不能为空")
+    @NotNull(message = "版本号不能为空", groups = Update.class)
     private Integer version;
 
     @NotBlank(message = "设备端不能为空")

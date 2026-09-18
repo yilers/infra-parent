@@ -58,6 +58,7 @@ public class RoleHandler {
         CglibUtil.copy(roleRequest, roleNew);
         roleNew.setOperable(CommonConst.YES);
         roleNew.setDeleted(CommonConst.NO);
+        roleNew.setVersion(1);
         roleNew.setCreateTime(LocalDateTime.now());
         roleNew.setUpdateTime(LocalDateTime.now());
         roleNew.insert();
@@ -223,7 +224,9 @@ public class RoleHandler {
         // 切换可用状态
         role.setUsable(role.getUsable().equals(CommonConst.YES) ? CommonConst.NO : CommonConst.YES);
         role.setUpdateTime(LocalDateTime.now());
-        role.updateById();
+        if (!roleService.updateById(role)) {
+            throw new CommonException("更新失败 数据已经变更");
+        }
     }
 
     public Page<RoleInfoResponse> page(BasePageRequest<RoleRequest> request) {

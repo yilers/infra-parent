@@ -106,6 +106,7 @@ public class UserHandler {
         UserExpandDTO userExpandDTO = new UserExpandDTO();
         userExpandDTO.setInitPwd(Boolean.TRUE);
         addUser.setExpand(JSONUtil.toJsonStr(userExpandDTO));
+        addUser.setVersion(1);
         boolean save = userService.save(addUser);
         if (save) {
             userRoleService.saveUserRoleRelation(addUser.getId(), request.getRoleIdList());
@@ -117,15 +118,18 @@ public class UserHandler {
     public void updateUser(UserRequest request) {
         Long id = request.getId();
         User oldUser = userService.getById(id);
-        String account = request.getAccount();
-        User user = userService.findByAccount(account);
-        if (CommonConst.NO.equals(user.getOperable())) {
+        if (oldUser == null) {
+            throw new CommonException("用户不存在");
+        }
+        if (CommonConst.NO.equals(oldUser.getOperable())) {
             throw new CommonException("数据不可操作");
         }
+        String account = request.getAccount();
+        User user = userService.findByAccount(account);
         if (ObjUtil.isNotEmpty(user) && !user.getId().equals(id)) {
             throw new CommonException("账号已存在");
         }
-        commonHandler.checkDataScope(StpUtil.getLoginIdAsLong(), user.getDeptId());
+        commonHandler.checkDataScope(StpUtil.getLoginIdAsLong(), request.getDeptId());
         CglibUtil.copy(request, oldUser);
         if (StrUtil.isNotBlank(request.getPassword())) {
             // md5的数据
@@ -134,17 +138,18 @@ public class UserHandler {
             oldUser.setPassword(pwd);
         }
         boolean b = userService.updateById(oldUser);
-        if (b) {
-            userRoleService.deleteByUserId(id);
-            // 缓存用户角色删除
-            String key = StrUtil.format(CommonConst.USER_ROLE_ID_CACHE_KEY, id);
-            SaManager.getSaTokenDao().delete(key);
-            key = StrUtil.format(CommonConst.USER_ROLE_CODE_CACHE_KEY, id);
-            SaManager.getSaTokenDao().delete(key);
-            userRoleService.saveUserRoleRelation(id, request.getRoleIdList());
-            // 清理当前人缓存
-            userService.cleanCache(id);
+        if (!b) {
+            throw new CommonException("更新失败 数据已经变更");
         }
+        userRoleService.deleteByUserId(id);
+        // 缓存用户角色删除
+        String key = StrUtil.format(CommonConst.USER_ROLE_ID_CACHE_KEY, id);
+        SaManager.getSaTokenDao().delete(key);
+        key = StrUtil.format(CommonConst.USER_ROLE_CODE_CACHE_KEY, id);
+        SaManager.getSaTokenDao().delete(key);
+        userRoleService.saveUserRoleRelation(id, request.getRoleIdList());
+        // 清理当前人缓存
+        userService.cleanCache(id);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -160,14 +165,17 @@ public class UserHandler {
         if (id.equals(StpUtil.getLoginIdAsLong())) {
             throw new CommonException("不能操作自己");
         }
-        // 可用状态切换为不可用 需要立即下线
-        if (user.getUsable().equals(CommonConst.YES)) {
+        boolean disable = CommonConst.YES.equals(user.getUsable());
+        // 切换可用状态
+        user.setUsable(disable ? CommonConst.NO : CommonConst.YES);
+        user.setUpdateTime(LocalDateTime.now());
+        if (!userService.updateById(user)) {
+            throw new CommonException("更新失败 数据已经变更");
+        }
+        // 只有状态更新成功后才让被停用用户下线。
+        if (disable) {
             authHandler.logout(id);
         }
-        // 切换可用状态
-        user.setUsable(user.getUsable().equals(CommonConst.YES) ? CommonConst.NO : CommonConst.YES);
-        user.setUpdateTime(LocalDateTime.now());
-        user.updateById();
     }
 
     public Page<UserInfoResponse> page(BasePageRequest<UserPageRequest> request) {

@@ -37,7 +37,7 @@ public class RoleRequest {
     @Schema(description = "是否可用 1-启用 0-禁用")
     private Integer usable;
 
-    @NotNull(message = "版本号不能为空")
+    @NotNull(message = "版本号不能为空", groups = Update.class)
     private Integer version;
 
     @Schema(description = "扩展字段")

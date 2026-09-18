@@ -30,6 +30,7 @@ public class PositionServiceImpl extends ServiceImpl<PositionMapper, Position> i
         }
         Position copy = CglibUtil.copy(dto, Position.class);
         copy.setOperable(CommonConst.YES);
+        copy.setVersion(1);
         positionMapper.insert(copy);
     }
 
@@ -41,7 +42,9 @@ public class PositionServiceImpl extends ServiceImpl<PositionMapper, Position> i
             throw new CommonException("职位编码已存在");
         }
         Position copy = CglibUtil.copy(dto, Position.class);
-        positionMapper.updateById(copy);
+        if (positionMapper.updateById(copy) == 0) {
+            throw new CommonException("更新失败 数据已经变更");
+        }
     }
 
     @Override

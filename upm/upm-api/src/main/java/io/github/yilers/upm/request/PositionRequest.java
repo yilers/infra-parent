@@ -33,6 +33,6 @@ public class PositionRequest {
     @Schema(description = "排序")
     private Integer sortNumber;
 
-    @NotNull(message = "版本号不能为空")
+    @NotNull(message = "版本号不能为空", groups = Update.class)
     private Integer version;
 }

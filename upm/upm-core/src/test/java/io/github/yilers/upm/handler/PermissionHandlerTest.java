@@ -50,6 +50,29 @@ class PermissionHandlerTest {
         assertThrows(CommonException.class, () -> handler.sortOrder(move));
     }
 
+    @Test
+    void reportsConflictWhenEitherSortUpdateFails() {
+        Permission first = permission(10L, 1L, "web");
+        first.setParentId(0L);
+        first.setSortNumber(1);
+        first.setVersion(3);
+        Permission second = permission(20L, 1L, "web");
+        second.setParentId(0L);
+        second.setSortNumber(2);
+        second.setVersion(5);
+        when(service.getById(10L)).thenReturn(first);
+        when(service.getById(20L)).thenReturn(second);
+        when(service.updateById(first)).thenReturn(true);
+        when(service.updateById(second)).thenReturn(false);
+        SortMoveRequest move = new SortMoveRequest();
+        move.setFId(10L);
+        move.setSId(20L);
+
+        assertThrows(CommonException.class, () -> handler.sortOrder(move));
+        verify(service).updateById(first);
+        verify(service).updateById(second);
+    }
+
     private Permission permission(Long id, Long appId, String device) {
         Permission permission = new Permission();
         permission.setId(id);

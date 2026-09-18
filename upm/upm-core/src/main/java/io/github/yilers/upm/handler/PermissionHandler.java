@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.HashSet;
 import java.util.Objects;
@@ -71,6 +70,7 @@ public class PermissionHandler {
         }
         permission.setOperable(CommonConst.YES);
         permission.setDeleted(CommonConst.NO);
+        permission.setVersion(1);
         permission.insert();
     }
 
@@ -160,10 +160,9 @@ public class PermissionHandler {
         Integer downSortNumber = down.getSortNumber();
         up.setSortNumber(downSortNumber);
         down.setSortNumber(upSortNumber);
-        List<Permission> list = new ArrayList<>();
-        list.add(up);
-        list.add(down);
-        permissionService.updateBatchById(list);
+        if (!permissionService.updateById(up) || !permissionService.updateById(down)) {
+            throw new CommonException("排序失败 数据已经变更");
+        }
     }
 
     public List<Permission> currentInfo(String device, Long appId) {

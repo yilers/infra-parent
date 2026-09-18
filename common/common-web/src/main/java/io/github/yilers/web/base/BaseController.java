@@ -2,6 +2,7 @@ package io.github.yilers.web.base;
 
 import com.baomidou.mybatisplus.spring.service.IService;
 import io.github.yilers.core.util.Result;
+import io.github.yilers.web.exception.CommonException;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -45,14 +46,18 @@ public abstract class BaseController<T> {
     @Operation(summary = "保存")
     @PostMapping("/save")
     public Result<?> save(@RequestBody T entity) {
-        getService().save(entity);
+        if (!getService().save(entity)) {
+            throw new CommonException("保存失败");
+        }
         return Result.ok();
     }
 
     @Operation(summary = "根据id更新")
     @PostMapping("/updateById")
     public Result<?> updateById(@RequestBody T entity) {
-        getService().updateById(entity);
+        if (!getService().updateById(entity)) {
+            throw new CommonException("更新失败 数据已经变更");
+        }
         return Result.ok();
     }
 

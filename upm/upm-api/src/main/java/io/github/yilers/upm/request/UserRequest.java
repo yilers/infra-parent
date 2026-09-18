@@ -44,4 +44,8 @@ public class UserRequest {
     @Schema(description = "角色id列表")
     private List<Long> roleIdList;
 
+    @NotNull(message = "版本号不能为空", groups = Update.class)
+    @Schema(description = "乐观锁版本号，修改时必填")
+    private Integer version;
+
 }
