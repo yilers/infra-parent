@@ -3,6 +3,8 @@ package io.github.yilers.upm.handler;
 import io.github.yilers.upm.entity.Application;
 import io.github.yilers.upm.request.ApplicationRequest;
 import io.github.yilers.upm.service.ApplicationService;
+import io.github.yilers.upm.service.TenantService;
+import io.github.yilers.upm.sso.SsoSecretCipher;
 import io.github.yilers.web.exception.CommonException;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -12,7 +14,8 @@ import static org.mockito.Mockito.*;
 
 class ApplicationHandlerTest {
     private final ApplicationService service = mock(ApplicationService.class);
-    private final ApplicationHandler handler = new ApplicationHandler(service);
+    private final ApplicationHandler handler = new ApplicationHandler(service, mock(TenantService.class),
+            mock(SsoSecretCipher.class));
 
     @Test
     void createsOnlyAnEmptyEnabledOperableApplication() {
@@ -28,6 +31,7 @@ class ApplicationHandlerTest {
         assertEquals(1, application.getOperable());
         assertEquals(1, application.getUsable());
         assertEquals(0, application.getDeleted());
+        assertEquals(0, application.getSsoEnabled());
         verify(service).findByCode("oa");
         verifyNoMoreInteractions(service);
     }

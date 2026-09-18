@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-class RequestContextFilterTest {
+class RequestContextCleanupFilterTest {
 
     @AfterEach
     void clearContext() {
@@ -16,7 +16,7 @@ class RequestContextFilterTest {
 
     @Test
     void clearsContextAfterRequest() throws Exception {
-        RequestContextFilter filter = new RequestContextFilter();
+        RequestContextCleanupFilter filter = new RequestContextCleanupFilter();
 
         filter.doFilter(null, null, (request, response) -> {
             RequestContextHolder.setUserId(7L);

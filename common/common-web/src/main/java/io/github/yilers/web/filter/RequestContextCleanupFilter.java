@@ -12,14 +12,14 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 /**
- * 请求上下文生命周期过滤器。
+ * 请求上下文清理过滤器。
  *
  * <p>上下文数据由具体的认证模块负责初始化，本过滤器只保证请求结束后清理线程变量，
  * 避免线程复用时发生上下文串用。</p>
  */
 @Component
 @Order(100)
-public class RequestContextFilter implements Filter {
+public class RequestContextCleanupFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain)

@@ -207,6 +207,12 @@ public class CommonHandler {
             application.setCreateId(null);
             application.setCreateTime(null);
             application.setUpdateTime(null);
+            // SSO 客户端凭据属于租户自身，复制模板时不得携带。
+            application.setSsoEnabled(CommonConst.NO);
+            application.setSsoSecret(null);
+            application.setRedirectUris(null);
+            application.setSsoPushUrl(null);
+            application.setSecretUpdateTime(null);
             applicationService.save(application);
             applicationIdMap.put(source.getId(), application.getId());
         }

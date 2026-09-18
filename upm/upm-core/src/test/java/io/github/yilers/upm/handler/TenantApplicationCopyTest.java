@@ -52,6 +52,10 @@ class TenantApplicationCopyTest {
         });
         Application builtIn = application(1L, "infra", 0, 1);
         Application oa = application(2L, "oa", 1, 0);
+        oa.setSsoEnabled(1);
+        oa.setSsoSecret("encrypted-secret");
+        oa.setRedirectUris("https://oa.example.com/sso/callback");
+        oa.setSsoPushUrl("https://oa.example.com/sso/pushC");
         when(applications.list()).thenAnswer(invocation -> {
             assertEquals(1L, RequestContextHolder.getTenantId());
             return List.of(builtIn, oa);
@@ -102,6 +106,10 @@ class TenantApplicationCopyTest {
         assertEquals(2, copiedApplications.size());
         assertEquals(0, copiedApplications.getFirst().getOperable());
         assertEquals(0, copiedApplications.get(1).getUsable());
+        assertEquals(0, copiedApplications.get(1).getSsoEnabled());
+        assertNull(copiedApplications.get(1).getSsoSecret());
+        assertNull(copiedApplications.get(1).getRedirectUris());
+        assertNull(copiedApplications.get(1).getSsoPushUrl());
         assertEquals(3, copiedMenus.size());
         Permission copiedRoot = copiedMenus.stream().filter(p -> "基础菜单".equals(p.getPermissionName())).findFirst().orElseThrow();
         Permission copiedChild = copiedMenus.stream().filter(p -> "子菜单".equals(p.getPermissionName())).findFirst().orElseThrow();

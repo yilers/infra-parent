@@ -10,7 +10,9 @@ sql/
 └── migration/                    # 已有数据库：按版本增量升级
     ├── README.md                 # 前置检查、部分失败续执行和核验说明
     ├── 20260907_application.mysql.sql
-    └── 20260907_application.postgres.sql
+    ├── 20260907_application.postgres.sql
+    ├── 20260918_sso.mysql.sql
+    └── 20260918_sso.postgres.sql
 ```
 
 ## 新数据库：执行全量脚本
@@ -30,7 +32,9 @@ psql -U postgres -d infra -v ON_ERROR_STOP=1 -f sql/full/postgres.sql
 
 ```bash
 mysql -u root -p infra < sql/migration/20260907_application.mysql.sql
+mysql -u root -p infra < sql/migration/20260918_sso.mysql.sql
 psql -U postgres -d infra -v ON_ERROR_STOP=1 -f sql/migration/20260907_application.postgres.sql
+psql -U postgres -d infra -v ON_ERROR_STOP=1 -f sql/migration/20260918_sso.postgres.sql
 ```
 
 如果旧版脚本在 MySQL 5.7 的 `ROW_NUMBER()` 处失败，不能直接重跑整份增量，更不能改用全量脚本；按 [部分失败续执行说明](migration/README.md#mysql-57-在旧版-row_number-语句处失败时)检查已执行的状态后续执行。

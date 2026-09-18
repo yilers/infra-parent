@@ -3,6 +3,7 @@ package io.github.yilers.upm.handler;
 import cn.dev33.satoken.SaManager;
 import cn.dev33.satoken.stp.SaTokenInfo;
 import cn.dev33.satoken.stp.StpUtil;
+import cn.dev33.satoken.sso.template.SaSsoServerTemplate;
 import cn.hutool.v7.core.bean.BeanUtil;
 import cn.hutool.v7.core.text.StrUtil;
 import cn.hutool.v7.core.util.ObjUtil;
@@ -43,6 +44,7 @@ public class AuthHandler implements AuthService {
     private final RolePermissionService rolePermissionService;
     private final CacheManager cacheManager;
     private final ApplicationAccessHandler applicationAccessHandler;
+    private final SaSsoServerTemplate ssoServerTemplate;
 
     public LoginResponse login(LoginRequest loginRequest) {
         String account = loginRequest.getAccount();
@@ -149,7 +151,14 @@ public class AuthHandler implements AuthService {
             key = StrUtil.format(CommonConst.ROLE_PERMISSION_CACHE_KEY, userId);
             SaManager.getSaTokenDao().delete(key);
         } finally {
-            StpUtil.logout(userId);
+            try {
+                // 同时注销认证中心会话，并由 Sa-Token 向已登记的业务应用推送单点注销。
+                ssoServerTemplate.ssoLogout(userId);
+            } catch (Exception e) {
+                // 业务应用通知失败不能阻断 UPM 自身退出，保留原有本地注销作为兜底。
+                log.warn("SSO客户端注销通知失败，继续注销UPM本地会话，用户: {}", userId, e);
+                StpUtil.logout(userId);
+            }
         }
     }
 }
