@@ -27,7 +27,7 @@
                 AND l.create_time between #{request.startTime} AND #{request.endTime}
             </if>
             <if test="request.data.tenantId != null ">
-                l.tenant_id = #{request.data.tenantId}
+                AND l.tenant_id = #{request.data.tenantId}
             </if>
             AND l.deleted = 0
             <!-- 动态 ORDER BY -->
