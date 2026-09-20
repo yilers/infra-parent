@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
+import io.github.yilers.core.constant.CommonConst;
 import io.github.yilers.upm.dto.UserRoleListDTO;
 import io.github.yilers.upm.entity.Role;
 import io.github.yilers.upm.entity.UserRole;
@@ -28,7 +29,7 @@ public class UserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRole> i
     private final UserRoleMapper userRoleMapper;
 
     @Override
-    @Cached(name = "userRole:", key = "#userId", expire = 3600, cacheType = CacheType.REMOTE)
+    @Cached(name = CommonConst.USER_ROLE_CACHE_NAME, key = "#userId", expire = 3600, cacheType = CacheType.REMOTE)
     public List<Role> findRoleListByUserId(Long userId) {
         return userRoleMapper.findRoleListByUserId(userId);
     }
@@ -55,7 +56,7 @@ public class UserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRole> i
     }
 
     @Override
-    @CacheInvalidate(name = "userRole:", key = "#userId")
+    @CacheInvalidate(name = CommonConst.USER_ROLE_CACHE_NAME, key = "#userId")
     public void deleteByUserId(Long userId) {
         LambdaUpdateWrapper<UserRole> update = Wrappers.lambdaUpdate(UserRole.class);
         update.eq(UserRole::getUserId, userId);

@@ -1,6 +1,5 @@
 package io.github.yilers.upm.handler;
 
-import cn.dev33.satoken.SaManager;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.v7.core.collection.CollUtil;
 import cn.hutool.v7.core.util.ObjUtil;
@@ -142,19 +141,14 @@ public class UserHandler {
             throw new CommonException("更新失败 数据已经变更");
         }
         userRoleService.deleteByUserId(id);
-        // 缓存用户角色删除
-        String key = StrUtil.format(CommonConst.USER_ROLE_ID_CACHE_KEY, id);
-        SaManager.getSaTokenDao().delete(key);
-        key = StrUtil.format(CommonConst.USER_ROLE_CODE_CACHE_KEY, id);
-        SaManager.getSaTokenDao().delete(key);
         userRoleService.saveUserRoleRelation(id, request.getRoleIdList());
         // 清理当前人缓存
         userService.cleanCache(id);
     }
 
     @Transactional(rollbackFor = Exception.class)
-    @CacheInvalidate(name = "user:", key = "#dto.id")
-    @CacheInvalidate(name = "user:currentInfo:", key = "#dto.id")
+    @CacheInvalidate(name = CommonConst.USER_CACHE_NAME, key = "#dto.id")
+    @CacheInvalidate(name = CommonConst.USER_CURRENT_INFO_CACHE_NAME, key = "#dto.id")
     public void usable(BaseOperateRequest dto) {
         Long id = dto.getId();
         User user = userService.getById(id);
@@ -211,13 +205,9 @@ public class UserHandler {
         if (userId.equals(StpUtil.getLoginIdAsLong())) {
             throw new CommonException("不能删除自己");
         }
-        // 删除缓存
-        String key = StrUtil.format(CommonConst.USER_ROLE_ID_CACHE_KEY, userId);
-        SaManager.getSaTokenDao().delete(key);
-        key = StrUtil.format(CommonConst.USER_ROLE_CODE_CACHE_KEY, userId);
-        SaManager.getSaTokenDao().delete(key);
         userService.removeById(userId);
         userRoleService.deleteByUserId(userId);
+        userService.cleanCache(userId);
     }
 
     @Transactional(rollbackFor = Exception.class)

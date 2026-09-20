@@ -63,7 +63,7 @@ public class DeptHandler {
 
 
     @Transactional(rollbackFor = Exception.class)
-    @CacheInvalidate(name = "dept:", key = "#deptRequest.id")
+    @CacheInvalidate(name = CommonConst.DEPT_CACHE_NAME, key = "#deptRequest.id")
     public void updateById(DeptRequest deptRequest) {
         Dept dept = deptService.getById(deptRequest.getId());
         if (dept != null) {
@@ -106,6 +106,7 @@ public class DeptHandler {
             throw new CommonException("id不存在");
         }
         deptService.removeById(id);
+        deptService.cleanCache(id);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -130,5 +131,7 @@ public class DeptHandler {
         if (!deptService.updateById(fDept) || !deptService.updateById(sDept)) {
             throw new CommonException("排序失败 数据已经变更");
         }
+        deptService.cleanCache(fId);
+        deptService.cleanCache(sId);
     }
 }

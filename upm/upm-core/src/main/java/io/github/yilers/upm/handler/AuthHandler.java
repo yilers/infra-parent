@@ -1,6 +1,5 @@
 package io.github.yilers.upm.handler;
 
-import cn.dev33.satoken.SaManager;
 import cn.dev33.satoken.stp.SaTokenInfo;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.dev33.satoken.sso.template.SaSsoServerTemplate;
@@ -84,26 +83,16 @@ public class AuthHandler implements AuthService {
 
     @Override
     public List<Long> getRoleIdListByUserId(Long loginId) {
-        String key = StrUtil.format(CommonConst.USER_ROLE_ID_CACHE_KEY, loginId);
-        List<Long> roleIdList = (List<Long>) SaManager.getSaTokenDao().getObject(key);
-        if (roleIdList == null) {
-            List<Role> roleList = userRoleService.findRoleListByUserId(loginId);
-            roleIdList = roleList.stream().map(Role::getId).collect(Collectors.toList());
-            SaManager.getSaTokenDao().setObject(key, roleIdList, CommonConst.KEY_EXPIRE);
-        }
-        return roleIdList;
+        return userRoleService.findRoleListByUserId(loginId).stream()
+                .map(Role::getId)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<String> getRoleCodeListByUserId(Long loginId) {
-        String key = StrUtil.format(CommonConst.USER_ROLE_CODE_CACHE_KEY, loginId);
-        List<String> roleCodeList = (List<String>) SaManager.getSaTokenDao().getObject(key);
-        if (roleCodeList == null) {
-            List<Role> roleList = userRoleService.findRoleListByUserId(loginId);
-            roleCodeList = roleList.stream().map(Role::getRoleCode).collect(Collectors.toList());
-            SaManager.getSaTokenDao().setObject(key, roleCodeList, CommonConst.KEY_EXPIRE);
-        }
-        return roleCodeList;
+        return userRoleService.findRoleListByUserId(loginId).stream()
+                .map(Role::getRoleCode)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -126,30 +115,26 @@ public class AuthHandler implements AuthService {
         // 清除缓存
         try {
             log.info("用户退出登录: {}", userId);
-            Cache<Object, Object> userRole = cacheManager.getCache("userRole:");
+            Cache<Object, Object> userRole = cacheManager.getCache(CommonConst.USER_ROLE_CACHE_NAME);
             if (userRole != null) {
                 boolean remove = userRole.remove(userId);
                 log.info("清除用户角色缓存: {}", remove);
             }
-            Cache<Object, Object> userDataScope = cacheManager.getCache("userDataScope:");
+            Cache<Object, Object> userDataScope = cacheManager.getCache(CommonConst.USER_DATA_SCOPE_CACHE_NAME);
             if (userDataScope != null) {
                 boolean remove = userDataScope.remove(userId);
                 log.info("清除用户数据权限缓存: {}", remove);
             }
-            Cache<Object, Object> user = cacheManager.getCache("user:");
+            Cache<Object, Object> user = cacheManager.getCache(CommonConst.USER_CACHE_NAME);
             if (user != null) {
                 boolean remove = user.remove(userId);
                 log.info("清除单用户缓存: {}", remove);
             }
-            Cache<Object, Object> userCurrentInfo = cacheManager.getCache("user:currentInfo:");
+            Cache<Object, Object> userCurrentInfo = cacheManager.getCache(CommonConst.USER_CURRENT_INFO_CACHE_NAME);
             if (userCurrentInfo != null) {
                 boolean remove = userCurrentInfo.remove(userId);
                 log.info("清除用户当前详细信息缓存: {}", remove);
             }
-            String key = StrUtil.format(CommonConst.USER_ROLE_ID_CACHE_KEY, userId);
-            SaManager.getSaTokenDao().delete(key);
-            key = StrUtil.format(CommonConst.ROLE_PERMISSION_CACHE_KEY, userId);
-            SaManager.getSaTokenDao().delete(key);
         } finally {
             try {
                 // 同时注销认证中心会话，并由 Sa-Token 向已登记的业务应用推送单点注销。

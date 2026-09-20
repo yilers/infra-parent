@@ -58,24 +58,29 @@ public class CommonConst {
     public static final String DEPT_ADMIN_ROLE_CODE = "deptAdmin";
 
     /**
-     * 角色ID与权限编码缓存key
+     * 用户基本信息缓存名称
      */
-    public static final String ROLE_PERMISSION_CACHE_KEY = "role:roleId2PermissionCode:{}";
+    public static final String USER_CACHE_NAME = "user:";
 
     /**
-     * 用户ID与角色ID缓存key
+     * 当前用户详细信息缓存名称
      */
-    public static final String USER_ROLE_ID_CACHE_KEY = "user:userId2RoleIdList:{}";
+    public static final String USER_CURRENT_INFO_CACHE_NAME = "user:currentInfo:";
 
     /**
-     * 用户ID与角色编码缓存key
+     * 用户角色缓存名称
      */
-    public static final String USER_ROLE_CODE_CACHE_KEY = "user:userId2RoleCodeList:{}";
+    public static final String USER_ROLE_CACHE_NAME = "userRole:";
 
     /**
-     * 缓存key有效期
+     * 用户数据权限覆盖配置缓存名称
      */
-    public static final Long KEY_EXPIRE = 60 * 60 * 24 * 5L;
+    public static final String USER_DATA_SCOPE_CACHE_NAME = "userDataScope:";
+
+    /**
+     * 部门缓存名称
+     */
+    public static final String DEPT_CACHE_NAME = "dept:";
 
     /**
      * 初始化密码

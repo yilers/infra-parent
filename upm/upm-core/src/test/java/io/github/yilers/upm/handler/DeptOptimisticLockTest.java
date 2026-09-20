@@ -11,6 +11,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -32,6 +33,25 @@ class DeptOptimisticLockTest {
         assertThrows(CommonException.class, () -> handler.sortOrder(request));
         verify(service).updateById(first);
         verify(service).updateById(second);
+        verify(service, never()).cleanCache(10L);
+        verify(service, never()).cleanCache(20L);
+    }
+
+    @Test
+    void successfulSortingClearsBothDepartmentCaches() {
+        Dept first = dept(10L, 1, 3);
+        Dept second = dept(20L, 2, 7);
+        when(service.findByIdList(List.of(10L, 20L))).thenReturn(List.of(first, second));
+        when(service.updateById(first)).thenReturn(true);
+        when(service.updateById(second)).thenReturn(true);
+        SortMoveRequest request = new SortMoveRequest();
+        request.setFId(10L);
+        request.setSId(20L);
+
+        handler.sortOrder(request);
+
+        verify(service).cleanCache(10L);
+        verify(service).cleanCache(20L);
     }
 
     private Dept dept(Long id, Integer sortNumber, Integer version) {

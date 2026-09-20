@@ -1,6 +1,5 @@
 package io.github.yilers.upm.handler;
 
-import cn.dev33.satoken.SaManager;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.v7.core.bean.BeanUtil;
 import cn.hutool.v7.core.collection.CollUtil;
@@ -118,6 +117,7 @@ public class RoleHandler {
             }).collect(Collectors.toList());
             roleDeptService.saveBatch(collect);
         }
+        cleanUserRoleCache(roleRequest.getId());
 
     }
 
@@ -165,10 +165,6 @@ public class RoleHandler {
         }
         // 仅替换明确提交且可管理的范围，其余应用和设备端的授权保持不变。
         rolePermissionService.deleteByRoleIdAndPermissionIds(roleId, scopeIds);
-        // 缓存删除
-        String key = StrUtil.format(CommonConst.ROLE_PERMISSION_CACHE_KEY, roleId);
-        SaManager.getSaTokenDao().delete(key);
-
         // 新增新的
         Set<RolePermission> rolePermissionSet = new LinkedHashSet<>();
         for (Long permissionId : new LinkedHashSet<>(permissionIdList)) {
@@ -227,6 +223,7 @@ public class RoleHandler {
         if (!roleService.updateById(role)) {
             throw new CommonException("更新失败 数据已经变更");
         }
+        cleanUserRoleCache(id);
     }
 
     public Page<RoleInfoResponse> page(BasePageRequest<RoleRequest> request) {
@@ -279,8 +276,14 @@ public class RoleHandler {
     public void bindUser(RoleUserRequest request) {
         Long roleId = request.getRoleId();
         List<Long> userIdList = request.getUserIdList();
+        Set<Long> affectedUserIds = new HashSet<>();
+        List<Long> oldUserIdList = userRoleService.findUserIdListByRoleId(roleId);
+        if (CollUtil.isNotEmpty(oldUserIdList)) {
+            affectedUserIds.addAll(oldUserIdList);
+        }
         userRoleService.deleteByRoleId(roleId);
         if (CollUtil.isNotEmpty(userIdList)) {
+            affectedUserIds.addAll(userIdList);
             List<UserRole> userRoleList = userIdList.stream().map(userId -> {
                 UserRole userRole = new UserRole();
                 userRole.setRoleId(roleId);
@@ -288,6 +291,17 @@ public class RoleHandler {
                 return userRole;
             }).collect(Collectors.toList());
             userRoleService.saveBatch(userRoleList);
+        }
+        affectedUserIds.forEach(userRoleService::cleanCache);
+    }
+
+    /**
+     * 角色信息或状态变更后，清理所有关联用户的角色缓存。
+     */
+    private void cleanUserRoleCache(Long roleId) {
+        List<Long> userIdList = userRoleService.findUserIdListByRoleId(roleId);
+        if (CollUtil.isNotEmpty(userIdList)) {
+            userIdList.forEach(userRoleService::cleanCache);
         }
     }
 }

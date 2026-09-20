@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
+import io.github.yilers.core.constant.CommonConst;
 import io.github.yilers.core.enums.DataScopeEnum;
 import io.github.yilers.upm.entity.UserDataScope;
 import io.github.yilers.upm.mapper.DeptMapper;
@@ -33,7 +34,7 @@ public class UserDataScopeServiceImpl extends ServiceImpl<UserDataScopeMapper, U
     private final DeptMapper deptMapper;
 
     @Override
-    @CacheInvalidate(name = "userDataScope:", key = "#userId")
+    @CacheInvalidate(name = CommonConst.USER_DATA_SCOPE_CACHE_NAME, key = "#userId")
     public void deleteByUserIdAndInterface(Long userId, String interfacePath) {
         LambdaUpdateWrapper<UserDataScope> update = Wrappers.lambdaUpdate(UserDataScope.class);
         update.eq(UserDataScope::getUserId, userId);
@@ -42,7 +43,7 @@ public class UserDataScopeServiceImpl extends ServiceImpl<UserDataScopeMapper, U
     }
 
     @Override
-    @CacheInvalidate(name = "userDataScope:", key = "#userId")
+    @CacheInvalidate(name = CommonConst.USER_DATA_SCOPE_CACHE_NAME, key = "#userId")
     public void deleteByUserId(Long userId) {
         LambdaUpdateWrapper<UserDataScope> update = Wrappers.lambdaUpdate(UserDataScope.class);
         update.eq(UserDataScope::getUserId, userId);
@@ -58,7 +59,7 @@ public class UserDataScopeServiceImpl extends ServiceImpl<UserDataScopeMapper, U
     }
 
     @Override
-    @Cached(name = "userDataScope:", key = "#userId", cacheType = CacheType.REMOTE, expire = 3600)
+    @Cached(name = CommonConst.USER_DATA_SCOPE_CACHE_NAME, key = "#userId", cacheType = CacheType.REMOTE, expire = 3600)
     public List<UserDataScope> findByUserId(Long userId) {
         LambdaQueryWrapper<UserDataScope> query = Wrappers.lambdaQuery(UserDataScope.class);
         query.eq(UserDataScope::getUserId, userId);
@@ -67,7 +68,7 @@ public class UserDataScopeServiceImpl extends ServiceImpl<UserDataScopeMapper, U
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @CacheInvalidate(name = "userDataScope:", key = "#request.userId")
+    @CacheInvalidate(name = CommonConst.USER_DATA_SCOPE_CACHE_NAME, key = "#request.userId")
     public void bind(UserDataScopeRequest request) {
         Long userId = request.getUserId();
         if (userMapper.selectById(userId) == null) {

@@ -1,6 +1,8 @@
 package io.github.yilers.upm.service;
 
+import com.alicp.jetcache.anno.CacheInvalidate;
 import com.baomidou.mybatisplus.spring.service.IService;
+import io.github.yilers.core.constant.CommonConst;
 import io.github.yilers.upm.entity.Role;
 import io.github.yilers.upm.entity.UserRole;
 
@@ -16,6 +18,10 @@ public interface UserRoleService extends IService<UserRole> {
     void saveUserRoleRelation(Long userId, List<Long> roleIdList);
 
     void deleteByUserId(Long userId);
+
+    @CacheInvalidate(name = CommonConst.USER_ROLE_CACHE_NAME, key = "#userId")
+    default void cleanCache(Long userId) {
+    }
 
     Map<Long, List<Role>> findRoleByUserIdList(List<Long> userIdList);
 

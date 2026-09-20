@@ -1,8 +1,10 @@
 package io.github.yilers.upm.service;
 
+import com.alicp.jetcache.anno.CacheInvalidate;
 import com.alicp.jetcache.anno.CacheType;
 import com.alicp.jetcache.anno.Cached;
 import com.baomidou.mybatisplus.spring.service.IService;
+import io.github.yilers.core.constant.CommonConst;
 import io.github.yilers.upm.entity.Dept;
 
 import java.util.List;
@@ -17,9 +19,13 @@ public interface DeptService extends IService<Dept> {
 
     List<Dept> findChildById(Long deptId);
 
-    @Cached(name = "dept:", key = "#deptId", cacheType = CacheType.REMOTE, expire = 600)
+    @Cached(name = CommonConst.DEPT_CACHE_NAME, key = "#deptId", cacheType = CacheType.REMOTE, expire = 600)
     default Dept findById(Long deptId) {
         return getById(deptId);
+    }
+
+    @CacheInvalidate(name = CommonConst.DEPT_CACHE_NAME, key = "#deptId")
+    default void cleanCache(Long deptId) {
     }
 
     List<Dept> findAllByByUsable(Integer usable);

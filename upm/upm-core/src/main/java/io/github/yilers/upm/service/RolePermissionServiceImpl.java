@@ -1,6 +1,5 @@
 package io.github.yilers.upm.service;
 
-import com.alicp.jetcache.anno.CacheInvalidate;
 import com.baomidou.mybatisplus.annotation.InterceptorIgnore;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -44,7 +43,6 @@ public class RolePermissionServiceImpl extends ServiceImpl<RolePermissionMapper,
     }
 
     @Override
-    @CacheInvalidate(name="rolePermission:", key="#roleId")
     public void deleteByRoleId(Long roleId) {
         LambdaUpdateWrapper<RolePermission> update = Wrappers.lambdaUpdate(RolePermission.class);
         update.eq(RolePermission::getRoleId, roleId);
@@ -52,7 +50,6 @@ public class RolePermissionServiceImpl extends ServiceImpl<RolePermissionMapper,
     }
 
     @Override
-    @CacheInvalidate(name="rolePermission:", key="#roleId")
     public void deleteByRoleIdAndDevice(Long roleId, String device) {
         LambdaUpdateWrapper<RolePermission> update = Wrappers.lambdaUpdate(RolePermission.class);
         update.eq(RolePermission::getRoleId, roleId);

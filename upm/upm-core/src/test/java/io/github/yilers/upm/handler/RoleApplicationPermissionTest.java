@@ -1,7 +1,5 @@
 package io.github.yilers.upm.handler;
 
-import cn.dev33.satoken.SaManager;
-import cn.dev33.satoken.dao.SaTokenDao;
 import cn.dev33.satoken.stp.StpUtil;
 import io.github.yilers.upm.entity.Permission;
 import io.github.yilers.upm.entity.Role;
@@ -9,7 +7,6 @@ import io.github.yilers.upm.request.RolePermissionRequest;
 import io.github.yilers.upm.service.*;
 import io.github.yilers.web.exception.CommonException;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
 
 import java.util.List;
 
@@ -29,10 +26,8 @@ class RoleApplicationPermissionTest {
         Permission menu = new Permission();
         menu.setId(100L);
         when(permissions.findAllByDevice("web", 2L)).thenReturn(List.of(menu));
-        try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class);
-             MockedStatic<SaManager> manager = mockStatic(SaManager.class)) {
+        try (var stp = mockStatic(StpUtil.class)) {
             stp.when(() -> StpUtil.hasRole("platformAdmin")).thenReturn(true);
-            manager.when(SaManager::getSaTokenDao).thenReturn(mock(SaTokenDao.class));
             handler.bindPermission(request(List.of()));
         }
         verify(grants).deleteByRoleIdAndPermissionIds(10L, List.of(100L));
@@ -45,7 +40,7 @@ class RoleApplicationPermissionTest {
     void rejectsForgedPermissionIdBeforeDeletingGrants() {
         when(roles.getOne(any())).thenReturn(new Role());
         when(permissions.findAllByDevice("web", 2L)).thenReturn(List.of());
-        try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+        try (var stp = mockStatic(StpUtil.class)) {
             stp.when(() -> StpUtil.hasRole("platformAdmin")).thenReturn(true);
             assertThrows(CommonException.class, () -> handler.bindPermission(request(List.of(999L))));
         }

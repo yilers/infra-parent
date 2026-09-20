@@ -8,11 +8,12 @@ import com.baomidou.mybatisplus.core.plugins.InterceptorIgnoreHelper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
+import io.github.yilers.api.base.BasePageRequest;
+import io.github.yilers.core.constant.CommonConst;
 import io.github.yilers.upm.entity.User;
 import io.github.yilers.upm.mapper.UserMapper;
 import io.github.yilers.upm.request.UserPageRequest;
 import io.github.yilers.upm.response.UserInfoResponse;
-import io.github.yilers.api.base.BasePageRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -48,7 +49,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    @Cached(name = "user:currentInfo:", key = "#userId", cacheType = CacheType.REMOTE, expire = 600)
+    @Cached(name = CommonConst.USER_CURRENT_INFO_CACHE_NAME, key = "#userId", cacheType = CacheType.REMOTE, expire = 600)
     public UserInfoResponse currentInfo(Long userId) {
         return userMapper.currentInfo(userId);
     }
