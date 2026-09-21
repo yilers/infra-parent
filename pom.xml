@@ -16,6 +16,7 @@
         <module>notice</module>
         <module>flow</module>
         <module>ai</module>
+        <module>infra-start</module>
     </modules>
 
     <name>infra-parent</name>
@@ -334,6 +335,7 @@
                             <autoPublish>false</autoPublish>
                             <excludeArtifacts>
                                 <excludeArtifact>upm-start</excludeArtifact>
+                                <excludeArtifact>infra-start</excludeArtifact>
                             </excludeArtifacts>
                         </configuration>
                     </plugin>

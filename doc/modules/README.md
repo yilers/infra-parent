@@ -1,6 +1,6 @@
 # 基础能力模块规划
 
-`infra-parent` 在 UPM 之外规划文件、通知和工作流三类可复用能力。各能力采用 `api + core` 分层，需要独立部署时再增加 `start` 模块。
+`infra-parent` 在 UPM 之外规划文件、通知和工作流三类可复用能力。各能力采用 `api + core` 分层，统一部署由 `infra-start` 组装，需要独立部署时再增加各自的 `start` 模块。
 
 ## 模块边界
 
@@ -20,7 +20,7 @@
 1. 模块集成：业务启动器直接依赖对应的 `core`，使用本地 Service 和同一数据库。
 2. 独立部署：新增对应的 `start`，业务系统只依赖 `api`，通过 HTTP 或 RPC 调用。
 
-当前不创建空的 `file-start`、`notice-start` 和 `flow-start`。出现真实的独立部署需求时再创建启动器、配置注册中心和远程适配器。
+`infra-start` 是基础能力统一部署入口，依赖 UPM、文件、通知和工作流的 `core`。`upm-start` 继续作为 UPM 独立部署入口。当前不创建空的 `file-start`、`notice-start` 和 `flow-start`，出现真实的独立部署需求时再创建启动器、配置注册中心和远程适配器。
 
 ## 依赖约束
 
