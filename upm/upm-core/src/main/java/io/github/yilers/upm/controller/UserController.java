@@ -14,6 +14,7 @@ import io.github.yilers.upm.service.UserService;
 import io.github.yilers.api.base.BaseOperateRequest;
 import io.github.yilers.api.base.BasePageRequest;
 import io.github.yilers.web.log.SysLog;
+import io.github.yilers.web.permission.DataPermissionResource;
 import io.github.yilers.api.validated.Update;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -69,6 +70,7 @@ public class UserController {
 
     @PostMapping("/page")
     @Operation(summary = "分页查询用户")
+    @DataPermissionResource(name = "用户列表")
     @SaCheckPermission("system:user:list")
     public Result<Page<UserInfoResponse>> page(@RequestBody BasePageRequest<UserPageRequest> request) {
         Page<UserInfoResponse> p = userHandler.page(request);

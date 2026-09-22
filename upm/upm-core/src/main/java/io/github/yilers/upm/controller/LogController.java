@@ -8,6 +8,7 @@ import io.github.yilers.upm.entity.Log;
 import io.github.yilers.upm.response.LogInfoResponse;
 import io.github.yilers.upm.service.LogService;
 import io.github.yilers.api.base.BasePageRequest;
+import io.github.yilers.web.permission.DataPermissionResource;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class LogController {
 
     @PostMapping("/page")
     @Operation(summary = "日志分页")
+    @DataPermissionResource(name = "操作日志")
     @SaCheckPermission("system:log:list")
     public Result<Page<LogInfoResponse>> page(@RequestBody BasePageRequest<Log> request) {
         Page<LogInfoResponse> p = logService.findByPage(request);

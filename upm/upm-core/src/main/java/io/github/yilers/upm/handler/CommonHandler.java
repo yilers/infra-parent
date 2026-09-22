@@ -16,6 +16,7 @@ import io.github.yilers.upm.entity.*;
 import io.github.yilers.upm.request.TenantRequest;
 import io.github.yilers.upm.service.*;
 import io.github.yilers.web.exception.CommonException;
+import io.github.yilers.web.permission.DataPermissionResourceResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -70,7 +71,7 @@ public class CommonHandler {
             ServletRequestAttributes attrs =
                     (ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
             if (attrs != null) {
-                requestPath = attrs.getRequest().getServletPath();
+                requestPath = DataPermissionResourceResolver.resolve(attrs.getRequest());
             }
         }
         List<UserDataScope> userDataScopeList = null;
