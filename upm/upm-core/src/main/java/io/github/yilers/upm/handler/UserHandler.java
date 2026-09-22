@@ -36,6 +36,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -123,12 +124,17 @@ public class UserHandler {
         if (CommonConst.NO.equals(oldUser.getOperable())) {
             throw new CommonException("数据不可操作");
         }
+        long currentUserId = StpUtil.getLoginIdAsLong();
+        // 先校验原部门，防止通过修改部门操作数据范围外的用户。
+        commonHandler.checkDataScope(currentUserId, oldUser.getDeptId());
+        if (!Objects.equals(oldUser.getDeptId(), request.getDeptId())) {
+            commonHandler.checkDataScope(currentUserId, request.getDeptId());
+        }
         String account = request.getAccount();
         User user = userService.findByAccount(account);
         if (ObjUtil.isNotEmpty(user) && !user.getId().equals(id)) {
             throw new CommonException("账号已存在");
         }
-        commonHandler.checkDataScope(StpUtil.getLoginIdAsLong(), request.getDeptId());
         CglibUtil.copy(request, oldUser);
         if (StrUtil.isNotBlank(request.getPassword())) {
             // md5的数据
