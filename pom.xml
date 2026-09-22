@@ -62,17 +62,15 @@
         <!-- https://mvnrepository.com/artifact/com.dtflys.forest/forest-spring-boot-starter -->
         <forest.version>1.8.1</forest.version>
         <!-- https://mvnrepository.com/artifact/org.redisson/redisson-spring-boot-starter -->
-        <redisson.version>4.6.1</redisson.version>
+        <redisson.version>4.7.0</redisson.version>
         <!-- https://mvnrepository.com/artifact/cn.dev33/sa-token-spring-boot-starter -->
         <sa-token.version>1.45.0</sa-token.version>
         <!-- https://mvnrepository.com/artifact/org.dromara.dynamictp/dynamic-tp-spring-boot-starter-common -->
         <dynamic-tp.version>1.2.2</dynamic-tp.version>
         <!-- https://mvnrepository.com/artifact/com.baomidou/mybatis-plus-boot-starter -->
         <mybatis-plus.version>3.5.17</mybatis-plus.version>
-        <!-- https://mvnrepository.com/artifact/com.github.xiaoymin/knife4j-openapi3-jakarta-spring-boot-starter -->
-<!--        <knife4j.version>4.5.0</knife4j.version>-->
         <!-- https://mvnrepository.com/artifact/com.baizhukui/knife4j-openapi3-boot4-spring-boot-starter -->
-        <knife4j-next.version>5.7.4</knife4j-next.version>
+        <knife4j-next.version>5.7.5</knife4j-next.version>
         <!-- https://mvnrepository.com/artifact/com.baomidou/dynamic-datasource-spring-boot-starter -->
         <dynamic-datasource.version>4.5.0</dynamic-datasource.version>
         <!-- https://mvnrepository.com/artifact/tech.powerjob/powerjob-worker-spring-boot-starter -->
@@ -84,7 +82,7 @@
         <!-- https://mvnrepository.com/artifact/org.lionsoul/ip2region -->
         <ip2region.version>3.3.7</ip2region.version>
         <!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
-        <lombok.version>1.18.46</lombok.version>
+        <lombok.version>1.18.48</lombok.version>
         <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-compiler-plugin -->
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
         <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-javadoc-plugin -->

@@ -24,7 +24,7 @@ infra-parent 是一个基于 Spring Boot 4.x 的基础服务项目，核心提�
 | 数据库 | MySQL 8.0+              |
 | 缓存 | Redis、Redisson、JetCache |
 | 权限认证 | Sa-Token                |
-| API 文档 | Knife4j                 |
+| API 文档 | Knife4j-next            |
 | 线程池 | Dynamic-TP              |
 | 任务调度 | PowerJob                |
 | AI | Spring AI               |
@@ -112,11 +112,6 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 业务服务可以直接依赖 UPM 模块，把 RBAC 能力集成到自己的启动器中：
 
 ```xml
-<dependency>
-    <groupId>io.github.yilers</groupId>
-    <artifactId>upm-api</artifactId>
-    <version>${revision}</version>
-</dependency>
 <dependency>
     <groupId>io.github.yilers</groupId>
     <artifactId>upm-core</artifactId>
