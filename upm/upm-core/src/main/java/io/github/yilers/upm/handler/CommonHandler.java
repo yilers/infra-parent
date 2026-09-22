@@ -162,10 +162,9 @@ public class CommonHandler {
      */
     public void checkDataScope(Long currentUserId, Long deptId) {
         List<Long> deptIdList = findDataScopeByUserId(currentUserId, null);
-        if (CollUtil.isNotEmpty(deptIdList)) {
-            if (!deptIdList.contains(deptId)) {
-                throw new CommonException("越权操作");
-            }
+        // null 表示全部权限；空集合表示没有可访问部门，不允许操作。
+        if (deptIdList != null && !deptIdList.contains(deptId)) {
+            throw new CommonException("越权操作");
         }
     }
 
