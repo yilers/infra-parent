@@ -48,6 +48,7 @@ public class CommonHandler {
     private final DeviceService deviceService;
     private final RolePermissionService rolePermissionService;
     private final ApplicationService applicationService;
+    private final ThirdAuthConfigService thirdAuthConfigService;
 
     public List<Dept> currentDept() {
         long userId = StpUtil.getLoginIdAsLong();
@@ -191,6 +192,7 @@ public class CommonHandler {
             initDevice(copy);
             Dept dept = initDept(copy);
             Map<Long, Long> applicationIdMap = initApplication(tenantId);
+            initThirdAuthConfig(tenantId);
             initAdmin(tenantId, copy, dept, applicationIdMap);
         } finally {
             RequestContextHolder.setTenantId(previousTenantId);
@@ -217,6 +219,30 @@ public class CommonHandler {
             applicationIdMap.put(source.getId(), application.getId());
         }
         return applicationIdMap;
+    }
+
+    /**
+     * 复制模板租户的第三方认证平台占位配置。
+     *
+     * <p>第三方应用凭据属于租户自身，Client ID、Client Secret、回调地址和授权范围都不能跨租户复制。
+     * 新租户得到停用的配置占位后，需要自行填写并启用。</p>
+     */
+    private void initThirdAuthConfig(Long tenantId) {
+        for (ThirdAuthConfig source : thirdAuthConfigService.list()) {
+            ThirdAuthConfig config = BeanUtil.copyProperties(source, ThirdAuthConfig.class);
+            config.setId(null);
+            config.setTenantId(tenantId);
+            config.setClientId(null);
+            config.setClientSecret(null);
+            config.setRedirectUri(null);
+            config.setScopes(null);
+            config.setUsable(CommonConst.NO);
+            config.setVersion(1);
+            config.setCreateId(null);
+            config.setCreateTime(null);
+            config.setUpdateTime(null);
+            thirdAuthConfigService.save(config);
+        }
     }
 
     private void initAdmin(Long tenantId, Tenant tenant, Dept dept, Map<Long, Long> applicationIdMap) {

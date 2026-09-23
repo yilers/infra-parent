@@ -613,6 +613,55 @@ CREATE TRIGGER trg_upm_user_third_update_time
     EXECUTE FUNCTION update_upm_user_third_update_time();
 
 
+-- 第三方认证平台配置表
+CREATE TABLE upm_third_auth_config (
+    id BIGINT NOT NULL PRIMARY KEY,
+    tenant_id BIGINT NOT NULL,
+    platform VARCHAR(30) NOT NULL,
+    client_id VARCHAR(255) DEFAULT '',
+    client_secret VARCHAR(512) DEFAULT '',
+    redirect_uri VARCHAR(500) DEFAULT '',
+    scopes VARCHAR(1000) DEFAULT '',
+    description VARCHAR(500) DEFAULT '',
+    operable SMALLINT NOT NULL DEFAULT 1,
+    usable SMALLINT NOT NULL DEFAULT 0,
+    deleted SMALLINT NOT NULL DEFAULT 0,
+    version INT NOT NULL DEFAULT 1,
+    create_id BIGINT,
+    create_time TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3),
+    update_time TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3),
+    CONSTRAINT uk_third_auth_tenant_platform UNIQUE (tenant_id, platform, deleted)
+);
+COMMENT ON TABLE upm_third_auth_config IS '第三方认证平台配置表';
+COMMENT ON COLUMN upm_third_auth_config.id IS '主键ID';
+COMMENT ON COLUMN upm_third_auth_config.tenant_id IS '租户ID';
+COMMENT ON COLUMN upm_third_auth_config.platform IS '第三方认证平台编码';
+COMMENT ON COLUMN upm_third_auth_config.client_id IS '第三方平台Client ID或AppKey';
+COMMENT ON COLUMN upm_third_auth_config.client_secret IS '第三方平台Client Secret或AppSecret';
+COMMENT ON COLUMN upm_third_auth_config.redirect_uri IS '第三方平台授权回调地址';
+COMMENT ON COLUMN upm_third_auth_config.scopes IS '授权范围，多个以英文逗号分隔';
+COMMENT ON COLUMN upm_third_auth_config.description IS '配置说明';
+COMMENT ON COLUMN upm_third_auth_config.operable IS '是否可操作 1-是 0-否';
+COMMENT ON COLUMN upm_third_auth_config.usable IS '是否启用 1-启用 0-停用';
+COMMENT ON COLUMN upm_third_auth_config.deleted IS '是否删除 1-是 0-否';
+COMMENT ON COLUMN upm_third_auth_config.version IS '乐观锁版本号';
+COMMENT ON COLUMN upm_third_auth_config.create_id IS '创建人ID';
+COMMENT ON COLUMN upm_third_auth_config.create_time IS '创建时间';
+COMMENT ON COLUMN upm_third_auth_config.update_time IS '更新时间';
+
+CREATE OR REPLACE FUNCTION update_upm_third_auth_config_update_time()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.update_time = CURRENT_TIMESTAMP(3);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER trg_upm_third_auth_config_update_time
+    BEFORE UPDATE ON upm_third_auth_config
+    FOR EACH ROW
+    EXECUTE FUNCTION update_upm_third_auth_config_update_time();
+
+
 -- 租户表 (id 自增)
 CREATE TABLE upm_tenant (
     id BIGINT NOT NULL,
@@ -788,4 +837,26 @@ INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALU
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 187, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 188, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 189, 1, 'web');
+
+-- 第三方认证配置菜单及按钮。
+INSERT INTO upm_permission (id, parent_id, app_id, tenant_id, permission_name, permission_type, menu_url, component, menu_icon, sort_number, device, operable, usable, deleted, version)
+VALUES (190, 10, 1, 1, '第三方认证', 1, 'third-auth', 'system/third-auth/index', 'simple-icons:authy', 16, 'web', 0, 1, 0, 1);
+INSERT INTO upm_permission (id, parent_id, app_id, tenant_id, permission_name, permission_type, permission_code, sort_number, device, operable, usable, deleted, version)
+VALUES (191, 190, 1, 1, '列表', 2, 'system:thirdAuth:list', 1, 'web', 0, 1, 0, 1);
+INSERT INTO upm_permission (id, parent_id, app_id, tenant_id, permission_name, permission_type, permission_code, sort_number, device, operable, usable, deleted, version)
+VALUES (192, 190, 1, 1, '新增', 2, 'system:thirdAuth:add', 2, 'web', 0, 1, 0, 1);
+INSERT INTO upm_permission (id, parent_id, app_id, tenant_id, permission_name, permission_type, permission_code, sort_number, device, operable, usable, deleted, version)
+VALUES (193, 190, 1, 1, '修改', 2, 'system:thirdAuth:edit', 3, 'web', 0, 1, 0, 1);
+INSERT INTO upm_permission (id, parent_id, app_id, tenant_id, permission_name, permission_type, permission_code, sort_number, device, operable, usable, deleted, version)
+VALUES (194, 190, 1, 1, '启停', 2, 'system:thirdAuth:usable', 4, 'web', 0, 1, 0, 1);
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 190, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 191, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 192, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 193, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 194, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 190, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 191, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 192, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 193, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 194, 1, 'web');
 CREATE INDEX idx_permission_app_device ON upm_permission (tenant_id, app_id, device, parent_id);

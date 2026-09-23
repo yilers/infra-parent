@@ -10,6 +10,9 @@
 4. 选择数据库对应的 `20260907_application.mysql.sql` 或 `20260907_application.postgres.sql`，完整执行一次。MySQL DDL 会隐式提交，失败不能依赖事务回滚；恢复备份后排查，不要盲目重跑。
 5. 部署前后端，重启后端并重新登录，刷新动态菜单。
 6. 已完成应用改造的数据库继续执行对应的 `20260918_sso` 脚本，为应用表增加 SSO 配置字段。该脚本不会自动启用任何存量应用，也不会生成客户端密钥。
+7. 已完成SSO改造的数据库继续执行对应的 `20260923_third_auth` 脚本，创建第三方认证平台配置表，并为每个租户增加配置菜单及按钮。该脚本不会生成任何第三方平台配置或凭据。
+
+执行第 7 步前，确认数据库中不存在 `upm_third_auth_config` 表、`system/third-auth/index` 组件和 `system:thirdAuth:*` 权限编码。该脚本不是幂等脚本，已经执行成功后不要重复执行。
 
 新数据库只执行 `sql/full/` 中对应数据库的全量脚本，不再执行本次迁移。本增量脚本为每个已有租户创建不可操作的内置应用（编码 `infra`），将已有菜单关联到它；原菜单 ID、`operable`、启停状态、授权关系都保留。新增应用管理菜单及四个按钮默认授予该租户的平台管理员和租户管理员。完整目录及用法见 [SQL 说明](../README.md)。
 
@@ -59,6 +62,15 @@ WHERE a.id IS NULL;
 SELECT t.id, a.id, a.operable, a.usable FROM upm_tenant t
 LEFT JOIN upm_application a ON a.tenant_id = t.id AND a.code = 'infra' AND a.deleted = 0
 WHERE t.deleted = 0;
+
+-- 每个未删除租户应有一个第三方认证菜单及四个按钮。
+SELECT t.id, COUNT(p.id) AS permission_count FROM upm_tenant t
+LEFT JOIN upm_permission p ON p.tenant_id = t.id
+    AND (p.component = 'system/third-auth/index'
+         OR p.permission_code LIKE 'system:thirdAuth:%')
+    AND p.deleted = 0
+WHERE t.deleted = 0
+GROUP BY t.id;
 ```
 
 ## 行为及接入边界
@@ -70,6 +82,7 @@ WHERE t.deleted = 0;
 - 接口权限以服务端 `upm.application-code` 配置为准，默认 `infra`，设备端来自登录态。应用被停用后，该应用对应服务的受保护请求被拦截。不要让客户端 header 或查询参数设置此配置。
 - 权限读取不再复用旧的跨应用权限编码缓存，菜单/按钮变化直接从当前授权查询读取。此轮以正确隔离为先，不额外引入缓存失效体系。
 - SSO 使用 Sa-Token 模式三。独立业务服务不共享 UPM Redis，通过签名校验一次性 ticket 后签发自己的业务 token；详细流程与安全边界见 `doc/SSO.md`。
+- 第三方认证配置按租户隔离，Client Secret第一阶段明文存储但不会通过查询接口返回；新租户只复制平台占位配置，不复制任何连接凭据且默认停用。详细边界见 `doc/THIRD_AUTH.md`。
 - 租户上下文会校验登录用户：普通用户只能访问自身租户，租户 1 的平台管理员可显式选择其他租户。`/user/current` 始终返回用户自己的租户信息。
 
 ## 回退

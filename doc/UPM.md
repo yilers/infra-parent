@@ -40,3 +40,5 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 - `upm-start`：独立部署入口。
 
 具体 SSO 接入约定见 [SSO.md](./SSO.md)。
+
+第三方登录平台的配置模型和后续接入顺序见 [THIRD_AUTH.md](./THIRD_AUTH.md)。

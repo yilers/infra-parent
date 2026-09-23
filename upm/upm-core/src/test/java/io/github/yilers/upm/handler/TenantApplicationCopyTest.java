@@ -33,9 +33,10 @@ class TenantApplicationCopyTest {
         DeviceService devices = mock(DeviceService.class);
         RolePermissionService grants = mock(RolePermissionService.class);
         ApplicationService applications = mock(ApplicationService.class);
+        ThirdAuthConfigService thirdAuthConfigs = mock(ThirdAuthConfigService.class);
         CommonHandler handler = new CommonHandler(users, departments, mock(RoleDeptService.class),
                 mock(UserRoleService.class), mock(UserDataScopeService.class), permissions, tenants,
-                roles, devices, grants, applications);
+                roles, devices, grants, applications, thirdAuthConfigs);
         AtomicLong sequence = new AtomicLong(1000);
         when(tenants.findAll()).thenReturn(List.of(new Tenant()));
         when(departments.save(any())).thenAnswer(invocation -> {
@@ -65,6 +66,23 @@ class TenantApplicationCopyTest {
             Application application = invocation.getArgument(0);
             application.setId(sequence.incrementAndGet());
             copiedApplications.add(application);
+            return true;
+        });
+        ThirdAuthConfig dingTalk = new ThirdAuthConfig();
+        dingTalk.setId(3L);
+        dingTalk.setPlatform("dingTalk");
+        dingTalk.setClientId("source-client-id");
+        dingTalk.setClientSecret("source-client-secret");
+        dingTalk.setRedirectUri("https://upm.example.com/auth/third/dingTalk/callback");
+        dingTalk.setScopes("openid");
+        dingTalk.setDescription("钉钉认证");
+        dingTalk.setOperable(1);
+        dingTalk.setUsable(1);
+        dingTalk.setTenantId(1L);
+        when(thirdAuthConfigs.list()).thenReturn(List.of(dingTalk));
+        List<ThirdAuthConfig> copiedThirdAuthConfigs = new ArrayList<>();
+        when(thirdAuthConfigs.save(any())).thenAnswer(invocation -> {
+            copiedThirdAuthConfigs.add(invocation.getArgument(0));
             return true;
         });
         Device web = new Device();
@@ -110,6 +128,16 @@ class TenantApplicationCopyTest {
         assertNull(copiedApplications.get(1).getSsoSecret());
         assertNull(copiedApplications.get(1).getRedirectUris());
         assertNull(copiedApplications.get(1).getSsoPushUrl());
+        assertEquals(1, copiedThirdAuthConfigs.size());
+        ThirdAuthConfig copiedThirdAuthConfig = copiedThirdAuthConfigs.getFirst();
+        assertEquals("dingTalk", copiedThirdAuthConfig.getPlatform());
+        assertEquals("钉钉认证", copiedThirdAuthConfig.getDescription());
+        assertEquals(20L, copiedThirdAuthConfig.getTenantId());
+        assertNull(copiedThirdAuthConfig.getClientId());
+        assertNull(copiedThirdAuthConfig.getClientSecret());
+        assertNull(copiedThirdAuthConfig.getRedirectUri());
+        assertNull(copiedThirdAuthConfig.getScopes());
+        assertEquals(0, copiedThirdAuthConfig.getUsable());
         assertEquals(3, copiedMenus.size());
         Permission copiedRoot = copiedMenus.stream().filter(p -> "基础菜单".equals(p.getPermissionName())).findFirst().orElseThrow();
         Permission copiedChild = copiedMenus.stream().filter(p -> "子菜单".equals(p.getPermissionName())).findFirst().orElseThrow();

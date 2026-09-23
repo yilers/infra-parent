@@ -341,6 +341,27 @@ CREATE TABLE upm_user_third (
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='用户第三方关联表';
 
+-- 第三方认证平台配置表
+CREATE TABLE upm_third_auth_config (
+    id BIGINT NOT NULL COMMENT '主键ID',
+    tenant_id BIGINT NOT NULL COMMENT '租户ID',
+    platform VARCHAR(30) NOT NULL COMMENT '第三方认证平台编码',
+    client_id VARCHAR(255) DEFAULT '' COMMENT '第三方平台Client ID或AppKey',
+    client_secret VARCHAR(512) DEFAULT '' COMMENT '第三方平台Client Secret或AppSecret',
+    redirect_uri VARCHAR(500) DEFAULT '' COMMENT '第三方平台授权回调地址',
+    scopes VARCHAR(1000) DEFAULT '' COMMENT '授权范围，多个以英文逗号分隔',
+    description VARCHAR(500) DEFAULT '' COMMENT '配置说明',
+    operable TINYINT NOT NULL DEFAULT 1 COMMENT '是否可操作 1-是 0-否',
+    usable TINYINT NOT NULL DEFAULT 0 COMMENT '是否启用 1-启用 0-停用',
+    deleted TINYINT NOT NULL DEFAULT 0 COMMENT '是否删除 1-是 0-否',
+    version INT NOT NULL DEFAULT 1 COMMENT '乐观锁版本号',
+    create_id BIGINT DEFAULT NULL COMMENT '创建人ID',
+    create_time DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+    update_time DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE INDEX uk_third_auth_tenant_platform (tenant_id, platform, deleted)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='第三方认证平台配置表';
+
 -- 租户表
 CREATE TABLE upm_tenant (
     id BIGINT AUTO_INCREMENT COMMENT '主键ID，自增',
@@ -431,4 +452,26 @@ INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALU
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 187, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 188, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 189, 1, 'web');
+
+-- 第三方认证配置菜单及按钮。
+INSERT INTO upm_permission (id, parent_id, app_id, tenant_id, permission_name, permission_type, menu_url, component, menu_icon, sort_number, device, operable, usable, deleted, version)
+VALUES (190, 10, 1, 1, '第三方认证', 1, 'third-auth', 'system/third-auth/index', 'simple-icons:authy', 16, 'web', 0, 1, 0, 1);
+INSERT INTO upm_permission (id, parent_id, app_id, tenant_id, permission_name, permission_type, permission_code, sort_number, device, operable, usable, deleted, version)
+VALUES (191, 190, 1, 1, '列表', 2, 'system:thirdAuth:list', 1, 'web', 0, 1, 0, 1);
+INSERT INTO upm_permission (id, parent_id, app_id, tenant_id, permission_name, permission_type, permission_code, sort_number, device, operable, usable, deleted, version)
+VALUES (192, 190, 1, 1, '新增', 2, 'system:thirdAuth:add', 2, 'web', 0, 1, 0, 1);
+INSERT INTO upm_permission (id, parent_id, app_id, tenant_id, permission_name, permission_type, permission_code, sort_number, device, operable, usable, deleted, version)
+VALUES (193, 190, 1, 1, '修改', 2, 'system:thirdAuth:edit', 3, 'web', 0, 1, 0, 1);
+INSERT INTO upm_permission (id, parent_id, app_id, tenant_id, permission_name, permission_type, permission_code, sort_number, device, operable, usable, deleted, version)
+VALUES (194, 190, 1, 1, '启停', 2, 'system:thirdAuth:usable', 4, 'web', 0, 1, 0, 1);
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 190, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 191, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 192, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 193, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 194, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 190, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 191, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 192, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 193, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 194, 1, 'web');
 CREATE INDEX idx_permission_app_device ON upm_permission (tenant_id, app_id, device, parent_id);
