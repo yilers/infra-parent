@@ -1,0 +1,1 @@
+import{dy as p}from"./bootstrap-hwZkjUZK.js";function a(){return p.get("/application/findAll")}function n(t){return p.post("/application/save",t)}function e(t){return p.post("/application/update",t)}function o(t){return p.post("/application/usable",{id:t})}function c(t){return p.post("/application/resetSecret",{id:t})}export{o as a,e as b,n as c,c as d,a as h};
