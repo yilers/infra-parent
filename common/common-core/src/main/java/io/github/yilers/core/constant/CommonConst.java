@@ -10,6 +10,11 @@ package io.github.yilers.core.constant;
 public class CommonConst {
 
     /**
+     * 平台模板租户ID
+     */
+    public static final Long PLATFORM_TENANT_ID = 1L;
+
+    /**
      * 1-是 0-否
      */
     public static final Integer YES = 1;

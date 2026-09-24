@@ -271,6 +271,7 @@ CREATE TABLE upm_application (
 CREATE TABLE upm_permission (
     app_id BIGINT NOT NULL,
     id BIGINT NOT NULL,
+    source_id BIGINT DEFAULT NULL,
     parent_id BIGINT,
     menu_icon VARCHAR(50) DEFAULT '',
     component VARCHAR(50) DEFAULT '',
@@ -293,8 +294,10 @@ CREATE TABLE upm_permission (
     PRIMARY KEY (id)
 );
 CREATE INDEX idx_permission_parent_id ON upm_permission(parent_id);
+CREATE UNIQUE INDEX uk_permission_tenant_source ON upm_permission(tenant_id, source_id);
 COMMENT ON TABLE upm_permission IS '权限表';
 COMMENT ON COLUMN upm_permission.id IS '主键ID';
+COMMENT ON COLUMN upm_permission.source_id IS '租户1模板菜单ID';
 COMMENT ON COLUMN upm_permission.parent_id IS '父id';
 COMMENT ON COLUMN upm_permission.menu_icon IS 'icon';
 COMMENT ON COLUMN upm_permission.component IS '组件';
@@ -382,7 +385,9 @@ VALUES (152, 150, NULL, NULL, 2, 'system:tenant:add', '新增', 2, 0, 1, 0, 1, 1
 INSERT INTO upm_permission (id, parent_id, menu_icon, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, create_time, update_time, component, cache, link, device, create_id, app_id)
 VALUES (153, 150, NULL, NULL, 3, 'system:tenant:edit', '修改', 2, 0, 1, 0, 1, 1, '2025-06-10 11:03:04.015', '2025-06-20 09:36:12.308', '', 0, 0, 'web', 1, 1);
 INSERT INTO upm_permission (id, parent_id, menu_icon, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, create_time, update_time, component, cache, link, device, create_id, app_id)
-VALUES (154, 150, NULL, NULL, 4, 'system:tenant:add', '删除', 2, 0, 1, 0, 1, 1, '2025-06-10 11:03:04.015', '2025-06-20 09:36:12.377', '', 0, 0, 'web', 1, 1);
+VALUES (154, 150, NULL, NULL, 4, 'system:tenant:delete', '删除', 2, 0, 1, 0, 1, 1, '2025-06-10 11:03:04.015', '2025-06-20 09:36:12.377', '', 0, 0, 'web', 1, 1);
+INSERT INTO upm_permission (id, parent_id, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, component, cache, link, device, create_id, app_id)
+VALUES (195, 150, NULL, 5, 'system:tenant:sync', '同步应用菜单', 2, 0, 1, 0, 1, 1, '', 0, 0, 'web', 1, 1);
 INSERT INTO upm_permission (id, parent_id, menu_icon, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, create_time, update_time, component, cache, link, device, create_id, app_id)
 VALUES (160, 10, 'carbon:scis-control-tower', 'role', 30, '', '角色管理', 1, 0, 1, 0, 1, 3, '2025-06-10 15:45:32.109', '2025-06-20 09:36:12.466', 'system/role/index', 1, 0, 'web', 1, 1);
 INSERT INTO upm_permission (id, parent_id, menu_icon, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, create_time, update_time, component, cache, link, device, create_id, app_id)
@@ -448,6 +453,7 @@ INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALU
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 152, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 153, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 154, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 195, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 160, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 161, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 162, 1, 'web');

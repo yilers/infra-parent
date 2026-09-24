@@ -73,6 +73,16 @@ class PermissionHandlerTest {
         verify(service).updateById(second);
     }
 
+    @Test
+    void rejectsDeletingTemplatePermission() {
+        Permission permission = permission(10L, 1L, "web");
+        permission.setSourceId(100L);
+        when(service.getById(10L)).thenReturn(permission);
+
+        assertThrows(CommonException.class, () -> handler.deleteById(10L));
+        verify(service, never()).removeById(any(Permission.class));
+    }
+
     private Permission permission(Long id, Long appId, String device) {
         Permission permission = new Permission();
         permission.setId(id);

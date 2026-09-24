@@ -24,7 +24,7 @@ class TenantApplicationCopyTest {
     }
 
     @Test
-    void copiesAllApplicationsAndMenusButOnlyExistingAdminGrants() {
+    void copiesAllApplicationsAndMenusAndCreatesOnlyTenantAdmin() {
         UserService users = mock(UserService.class);
         DeptService departments = mock(DeptService.class);
         PermissionService permissions = mock(PermissionService.class);
@@ -38,7 +38,10 @@ class TenantApplicationCopyTest {
                 mock(UserRoleService.class), mock(UserDataScopeService.class), permissions, tenants,
                 roles, devices, grants, applications, thirdAuthConfigs);
         AtomicLong sequence = new AtomicLong(1000);
-        when(tenants.findAll()).thenReturn(List.of(new Tenant()));
+        when(tenants.save(any())).thenAnswer(invocation -> {
+            ((Tenant) invocation.getArgument(0)).setId(20L);
+            return true;
+        });
         when(departments.save(any())).thenAnswer(invocation -> {
             ((Dept) invocation.getArgument(0)).setId(sequence.incrementAndGet());
             return true;
@@ -86,18 +89,14 @@ class TenantApplicationCopyTest {
         Device app = new Device();
         app.setCode("app");
         when(devices.list()).thenReturn(List.of(web, app));
-        Role platformRole = new Role();
-        platformRole.setId(10L);
         Role tenantRole = new Role();
         tenantRole.setId(20L);
-        when(roles.findByRoleCode(CommonConst.PLATFORM_ADMIN_ROLE_CODE)).thenReturn(platformRole);
         when(roles.findByRoleCode(CommonConst.TENANT_ADMIN_ROLE_CODE)).thenReturn(tenantRole);
         Permission root = permission(100L, 0L, 1L, "基础菜单", 0, 1);
         Permission child = permission(101L, 100L, 1L, "子菜单", 1, 1);
         Permission unassigned = permission(200L, 0L, 2L, "未授权停用菜单", 1, 0);
         unassigned.setDevice("app");
         when(permissions.list()).thenReturn(List.of(root, child, unassigned));
-        when(grants.findPermissionListByRoleId(10L)).thenReturn(List.of(root, child));
         when(grants.findPermissionListByRoleId(20L)).thenReturn(List.of(root));
         List<Permission> copiedMenus = new ArrayList<>();
         when(permissions.saveBatch(anyCollection())).thenAnswer(invocation -> {
@@ -152,14 +151,19 @@ class TenantApplicationCopyTest {
         assertEquals(0, copiedUnassigned.getUsable());
         assertEquals("app", copiedUnassigned.getDevice());
         assertTrue(copiedMenus.stream().allMatch(p -> p.getTenantId().equals(20L)));
-        assertEquals(3, copiedGrants.size());
+        assertEquals(1, copiedGrants.size());
         assertTrue(copiedGrants.stream().noneMatch(g -> g.getPermissionId().equals(copiedUnassigned.getId())));
+        assertEquals(100L, copiedRoot.getSourceId());
+        assertEquals(101L, copiedChild.getSourceId());
+        assertEquals(200L, copiedUnassigned.getSourceId());
         assertEquals(100L, root.getId());
         assertEquals(100L, child.getParentId());
         verify(devices, times(2)).save(any(Device.class));
-        verify(users, times(2)).save(any(User.class));
-        assertEquals(2, copiedUsers.size());
+        verify(users).save(any(User.class));
+        assertEquals(1, copiedUsers.size());
         assertTrue(copiedUsers.stream().allMatch(user -> UserExpandHelper.isInitPwd(user.getExpand())));
+        assertEquals("admin@example.com", copiedUsers.getFirst().getAccount());
+        assertEquals("租户管理员", copiedUsers.getFirst().getNickname());
     }
 
     private Application application(Long id, String code, int operable, int usable) {

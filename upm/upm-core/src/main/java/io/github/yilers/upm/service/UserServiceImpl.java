@@ -29,13 +29,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public User findByAccount(String account) {
         try {
-            // 设置忽略租户插件
+            // 登录时尚未建立租户上下文，查询由SQL关联未删除租户完成隔离。
             InterceptorIgnoreHelper.handle(IgnoreStrategy.builder().tenantLine(true).build());
-            LambdaQueryWrapper<User> query = Wrappers.lambdaQuery(User.class);
-            query.eq(User::getAccount, account);
-            return userMapper.selectOne(query);
+            return userMapper.findByAccount(account);
         } finally {
-            // 关闭忽略策略
             InterceptorIgnoreHelper.clearIgnoreStrategy();
         }
 

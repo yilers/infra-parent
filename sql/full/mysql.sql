@@ -135,6 +135,7 @@ CREATE TABLE upm_application (
 CREATE TABLE upm_permission (
     app_id BIGINT NOT NULL,
     id BIGINT NOT NULL COMMENT '主键ID',
+    source_id BIGINT DEFAULT NULL COMMENT '租户1模板菜单ID',
     parent_id BIGINT COMMENT '父id',
     menu_icon VARCHAR(50) DEFAULT '' COMMENT 'icon',
     component VARCHAR(50) DEFAULT '' COMMENT '组件',
@@ -155,7 +156,8 @@ CREATE TABLE upm_permission (
     create_time DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
     update_time DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间',
     PRIMARY KEY (id),
-    INDEX idx_parent_id (parent_id)
+    INDEX idx_parent_id (parent_id),
+    UNIQUE INDEX uk_permission_tenant_source (tenant_id, source_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='权限表';
 
 INSERT INTO `upm_permission` (`id`, `parent_id`, `menu_icon`, `menu_url`, `sort_number`, `permission_code`, `permission_name`, `permission_type`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `create_time`, `update_time`, `component`, `cache`, `link`, `device`, `create_id`, app_id) VALUES (10, 0, 'carbon:align-box-bottom-right', 'system', 1, NULL, '系统管理', 0, 0, 1, 0, 1, 1, '2025-06-05 16:15:23.519', '2025-06-10 11:51:45.730', '', 0, 0, 'web', 1, 1);
@@ -185,7 +187,8 @@ INSERT INTO `upm_permission` (`id`, `parent_id`, `menu_icon`, `menu_url`, `sort_
 INSERT INTO `upm_permission` (`id`, `parent_id`, `menu_icon`, `menu_url`, `sort_number`, `permission_code`, `permission_name`, `permission_type`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `create_time`, `update_time`, `component`, `cache`, `link`, `device`, `create_id`, app_id) VALUES (151, 150, NULL, NULL, 1, 'system:tenant:list', '列表', 2, 0, 1, 0, 1, 1, '2025-06-10 11:03:04.015', '2025-06-20 09:36:12.165', '', 0, 0, 'web', 1, 1);
 INSERT INTO `upm_permission` (`id`, `parent_id`, `menu_icon`, `menu_url`, `sort_number`, `permission_code`, `permission_name`, `permission_type`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `create_time`, `update_time`, `component`, `cache`, `link`, `device`, `create_id`, app_id) VALUES (152, 150, NULL, NULL, 2, 'system:tenant:add', '新增', 2, 0, 1, 0, 1, 1, '2025-06-10 11:03:04.015', '2025-06-20 09:36:12.232', '', 0, 0, 'web', 1, 1);
 INSERT INTO `upm_permission` (`id`, `parent_id`, `menu_icon`, `menu_url`, `sort_number`, `permission_code`, `permission_name`, `permission_type`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `create_time`, `update_time`, `component`, `cache`, `link`, `device`, `create_id`, app_id) VALUES (153, 150, NULL, NULL, 3, 'system:tenant:edit', '修改', 2, 0, 1, 0, 1, 1, '2025-06-10 11:03:04.015', '2025-06-20 09:36:12.308', '', 0, 0, 'web', 1, 1);
-INSERT INTO `upm_permission` (`id`, `parent_id`, `menu_icon`, `menu_url`, `sort_number`, `permission_code`, `permission_name`, `permission_type`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `create_time`, `update_time`, `component`, `cache`, `link`, `device`, `create_id`, app_id) VALUES (154, 150, NULL, NULL, 4, 'system:tenant:add', '删除', 2, 0, 1, 0, 1, 1, '2025-06-10 11:03:04.015', '2025-06-20 09:36:12.377', '', 0, 0, 'web', 1, 1);
+INSERT INTO `upm_permission` (`id`, `parent_id`, `menu_icon`, `menu_url`, `sort_number`, `permission_code`, `permission_name`, `permission_type`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `create_time`, `update_time`, `component`, `cache`, `link`, `device`, `create_id`, app_id) VALUES (154, 150, NULL, NULL, 4, 'system:tenant:delete', '删除', 2, 0, 1, 0, 1, 1, '2025-06-10 11:03:04.015', '2025-06-20 09:36:12.377', '', 0, 0, 'web', 1, 1);
+INSERT INTO `upm_permission` (`id`, `parent_id`, `menu_url`, `sort_number`, `permission_code`, `permission_name`, `permission_type`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `component`, `cache`, `link`, `device`, `create_id`, app_id) VALUES (195, 150, NULL, 5, 'system:tenant:sync', '同步应用菜单', 2, 0, 1, 0, 1, 1, '', 0, 0, 'web', 1, 1);
 INSERT INTO `upm_permission` (`id`, `parent_id`, `menu_icon`, `menu_url`, `sort_number`, `permission_code`, `permission_name`, `permission_type`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `create_time`, `update_time`, `component`, `cache`, `link`, `device`, `create_id`, app_id) VALUES (160, 10, 'carbon:scis-control-tower', 'role', 30, '', '角色管理', 1, 0, 1, 0, 1, 3, '2025-06-10 15:45:32.109', '2025-06-20 09:36:12.466', 'system/role/index', 1, 0, 'web', 1, 1);
 INSERT INTO `upm_permission` (`id`, `parent_id`, `menu_icon`, `menu_url`, `sort_number`, `permission_code`, `permission_name`, `permission_type`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `create_time`, `update_time`, `component`, `cache`, `link`, `device`, `create_id`, app_id) VALUES (161, 160, NULL, NULL, 1, 'system:role:list', '列表', 2, 0, 1, 0, 1, 1, '2025-06-10 11:03:04.015', '2025-06-20 09:36:12.586', '', 0, 0, 'web', 1, 1);
 INSERT INTO `upm_permission` (`id`, `parent_id`, `menu_icon`, `menu_url`, `sort_number`, `permission_code`, `permission_name`, `permission_type`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `create_time`, `update_time`, `component`, `cache`, `link`, `device`, `create_id`, app_id) VALUES (162, 160, NULL, NULL, 2, 'system:role:add', '新增', 2, 0, 1, 0, 1, 1, '2025-06-10 11:03:04.015', '2025-06-20 09:36:12.650', '', 0, 0, 'web', 1, 1);
@@ -235,6 +238,7 @@ INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `dev
 INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 152, 1, 'web');
 INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 153, 1, 'web');
 INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 154, 1, 'web');
+INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 195, 1, 'web');
 INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 160, 1, 'web');
 INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 161, 1, 'web');
 INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 162, 1, 'web');

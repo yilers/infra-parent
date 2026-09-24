@@ -3,6 +3,13 @@
 
 <mapper namespace="io.github.yilers.upm.mapper.UserMapper">
 
+    <select id="findByAccount" resultType="io.github.yilers.upm.entity.User">
+        SELECT u.*
+        FROM upm_user u
+        INNER JOIN upm_tenant t ON t.id = u.tenant_id AND t.deleted = 0
+        WHERE u.account = #{account}
+          AND u.deleted = 0
+    </select>
 
     <select id="currentInfo" resultType="io.github.yilers.upm.response.UserInfoResponse">
         SELECT u.id, u.user_type, u.account, u.nickname, u.dept_id, u.position_id, u.tenant_id,

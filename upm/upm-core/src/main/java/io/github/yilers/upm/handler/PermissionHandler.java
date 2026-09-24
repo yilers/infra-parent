@@ -84,6 +84,9 @@ public class PermissionHandler {
         if (CommonConst.NO.equals(p.getOperable())) {
             throw new CommonException("该资源不可操作");
         }
+        if (p.getSourceId() != null) {
+            throw new CommonException("平台下发的菜单不能删除，可通过平台模板统一停用");
+        }
 
         // 先判断子级有没有数据
         LambdaQueryWrapper<Permission> wrapper = new QueryWrapper<Permission>().lambda().select(Permission::getId);

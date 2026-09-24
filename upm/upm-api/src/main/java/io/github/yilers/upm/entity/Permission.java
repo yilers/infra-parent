@@ -14,6 +14,9 @@ public class Permission extends BaseAllColumnDomain<Permission> {
     @Schema(description = "所属应用id")
     private Long appId;
 
+    @Schema(description = "租户1模板菜单ID，租户自建菜单为空")
+    private Long sourceId;
+
     @Schema(description = "父id")
     private Long parentId;
 

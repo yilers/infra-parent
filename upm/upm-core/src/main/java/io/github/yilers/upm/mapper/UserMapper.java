@@ -11,6 +11,13 @@ import org.apache.ibatis.annotations.Param;
 
 public interface UserMapper extends CustomMapper<User> {
 
+    /**
+     * 按账号查询当前有效租户下的用户。
+     *
+     * <p>租户采用逻辑删除，重新使用相同租户编码时，必须排除已删除租户遗留的同名账号。</p>
+     */
+    User findByAccount(@Param("account") String account);
+
     UserInfoResponse currentInfo(Long userId);
 
     @DataPermission(tableName = "upm_user")
