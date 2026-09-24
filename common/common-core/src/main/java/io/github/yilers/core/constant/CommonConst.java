@@ -83,6 +83,11 @@ public class CommonConst {
     public static final String THIRD_AUTH_BIND_STATE_CACHE_NAME = "thirdAuth:bindState:";
 
     /**
+     * 第三方账号登录OAuth2 state缓存名称
+     */
+    public static final String THIRD_AUTH_LOGIN_STATE_CACHE_NAME = "thirdAuth:loginState:";
+
+    /**
      * 部门缓存名称
      */
     public static final String DEPT_CACHE_NAME = "dept:";

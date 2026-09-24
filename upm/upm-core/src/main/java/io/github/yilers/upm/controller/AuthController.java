@@ -7,8 +7,12 @@ import io.github.yilers.core.util.Result;
 import io.github.yilers.redisson.DistributedLock;
 import io.github.yilers.redisson.DistributedRateLimiter;
 import io.github.yilers.upm.handler.AuthHandler;
+import io.github.yilers.upm.handler.ThirdAuthLoginHandler;
 import io.github.yilers.upm.request.LoginRequest;
+import io.github.yilers.upm.request.ThirdAuthLoginAuthorizeRequest;
+import io.github.yilers.upm.request.ThirdAuthLoginRequest;
 import io.github.yilers.upm.response.LoginResponse;
+import io.github.yilers.upm.response.ThirdAuthAuthorizeResponse;
 import io.github.yilers.web.log.SysLog;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 @ApiSupport(order = 30, author = "yilers")
 public class AuthController {
     private final AuthHandler authHandler;
+    private final ThirdAuthLoginHandler thirdAuthLoginHandler;
 
     @SaIgnore
     @PostMapping("/admin")
@@ -36,6 +41,22 @@ public class AuthController {
     public Result<LoginResponse> login(@Validated @RequestBody LoginRequest loginRequest) {
         LoginResponse login = authHandler.login(loginRequest);
         return Result.ok(login);
+    }
+
+    @SaIgnore
+    @PostMapping("/third/authorize")
+    @Operation(summary = "生成第三方账号登录授权地址")
+    public Result<ThirdAuthAuthorizeResponse> thirdAuthorize(
+            @Validated @RequestBody ThirdAuthLoginAuthorizeRequest request) {
+        return Result.ok(thirdAuthLoginHandler.authorize(request));
+    }
+
+    @SaIgnore
+    @PostMapping("/third/login")
+    @Operation(summary = "使用第三方账号登录")
+    @SysLog(module = "认证模块", value = "第三方账号登录", hideFieldList = {"authCode", "state"})
+    public Result<LoginResponse> thirdLogin(@Validated @RequestBody ThirdAuthLoginRequest request) {
+        return Result.ok(thirdAuthLoginHandler.login(request));
     }
 
     @PostMapping("/logout")

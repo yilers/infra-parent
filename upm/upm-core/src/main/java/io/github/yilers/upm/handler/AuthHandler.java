@@ -52,33 +52,39 @@ public class AuthHandler implements AuthService {
         User user = userService.findByAccount(account);
         if (ObjUtil.isEmpty(user)) {
             throw new CommonException("账号或密码错误");
+        } else if (BCrypt.checkpw(password, user.getPassword())) {
+            return login(user, device);
         } else {
-            Tenant tenant = tenantService.getById(user.getTenantId());
-            if (ObjUtil.isEmpty(tenant) || CommonConst.NO.equals(tenant.getUsable())) {
-                throw new CommonException("租户已禁用");
-            }
-            if (BCrypt.checkpw(password, user.getPassword())) {
-                Integer usable = user.getUsable();
-                if (ObjUtil.isEmpty(usable) || CommonConst.NO.equals(usable)) {
-                    throw new CommonException("账号暂不可用");
-                }
-                Long previousTenantId = RequestContextHolder.getTenantId();
-                try {
-                    RequestContextHolder.setTenantId(user.getTenantId());
-                    applicationAccessHandler.currentApplication();
-                } finally {
-                    RequestContextHolder.setTenantId(previousTenantId);
-                }
-                StpUtil.login(user.getId(), device);
-                SaTokenInfo tokenInfo = StpUtil.getTokenInfo();
-                LoginResponse response = BeanUtil.copyProperties(tokenInfo, LoginResponse.class);
-                response.setName(user.getName());
-                return response;
-            } else {
-                throw new CommonException("账号或密码错误");
-            }
+            throw new CommonException("账号或密码错误");
         }
+    }
 
+    /**
+     * 为已经完成身份校验的用户签发UPM登录态。
+     *
+     * <p>账号密码和第三方认证共用此方法，确保租户、账号及当前应用状态校验保持一致。</p>
+     */
+    public LoginResponse login(User user, String device) {
+        Tenant tenant = tenantService.getById(user.getTenantId());
+        if (ObjUtil.isEmpty(tenant) || CommonConst.NO.equals(tenant.getUsable())) {
+            throw new CommonException("租户已禁用");
+        }
+        Integer usable = user.getUsable();
+        if (ObjUtil.isEmpty(usable) || CommonConst.NO.equals(usable)) {
+            throw new CommonException("账号暂不可用");
+        }
+        Long previousTenantId = RequestContextHolder.getTenantId();
+        try {
+            RequestContextHolder.setTenantId(user.getTenantId());
+            applicationAccessHandler.currentApplication();
+        } finally {
+            RequestContextHolder.setTenantId(previousTenantId);
+        }
+        StpUtil.login(user.getId(), device);
+        SaTokenInfo tokenInfo = StpUtil.getTokenInfo();
+        LoginResponse response = BeanUtil.copyProperties(tokenInfo, LoginResponse.class);
+        response.setName(user.getName());
+        return response;
     }
 
     @Override

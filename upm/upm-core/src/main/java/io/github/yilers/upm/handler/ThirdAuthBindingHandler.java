@@ -43,6 +43,7 @@ import java.util.UUID;
 public class ThirdAuthBindingHandler {
 
     private static final long STATE_TIMEOUT_MINUTES = 5;
+    private static final String BIND_STATE_PREFIX = "bind_";
 
     private final ThirdAuthConfigService thirdAuthConfigService;
     private final UserThirdService userThirdService;
@@ -68,7 +69,7 @@ public class ThirdAuthBindingHandler {
         ThirdAuthProvider provider = providerRegistry.get(platform);
         ThirdAuthBindState stateValue = new ThirdAuthBindState(
                 StpUtil.getLoginIdAsLong(), currentTenantId(), platform);
-        String state = UUID.randomUUID().toString().replace("-", "");
+        String state = BIND_STATE_PREFIX + UUID.randomUUID().toString().replace("-", "");
         try {
             stateBucket(state).set(objectMapper.writeValueAsString(stateValue),
                     Duration.ofMinutes(STATE_TIMEOUT_MINUTES));
