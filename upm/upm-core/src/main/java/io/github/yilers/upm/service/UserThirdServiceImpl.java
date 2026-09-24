@@ -38,6 +38,13 @@ public class UserThirdServiceImpl extends ServiceImpl<UserThirdMapper, UserThird
         return userThirdMapper.selectOne(query);
     }
 
+    @Override
+    public UserThird findByUnionIdAndPlatform(String unionId, String platform) {
+        LambdaQueryWrapper<UserThird> query = Wrappers.lambdaQuery(UserThird.class);
+        query.eq(UserThird::getUnionId, unionId);
+        query.eq(StrUtil.isNotBlank(platform), UserThird::getPlatform, platform);
+        return userThirdMapper.selectOne(query);
+    }
 
     @Override
     public UserThird findByUserIdAndPlatform(Long userId, String platform) {
@@ -45,5 +52,10 @@ public class UserThirdServiceImpl extends ServiceImpl<UserThirdMapper, UserThird
         query.eq(UserThird::getUserId, userId);
         query.eq(StrUtil.isNotBlank(platform), UserThird::getPlatform, platform);
         return userThirdMapper.selectOne(query);
+    }
+
+    @Override
+    public boolean physicallyDelete(Long tenantId, Long userId, String platform) {
+        return userThirdMapper.physicallyDelete(tenantId, userId, platform) > 0;
     }
 }

@@ -35,7 +35,7 @@ class ApplicationMigrationTest {
                     RunScript.execute(connection, new StringReader(statement));
                 }
                 assertEquals(1, count(connection, "SELECT COUNT(*) FROM upm_application WHERE code='infra' AND operable=0"));
-                assertEquals(43, count(connection, "SELECT COUNT(*) FROM upm_permission"));
+                assertEquals(48, count(connection, "SELECT COUNT(*) FROM upm_permission"));
                 assertEquals(0, count(connection, "SELECT COUNT(*) FROM upm_permission WHERE app_id<>1 OR app_id IS NULL"));
                 assertEquals(10, count(connection, "SELECT COUNT(*) FROM upm_role_permission rp JOIN upm_permission p ON p.id=rp.permission_id WHERE p.component='system/application/index' OR p.permission_code LIKE 'system:application:%'"));
             }

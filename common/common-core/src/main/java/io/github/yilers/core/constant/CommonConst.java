@@ -78,6 +78,11 @@ public class CommonConst {
     public static final String USER_DATA_SCOPE_CACHE_NAME = "userDataScope:";
 
     /**
+     * 第三方账号绑定OAuth2 state缓存名称
+     */
+    public static final String THIRD_AUTH_BIND_STATE_CACHE_NAME = "thirdAuth:bindState:";
+
+    /**
      * 部门缓存名称
      */
     public static final String DEPT_CACHE_NAME = "dept:";

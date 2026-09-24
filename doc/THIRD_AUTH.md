@@ -7,7 +7,7 @@
 - 第三方认证解决“用户如何登录 UPM”。
 - SSO 解决“用户登录 UPM 后，如何免登录进入业务应用”。
 
-当前阶段只实现第三方认证平台的配置管理，不包含钉钉授权地址、授权回调、账号绑定、扫码登录和组织架构同步。这样可以先稳定配置模型和租户边界，再逐步接入具体平台。
+当前已经实现第三方认证平台配置管理，以及已登录用户绑定、解绑钉钉账号。尚未开放钉钉直接登录、自动创建用户和组织架构同步。
 
 ## 模块位置
 
@@ -31,7 +31,7 @@
 | `platform` | 第三方认证平台编码 |
 | `client_id` | 平台 AppKey 或 Client ID |
 | `client_secret` | 平台 AppSecret 或 Client Secret |
-| `redirect_uri` | 平台授权完成后回到 UPM 的地址 |
+| `redirect_uri` | 平台授权完成后回到 UPM 个人中心的地址 |
 | `scopes` | 逗号分隔的授权范围 |
 | `operable` | 是否允许管理员修改 |
 | `usable` | 是否启用 |
@@ -66,6 +66,36 @@ logging.level.io.github.yilers.upm.mapper.ThirdAuthConfigMapper=info
 
 管理接口不接收租户 ID，全部通过服务端登录上下文和 MyBatis Plus 租户插件隔离数据。
 
+## 账号绑定接口
+
+账号绑定接口统一位于 `/thirdAuth/binding`，只要求用户已经登录 UPM，不需要菜单权限：
+
+| 接口 | 说明 |
+| --- | --- |
+| `GET /findAll` | 查询当前用户各平台绑定状态 |
+| `POST /authorize` | 生成五分钟有效的一次性 state 和钉钉 OAuth2 授权地址 |
+| `POST /bind` | 使用回调返回的授权码和 state 完成绑定 |
+| `POST /unbind` | 物理删除当前用户的平台绑定，允许以后重新绑定 |
+
+绑定流程如下：
+
+1. 已登录用户在个人中心点击“立即绑定”。
+2. UPM 把用户 ID、租户 ID 和平台编码写入 Redis 一次性 state，返回钉钉授权地址。
+3. 钉钉授权后返回配置的个人中心地址，并附带 `authCode` 和 `state`。
+4. 前端携带原 UPM token 调用绑定接口。
+5. 后端一次性消费 state，校验它与当前登录用户、租户一致。
+6. 后端使用授权码换取钉钉用户 token 并读取当前钉钉用户信息。
+7. 只保存 OpenId、UnionId 和公开资料快照，不保存钉钉 access token 或 refresh token。
+
+推荐回调地址：
+
+```text
+https://upm.example.com/third-auth-callback.html
+```
+
+该地址必须与钉钉开发者后台登记的回调地址一致。回调页会保留钉钉返回的授权参数，再转到 Hash 路由下的个人中心完成绑定。
+本地开发需要使用钉钉可以访问的公网测试域名，不能直接使用仅本机可见的地址。
+
 ## 租户初始化
 
 创建新租户时，会从默认租户复制已经存在的第三方平台配置模板，但会清空：
@@ -81,12 +111,10 @@ logging.level.io.github.yilers.upm.mapper.ThirdAuthConfigMapper=info
 
 ## 后续接入顺序
 
-1. 实现钉钉 Provider，封装授权地址、临时授权码换取身份等平台差异。
-2. 增加短时 `state`，使用 Redis 保存并一次性消费，防止登录 CSRF。
-3. 增加用户第三方账号绑定接口，复用现有 `upm_user_third` 保存绑定关系。
-4. 在个人中心提供扫码绑定、解绑入口。
-5. 在登录页提供钉钉登录入口；未绑定账号时禁止自动创建高权限用户。
-6. 如确有需要，再单独设计部门和用户同步任务，不能把组织同步混入登录回调。
+1. 使用测试组织的企业内部应用完成钉钉账号绑定联调。
+2. 在登录页提供钉钉登录入口；未绑定账号时禁止自动创建用户。
+3. 对直接登录流程增加独立的一次性 state 和登录结果交换凭证。
+4. 如确有需要，再单独设计部门和用户同步任务，不能把组织同步混入登录回调。
 
 第三方登录成功后仍由 UPM 签发原有登录 token，现有角色、菜单、数据权限和 SSO 流程均保持不变。
 
@@ -95,5 +123,7 @@ logging.level.io.github.yilers.upm.mapper.ThirdAuthConfigMapper=info
 - 新库：直接执行 `sql/full/mysql.sql` 或 `sql/full/postgres.sql`。
 - 已有 MySQL：执行 `sql/migration/20260923_third_auth.mysql.sql`。
 - 已有 PostgreSQL：执行 `sql/migration/20260923_third_auth.postgres.sql`。
+- 已执行上述配置迁移的数据库，再执行对应的 `20260924_third_auth_binding` 脚本。
 
-执行增量脚本前应停止写入并备份数据库。脚本会在当前最大菜单 ID 后，为每个租户连续创建第三方认证菜单及四个按钮权限。
+执行增量脚本前应停止写入并备份数据库。`20260923` 脚本创建第三方认证配置表、菜单和四个按钮权限，
+`20260924` 脚本只调整用户绑定表字段并补充唯一约束。

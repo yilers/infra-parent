@@ -577,16 +577,21 @@ CREATE TABLE upm_user_third (
     id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
     platform VARCHAR(30) DEFAULT 'wx',
-    open_id VARCHAR(60) DEFAULT '',
-    union_id VARCHAR(60) DEFAULT '',
+    open_id VARCHAR(128) DEFAULT NULL,
+    union_id VARCHAR(128) DEFAULT NULL,
     session_key VARCHAR(100) DEFAULT '',
     expand VARCHAR(1000) DEFAULT '',
     tenant_id BIGINT DEFAULT 1,
     deleted SMALLINT DEFAULT 0,
     create_time TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3),
     update_time TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3),
-    PRIMARY KEY (id)
+    PRIMARY KEY (id),
+    CONSTRAINT uk_user_third_user_platform UNIQUE (tenant_id, user_id, platform),
+    CONSTRAINT uk_user_third_open_platform UNIQUE (tenant_id, platform, open_id)
 );
+CREATE UNIQUE INDEX uk_user_third_union_platform
+    ON upm_user_third (tenant_id, platform, union_id)
+    WHERE union_id IS NOT NULL AND union_id <> '';
 COMMENT ON TABLE upm_user_third IS '用户第三方关联表';
 COMMENT ON COLUMN upm_user_third.id IS '主键ID';
 COMMENT ON COLUMN upm_user_third.user_id IS '用户ID';

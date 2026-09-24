@@ -46,7 +46,7 @@ public class ThirdAuthConfigRequest {
     @Size(max = 500)
     @Schema(description = "第三方平台授权完成后的UPM回调地址",
             requiredMode = Schema.RequiredMode.REQUIRED,
-            example = "https://upm.example.com/auth/third/dingTalk/callback")
+            example = "https://upm.example.com/third-auth-callback.html")
     private String redirectUri;
 
     @Size(max = 20, message = "授权范围最多配置20个")

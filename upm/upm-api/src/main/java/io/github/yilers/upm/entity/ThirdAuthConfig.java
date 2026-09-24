@@ -31,7 +31,8 @@ public class ThirdAuthConfig extends BaseAllColumnDomain<ThirdAuthConfig> {
     @Schema(hidden = true)
     private String clientSecret;
 
-    @Schema(description = "第三方平台授权回调地址", example = "https://upm.example.com/auth/third/dingTalk/callback")
+    @Schema(description = "第三方平台授权完成后返回的UPM个人中心地址",
+            example = "https://upm.example.com/third-auth-callback.html")
     private String redirectUri;
 
     @Schema(description = "授权范围，数据库中以英文逗号分隔")
