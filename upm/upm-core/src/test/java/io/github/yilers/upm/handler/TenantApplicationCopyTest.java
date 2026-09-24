@@ -47,10 +47,6 @@ class TenantApplicationCopyTest {
             ((Role) invocation.getArgument(0)).setId(sequence.incrementAndGet());
             return true;
         });
-        when(users.save(any())).thenAnswer(invocation -> {
-            ((User) invocation.getArgument(0)).setId(sequence.incrementAndGet());
-            return true;
-        });
         Application builtIn = application(1L, "infra", 0, 1);
         Application oa = application(2L, "oa", 1, 0);
         oa.setSsoEnabled(1);
@@ -113,6 +109,13 @@ class TenantApplicationCopyTest {
             copiedGrants.addAll(invocation.<Collection<RolePermission>>getArgument(0));
             return true;
         });
+        List<User> copiedUsers = new ArrayList<>();
+        when(users.save(any())).thenAnswer(invocation -> {
+            User user = invocation.getArgument(0);
+            user.setId(sequence.incrementAndGet());
+            copiedUsers.add(user);
+            return true;
+        });
 
         RequestContextHolder.setTenantId(88L);
         TenantRequest request = new TenantRequest();
@@ -155,6 +158,8 @@ class TenantApplicationCopyTest {
         assertEquals(100L, child.getParentId());
         verify(devices, times(2)).save(any(Device.class));
         verify(users, times(2)).save(any(User.class));
+        assertEquals(2, copiedUsers.size());
+        assertTrue(copiedUsers.stream().allMatch(user -> UserExpandHelper.isInitPwd(user.getExpand())));
     }
 
     private Application application(Long id, String code, int operable, int usable) {

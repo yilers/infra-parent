@@ -6,14 +6,12 @@ import cn.hutool.v7.core.util.ObjUtil;
 import cn.hutool.v7.core.text.StrUtil;
 import cn.hutool.v7.crypto.digest.BCrypt;
 import cn.hutool.v7.extra.spring.cglib.CglibUtil;
-import cn.hutool.v7.json.JSONUtil;
 import com.alicp.jetcache.anno.CacheInvalidate;
 import com.baomidou.mybatisplus.core.plugins.IgnoreStrategy;
 import com.baomidou.mybatisplus.core.plugins.InterceptorIgnoreHelper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.github.yilers.core.constant.CommonConst;
 import io.github.yilers.core.enums.UserTypeEnum;
-import io.github.yilers.upm.dto.UserExpandDTO;
 import io.github.yilers.upm.entity.Permission;
 import io.github.yilers.upm.entity.Role;
 import io.github.yilers.upm.entity.User;
@@ -55,6 +53,7 @@ public class UserHandler {
         UserInfoResponse userInfo = CglibUtil.copy(userService.currentInfo(userId), UserInfoResponse.class);
         userInfo.setRoleList(userRoleService.findRoleListByUserId(userId));
         userInfo.setPermissionList(applicationAccessHandler.currentPermissions(userId));
+        userInfo.setInitPwd(UserExpandHelper.isInitPwd(userInfo.getExpand()));
         return userInfo;
     }
 
@@ -103,9 +102,7 @@ public class UserHandler {
         String password = request.getPassword();
         String pwd = BCrypt.hashpw(password);
         addUser.setPassword(pwd);
-        UserExpandDTO userExpandDTO = new UserExpandDTO();
-        userExpandDTO.setInitPwd(Boolean.TRUE);
-        addUser.setExpand(JSONUtil.toJsonStr(userExpandDTO));
+        addUser.setExpand(UserExpandHelper.setInitPwd(addUser.getExpand(), true));
         addUser.setVersion(1);
         boolean save = userService.save(addUser);
         if (save) {
@@ -141,6 +138,7 @@ public class UserHandler {
             String password = request.getPassword();
             String pwd = BCrypt.hashpw(password);
             oldUser.setPassword(pwd);
+            oldUser.setExpand(UserExpandHelper.setInitPwd(oldUser.getExpand(), true));
         }
         boolean b = userService.updateById(oldUser);
         if (!b) {
@@ -234,12 +232,11 @@ public class UserHandler {
         updateUser.setPassword(pwd);
         updateUser.setVersion(user.getVersion());
         // 设置不为初始密码了
-        UserExpandDTO userExpandDTO = new UserExpandDTO();
-        userExpandDTO.setInitPwd(Boolean.FALSE);
-        updateUser.setExpand(JSONUtil.toJsonStr(userExpandDTO));
+        updateUser.setExpand(UserExpandHelper.setInitPwd(user.getExpand(), false));
         boolean b = userService.updateById(updateUser);
         if (!b) {
             throw new CommonException("修改密码失败 刷新重试");
         }
+        userService.cleanCache(userId);
     }
 }

@@ -6,7 +6,7 @@
 
     <select id="currentInfo" resultType="io.github.yilers.upm.response.UserInfoResponse">
         SELECT u.id, u.user_type, u.account, u.nickname, u.dept_id, u.position_id, u.tenant_id,
-        u.name, u.gender, u.id_card, u.email, u.phone, u.photo, u.operable, d.dept_code, u.version,
+        u.name, u.gender, u.id_card, u.email, u.phone, u.photo, u.operable, u.expand, d.dept_code, u.version,
         d.dept_name, p.position_code, p.position_name, u.usable, u.create_time ,u.update_time
         FROM upm_user u
         LEFT JOIN upm_dept d ON u.dept_id = d.id

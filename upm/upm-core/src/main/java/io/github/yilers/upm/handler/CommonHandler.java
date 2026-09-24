@@ -330,6 +330,7 @@ public class CommonHandler {
         user.setNickname(name);
         user.setTenantId(tenantId);
         user.setVersion(1);
+        user.setExpand(UserExpandHelper.setInitPwd(user.getExpand(), true));
         userService.save(user);
         // 添加角色用户关联
         UserRole userRole = new UserRole();
@@ -369,6 +370,7 @@ public class CommonHandler {
         tenantUser.setNickname(name);
         tenantUser.setTenantId(tenantId);
         tenantUser.setVersion(1);
+        tenantUser.setExpand(UserExpandHelper.setInitPwd(tenantUser.getExpand(), true));
         userService.save(tenantUser);
         // 添加角色用户关联
         UserRole tenantUserRole = new UserRole();

@@ -1,18 +1,23 @@
 package io.github.yilers.upm.handler;
 
 import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.v7.crypto.digest.BCrypt;
 import io.github.yilers.upm.entity.User;
 import io.github.yilers.upm.request.UserRequest;
+import io.github.yilers.upm.request.UserUpdatePwdRequest;
 import io.github.yilers.upm.service.RolePermissionService;
 import io.github.yilers.upm.service.UserRoleService;
 import io.github.yilers.upm.service.UserService;
 import io.github.yilers.web.exception.CommonException;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -57,6 +62,27 @@ class UserOptimisticLockTest {
         }
 
         verify(authHandler, never()).logout(10L);
+    }
+
+    @Test
+    void passwordChangeClearsInitialFlagAndUserCache() {
+        User user = user(10L, 2);
+        user.setPassword(BCrypt.hashpw("old-password"));
+        user.setExpand("{\"initPwd\":true,\"theme\":\"dark\"}");
+        when(userService.getById(10L)).thenReturn(user);
+        when(userService.updateById(any())).thenReturn(true);
+        UserUpdatePwdRequest request = new UserUpdatePwdRequest();
+        request.setUserId(10L);
+        request.setOldPwd("old-password");
+        request.setNewPwd("new-password");
+
+        handler.updatePwd(request);
+
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userService).updateById(captor.capture());
+        assertFalse(UserExpandHelper.isInitPwd(captor.getValue().getExpand()));
+        assertTrue(captor.getValue().getExpand().contains("\"theme\":\"dark\""));
+        verify(userService).cleanCache(10L);
     }
 
     private UserRequest request() {
