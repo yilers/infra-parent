@@ -29,8 +29,8 @@ import java.util.TimeZone;
 @EnableGlobalException
 @EnableResilientMethods
 @EnableTransactionManagement
-@EnableMethodCache(basePackages = "io.github")
-@SpringBootApplication(scanBasePackages = "io.github")
+@EnableMethodCache(basePackages = "io.github.yilers")
+@SpringBootApplication(scanBasePackages = "io.github.yilers")
 @Import(SpringUtil.class)
 public class InfraApplication {
 

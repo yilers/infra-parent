@@ -83,6 +83,10 @@
         <ip2region.version>3.3.7</ip2region.version>
         <!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
         <lombok.version>1.18.48</lombok.version>
+        <!-- https://mvnrepository.com/artifact/org.roaringbitmap/RoaringBitmap -->
+        <RoaringBitmap.version>1.6.23</RoaringBitmap.version>
+        <!-- https://mvnrepository.com/artifact/com.julien-dubois.bootui/bootui-spring-boot-starter -->
+        <bootui.version>1.19.0</bootui.version>
         <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-compiler-plugin -->
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
         <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-javadoc-plugin -->
