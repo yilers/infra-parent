@@ -16,7 +16,7 @@ INSERT INTO upm_permission
     (id, parent_id, app_id, tenant_id, permission_name, permission_type, permission_code,
      sort_number, device, operable, usable, deleted, version)
 VALUES
-    (195, 150, 1, 1, '同步应用菜单', 2, 'system:tenant:sync', 5, 'web', 0, 1, 0, 1);
+    (195, 150, 1, 1, '同步应用菜单', 2, 'system:tenant:sync', 5, 'web', 1, 1, 0, 1);
 
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device)
 VALUES (10, 195, 1, 'web');

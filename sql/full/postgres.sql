@@ -387,7 +387,7 @@ VALUES (153, 150, NULL, NULL, 3, 'system:tenant:edit', '修改', 2, 0, 1, 0, 1, 
 INSERT INTO upm_permission (id, parent_id, menu_icon, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, create_time, update_time, component, cache, link, device, create_id, app_id)
 VALUES (154, 150, NULL, NULL, 4, 'system:tenant:delete', '删除', 2, 0, 1, 0, 1, 1, '2025-06-10 11:03:04.015', '2025-06-20 09:36:12.377', '', 0, 0, 'web', 1, 1);
 INSERT INTO upm_permission (id, parent_id, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, component, cache, link, device, create_id, app_id)
-VALUES (195, 150, NULL, 5, 'system:tenant:sync', '同步应用菜单', 2, 0, 1, 0, 1, 1, '', 0, 0, 'web', 1, 1);
+VALUES (195, 150, NULL, 5, 'system:tenant:sync', '同步应用菜单', 2, 1, 1, 0, 1, 1, '', 0, 0, 'web', 1, 1);
 INSERT INTO upm_permission (id, parent_id, menu_icon, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, create_time, update_time, component, cache, link, device, create_id, app_id)
 VALUES (160, 10, 'carbon:scis-control-tower', 'role', 30, '', '角色管理', 1, 0, 1, 0, 1, 3, '2025-06-10 15:45:32.109', '2025-06-20 09:36:12.466', 'system/role/index', 1, 0, 'web', 1, 1);
 INSERT INTO upm_permission (id, parent_id, menu_icon, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, create_time, update_time, component, cache, link, device, create_id, app_id)
@@ -851,15 +851,15 @@ INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALU
 
 -- 第三方认证配置菜单及按钮。
 INSERT INTO upm_permission (id, parent_id, app_id, tenant_id, permission_name, permission_type, menu_url, component, menu_icon, sort_number, device, operable, usable, deleted, version)
-VALUES (190, 10, 1, 1, '第三方认证', 1, 'third-auth', 'system/third-auth/index', 'simple-icons:authy', 16, 'web', 0, 1, 0, 1);
+VALUES (190, 10, 1, 1, '第三方认证', 1, 'third-auth', 'system/third-auth/index', 'simple-icons:authy', 16, 'web', 1, 1, 0, 1);
 INSERT INTO upm_permission (id, parent_id, app_id, tenant_id, permission_name, permission_type, permission_code, sort_number, device, operable, usable, deleted, version)
-VALUES (191, 190, 1, 1, '列表', 2, 'system:thirdAuth:list', 1, 'web', 0, 1, 0, 1);
+VALUES (191, 190, 1, 1, '列表', 2, 'system:thirdAuth:list', 1, 'web', 1, 1, 0, 1);
 INSERT INTO upm_permission (id, parent_id, app_id, tenant_id, permission_name, permission_type, permission_code, sort_number, device, operable, usable, deleted, version)
-VALUES (192, 190, 1, 1, '新增', 2, 'system:thirdAuth:add', 2, 'web', 0, 1, 0, 1);
+VALUES (192, 190, 1, 1, '新增', 2, 'system:thirdAuth:add', 2, 'web', 1, 1, 0, 1);
 INSERT INTO upm_permission (id, parent_id, app_id, tenant_id, permission_name, permission_type, permission_code, sort_number, device, operable, usable, deleted, version)
-VALUES (193, 190, 1, 1, '修改', 2, 'system:thirdAuth:edit', 3, 'web', 0, 1, 0, 1);
+VALUES (193, 190, 1, 1, '修改', 2, 'system:thirdAuth:edit', 3, 'web', 1, 1, 0, 1);
 INSERT INTO upm_permission (id, parent_id, app_id, tenant_id, permission_name, permission_type, permission_code, sort_number, device, operable, usable, deleted, version)
-VALUES (194, 190, 1, 1, '启停', 2, 'system:thirdAuth:usable', 4, 'web', 0, 1, 0, 1);
+VALUES (194, 190, 1, 1, '启停', 2, 'system:thirdAuth:usable', 4, 'web', 1, 1, 0, 1);
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 190, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 191, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 192, 1, 'web');

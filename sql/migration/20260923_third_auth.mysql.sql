@@ -41,11 +41,11 @@ LEFT JOIN (
 WHERE t.deleted = 0;
 
 INSERT INTO upm_permission (id, parent_id, app_id, tenant_id, permission_name, permission_type, menu_url, component, menu_icon, sort_number, device, operable, usable, deleted, version)
-SELECT menu_id, parent_id, app_id, tenant_id, '第三方认证', 1, 'third-auth', 'system/third-auth/index', 'simple-icons:authy', 16, 'web', 0, 1, 0, 1
+SELECT menu_id, parent_id, app_id, tenant_id, '第三方认证', 1, 'third-auth', 'system/third-auth/index', 'simple-icons:authy', 16, 'web', 1, 1, 0, 1
 FROM migration_third_auth_menu;
 
 INSERT INTO upm_permission (id, parent_id, app_id, tenant_id, permission_name, permission_type, permission_code, sort_number, device, operable, usable, deleted, version)
-SELECT m.menu_id + b.offset_id, m.menu_id, m.app_id, m.tenant_id, b.name, 2, b.code, b.offset_id, 'web', 0, 1, 0, 1
+SELECT m.menu_id + b.offset_id, m.menu_id, m.app_id, m.tenant_id, b.name, 2, b.code, b.offset_id, 'web', 1, 1, 0, 1
 FROM migration_third_auth_menu m
 CROSS JOIN (
     SELECT 1 AS offset_id, '列表' AS name, 'system:thirdAuth:list' AS code
