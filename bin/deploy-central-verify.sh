@@ -3,17 +3,22 @@
 # 进入项目根目录（可选）
 cd "$(dirname "$0")/.."
 
-# 提示用户输入版本号
-read -p "请输入版本号（如 1.0.4）: " revision
+# 读取父 POM 中定义的版本号
+revision=$(mvn help:evaluate -Dexpression=revision -q -DforceStdout)
+if [[ -z "$revision" || "$revision" == *'${'* ]]; then
+  echo "无法从 pom.xml 读取 revision，已退出。"
+  exit 1
+fi
 
-# 检查输入
-if [[ -z "$revision" ]]; then
-  echo "版本号不能为空，已退出。"
+# 中央仓库不接受 SNAPSHOT 版本
+if [[ "$revision" == *-SNAPSHOT ]]; then
+  echo "当前版本 $revision 为 SNAPSHOT，无法校验中央仓库发布。"
   exit 1
 fi
 
 # 确认执行
-echo "即将执行: mvn clean verify -Pcentral -DskipTests -Drevision=$revision -Dgpg.keyname=223F63D22AE99F1E"
+echo "当前版本: $revision"
+echo "即将执行: mvn clean verify -Pcentral -Dgpg.keyname=223F63D22AE99F1E"
 read -p "是否确认执行？(y/n): " confirm
 
 if [[ "$confirm" != "y" ]]; then
@@ -22,4 +27,4 @@ if [[ "$confirm" != "y" ]]; then
 fi
 
 # 执行部署命令
-mvn clean verify -Pcentral -Drevision="$revision" -Dgpg.keyname=223F63D22AE99F1E
+mvn clean verify -Pcentral -Dgpg.keyname=223F63D22AE99F1E
