@@ -12,6 +12,7 @@ import io.github.yilers.upm.entity.Log;
 import io.github.yilers.upm.entity.User;
 import io.github.yilers.upm.request.LoginRequest;
 import io.github.yilers.upm.service.UserService;
+import io.github.yilers.web.context.RequestContextHolder;
 import io.github.yilers.web.log.SysLog;
 import io.github.yilers.web.util.Ip2RegionUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,7 +26,6 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestAttributes;
-import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDateTime;
@@ -90,7 +90,8 @@ public class SysLogAspect {
             if (hideFieldList.length > 0) {
                 params = hideJsonFields(params, hideFieldList);
             }
-            RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
+            RequestAttributes requestAttributes = org.springframework.web.context.request.RequestContextHolder
+                    .getRequestAttributes();
             HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
             String ip = ServletUtil.getClientIP(request);
             saveLog.setIp(ip);
@@ -101,6 +102,7 @@ public class SysLogAspect {
             saveLog.setParams(params);
             saveLog.setDeleted(CommonConst.NO);
             saveLog.setCreateTime(LocalDateTime.now());
+            saveLog.setTenantId(RequestContextHolder.getTenantId());
             try {
                 String userId = StpUtil.getLoginIdAsString();
                 UserService userService = SpringUtil.getBean(UserService.class);
@@ -108,6 +110,7 @@ public class SysLogAspect {
                 saveLog.setOperator(userId);
                 if (user != null) {
                     saveLog.setDeptId(user.getDeptId());
+                    saveLog.setTenantId(user.getTenantId());
                 }
             } catch (Exception e) {
                 log.warn("获取不到用户信息");
@@ -121,11 +124,13 @@ public class SysLogAspect {
                     if (user != null) {
                         saveLog.setOperator(user.getId().toString());
                         saveLog.setDeptId(user.getDeptId());
+                        saveLog.setTenantId(user.getTenantId());
                     }
                 }
             }
 
             Object proceed = joinPoint.proceed();
+            fillCurrentUser(saveLog);
             saveLog.setSuccess(CommonConst.YES);
             String detail = String.format("(%s)访问:%s.%s() 传入:%s 执行:%s",
                     ip, className, methodName, params, action);
@@ -140,9 +145,54 @@ public class SysLogAspect {
             saveLog.setDuration((int) cost);
             log.info("方法执行耗时:{}ms", cost);
             try {
-                commonExecutor.execute(saveLog::insert);
+                commonExecutor.execute(() -> persistLog(saveLog));
             } catch (Exception e) {
-                log.error("保存日志失败", e);
+                log.error("提交日志保存任务失败", e);
+            }
+        }
+    }
+
+    /**
+     * 登录接口执行前可能尚未建立登录态，执行完成后再次补充用户和租户信息。
+     */
+    private void fillCurrentUser(Log saveLog) {
+        if (saveLog.getTenantId() != null && saveLog.getOperator() != null) {
+            return;
+        }
+        try {
+            String userId = StpUtil.getLoginIdAsString();
+            User user = SpringUtil.getBean(UserService.class).findById(Long.parseLong(userId));
+            saveLog.setOperator(userId);
+            if (user != null) {
+                saveLog.setDeptId(user.getDeptId());
+                saveLog.setTenantId(user.getTenantId());
+            }
+        } catch (Exception ignored) {
+            // 登录失败或匿名请求无法取得用户信息，保留前面已经采集到的日志内容。
+        }
+    }
+
+    /**
+     * 在异步线程中恢复日志所属租户，保证租户插件和自动填充均使用正确的上下文。
+     */
+    private void persistLog(Log saveLog) {
+        Long tenantId = saveLog.getTenantId();
+        if (tenantId == null) {
+            log.warn("无法确定操作日志所属租户，跳过保存，方法: {}", saveLog.getMethod());
+            return;
+        }
+
+        Long previousTenantId = RequestContextHolder.getTenantId();
+        try {
+            RequestContextHolder.setTenantId(tenantId);
+            saveLog.insert();
+        } catch (Exception e) {
+            log.error("保存日志失败，方法: {}", saveLog.getMethod(), e);
+        } finally {
+            if (previousTenantId == null) {
+                RequestContextHolder.clear();
+            } else {
+                RequestContextHolder.setTenantId(previousTenantId);
             }
         }
     }
