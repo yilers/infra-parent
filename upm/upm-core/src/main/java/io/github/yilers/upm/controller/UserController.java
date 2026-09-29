@@ -86,6 +86,15 @@ public class UserController {
         return Result.ok();
     }
 
+    @PostMapping("/login-lock/unlock/{userId}")
+    @Operation(summary = "解除用户登录锁定")
+    @SysLog(module = "用户模块", value = "解除登录锁定")
+    @SaCheckPermission("system:user:unlock")
+    public Result<?> unlockLogin(@PathVariable("userId") @NotNull Long userId) {
+        userHandler.unlockLogin(userId);
+        return Result.ok();
+    }
+
     @PostMapping("/updatePwd")
     @Operation(summary = "修改密码")
     @SysLog(module = "用户模块", value = "修改密码")

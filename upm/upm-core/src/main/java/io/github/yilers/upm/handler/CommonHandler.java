@@ -48,6 +48,7 @@ public class CommonHandler {
     private final RolePermissionService rolePermissionService;
     private final ApplicationService applicationService;
     private final ThirdAuthConfigService thirdAuthConfigService;
+    private final TenantLoginPolicyHandler tenantLoginPolicyHandler;
 
     public List<Dept> currentDept() {
         long userId = StpUtil.getLoginIdAsLong();
@@ -184,6 +185,7 @@ public class CommonHandler {
             throw new CommonException("租户创建失败");
         }
         Long tenantId = copy.getId();
+        tenantLoginPolicyHandler.createDefault(tenantId);
         Long previousTenantId = RequestContextHolder.getTenantId();
         try {
             // 新租户始终以租户1为模板，复制后独立维护。

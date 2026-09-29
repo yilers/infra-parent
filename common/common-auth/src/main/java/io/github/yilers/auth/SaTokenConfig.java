@@ -46,7 +46,9 @@ public class SaTokenConfig implements WebMvcConfigurer {
         url.add("/**/*.png");
         url.add("/static/**");
         url.add("/applications");
+        url.add("/");
         url.add("/index.html");
+        url.add("/third-auth-callback.html");
         url.add("/bootui/**");
         // 注册 Sa-Token 拦截器，打开注解式鉴权功能
         registry.addInterceptor(new SaInterceptor(handler ->

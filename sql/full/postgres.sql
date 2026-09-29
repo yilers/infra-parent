@@ -347,6 +347,8 @@ VALUES (115, 110, NULL, NULL, 5, 'system:user:dataScope', '数据权限', 2, 0, 
 INSERT INTO upm_permission (id, parent_id, menu_icon, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, create_time, update_time, component, cache, link, device, create_id, app_id)
 VALUES (116, 110, NULL, NULL, 6, 'system:user:updatePwd', '重置密码', 2, 0, 1, 0, 1, 1, '2025-06-12 14:37:35.951', '2025-06-20 09:36:10.165', '', 0, 0, 'web', 1, 1);
 INSERT INTO upm_permission (id, parent_id, menu_icon, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, create_time, update_time, component, cache, link, device, create_id, app_id)
+VALUES (117, 110, NULL, NULL, 7, 'system:user:unlock', '解除登录锁定', 2, 1, 1, 0, 1, 1, '2026-09-29 00:00:00.000', '2026-09-29 00:00:00.000', '', 0, 0, 'web', 1, 1);
+INSERT INTO upm_permission (id, parent_id, menu_icon, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, create_time, update_time, component, cache, link, device, create_id, app_id)
 VALUES (120, 10, 'ic:sharp-menu', 'menu', 20, '', '菜单管理', 1, 0, 1, 0, 1, 1, '2025-06-09 13:35:10.730', '2025-06-20 09:36:10.268', 'system/menu/index', 1, 0, 'web', 1, 1);
 INSERT INTO upm_permission (id, parent_id, menu_icon, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, create_time, update_time, component, cache, link, device, create_id, app_id)
 VALUES (121, 120, NULL, NULL, 1, 'system:menu:list', '列表', 2, 0, 1, 0, 1, 1, '2025-06-10 11:03:04.015', '2025-06-20 09:36:10.402', '', 0, 0, 'web', 1, 1);
@@ -433,6 +435,7 @@ INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALU
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 114, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 115, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 116, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 117, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 120, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 121, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 122, 1, 'web');
@@ -472,6 +475,7 @@ INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALU
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 114, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 115, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 116, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 117, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 130, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 131, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 132, 1, 'web');
@@ -717,6 +721,41 @@ CREATE TRIGGER trg_upm_tenant_update_time
 INSERT INTO upm_tenant (id, name, code, description, expand, operable, usable, deleted, version, create_time, update_time)
 VALUES (1, '默认租户', 'yilers.com', '默认租户', '{"logo":"https://files.authing.co/user-contents/photos/b97119c3-5772-4a2d-804b-b9727c4cd124.png","name":"UPM"}', 0, 1, 0, 1, '2025-06-09 15:48:25', '2026-01-23 15:51:35');
 
+
+-- 租户账号密码登录策略表（物理删除；无记录表示不限制）
+CREATE TABLE upm_tenant_login_policy (
+    id BIGINT NOT NULL PRIMARY KEY,
+    tenant_id BIGINT NOT NULL,
+    max_failures INT NOT NULL DEFAULT 3,
+    failure_window_minutes INT NOT NULL DEFAULT 10,
+    lock_duration_minutes INT NOT NULL DEFAULT 10,
+    version INT NOT NULL DEFAULT 1,
+    create_time TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3),
+    update_time TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3),
+    CONSTRAINT uk_tenant_login_policy_tenant UNIQUE (tenant_id)
+);
+COMMENT ON TABLE upm_tenant_login_policy IS '租户账号密码登录策略表';
+COMMENT ON COLUMN upm_tenant_login_policy.tenant_id IS '租户ID';
+COMMENT ON COLUMN upm_tenant_login_policy.max_failures IS '统计周期内最大连续失败次数';
+COMMENT ON COLUMN upm_tenant_login_policy.failure_window_minutes IS '失败统计周期，单位分钟';
+COMMENT ON COLUMN upm_tenant_login_policy.lock_duration_minutes IS '账号锁定时长，单位分钟';
+COMMENT ON COLUMN upm_tenant_login_policy.version IS '乐观锁版本号';
+
+CREATE OR REPLACE FUNCTION update_upm_tenant_login_policy_update_time()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.update_time = CURRENT_TIMESTAMP(3);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER trg_upm_tenant_login_policy_update_time
+    BEFORE UPDATE ON upm_tenant_login_policy
+    FOR EACH ROW
+    EXECUTE FUNCTION update_upm_tenant_login_policy_update_time();
+
+INSERT INTO upm_tenant_login_policy
+    (id, tenant_id, max_failures, failure_window_minutes, lock_duration_minutes, version)
+VALUES (1, 1, 3, 10, 10, 1);
 
 -- 设备表 (id 自增)
 CREATE TABLE upm_device (

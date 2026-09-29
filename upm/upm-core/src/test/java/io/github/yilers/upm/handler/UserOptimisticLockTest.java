@@ -31,7 +31,8 @@ class UserOptimisticLockTest {
     private final CommonHandler commonHandler = mock(CommonHandler.class);
     private final AuthHandler authHandler = mock(AuthHandler.class);
     private final UserHandler handler = new UserHandler(userService, userRoleService,
-            mock(RolePermissionService.class), commonHandler, authHandler, mock(ApplicationAccessHandler.class));
+            mock(RolePermissionService.class), commonHandler, authHandler,
+            mock(ApplicationAccessHandler.class), mock(LoginRiskHandler.class));
 
     @Test
     void updateUsesClientVersionAndReportsConflict() {

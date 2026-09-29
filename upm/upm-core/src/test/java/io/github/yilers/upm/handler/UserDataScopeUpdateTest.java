@@ -22,7 +22,7 @@ class UserDataScopeUpdateTest {
     private final CommonHandler commonHandler = mock(CommonHandler.class);
     private final UserHandler handler = new UserHandler(userService, userRoleService,
             mock(RolePermissionService.class), commonHandler, mock(AuthHandler.class),
-            mock(ApplicationAccessHandler.class));
+            mock(ApplicationAccessHandler.class), mock(LoginRiskHandler.class));
 
     private User existingUser() {
         User user = new User();

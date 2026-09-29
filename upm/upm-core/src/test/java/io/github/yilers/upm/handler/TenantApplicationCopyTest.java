@@ -34,9 +34,10 @@ class TenantApplicationCopyTest {
         RolePermissionService grants = mock(RolePermissionService.class);
         ApplicationService applications = mock(ApplicationService.class);
         ThirdAuthConfigService thirdAuthConfigs = mock(ThirdAuthConfigService.class);
+        TenantLoginPolicyHandler loginPolicyHandler = mock(TenantLoginPolicyHandler.class);
         CommonHandler handler = new CommonHandler(users, departments, mock(RoleDeptService.class),
                 mock(UserRoleService.class), mock(UserDataScopeService.class), permissions, tenants,
-                roles, devices, grants, applications, thirdAuthConfigs);
+                roles, devices, grants, applications, thirdAuthConfigs, loginPolicyHandler);
         AtomicLong sequence = new AtomicLong(1000);
         when(tenants.save(any())).thenAnswer(invocation -> {
             ((Tenant) invocation.getArgument(0)).setId(20L);
@@ -160,6 +161,7 @@ class TenantApplicationCopyTest {
         assertEquals(100L, child.getParentId());
         verify(devices, times(2)).save(any(Device.class));
         verify(users).save(any(User.class));
+        verify(loginPolicyHandler).createDefault(20L);
         assertEquals(1, copiedUsers.size());
         assertTrue(copiedUsers.stream().allMatch(user -> UserExpandHelper.isInitPwd(user.getExpand())));
         assertEquals("admin@example.com", copiedUsers.getFirst().getAccount());

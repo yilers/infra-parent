@@ -47,6 +47,7 @@ public class UserHandler {
     private final CommonHandler commonHandler;
     private final AuthHandler authHandler;
     private final ApplicationAccessHandler applicationAccessHandler;
+    private final LoginRiskHandler loginRiskHandler;
 
     public UserInfoResponse currentInfo() {
         long userId = StpUtil.getLoginIdAsLong();
@@ -212,6 +213,20 @@ public class UserHandler {
         userService.removeById(userId);
         userRoleService.deleteByUserId(userId);
         userService.cleanCache(userId);
+    }
+
+    /**
+     * 解除用户账号密码登录的临时锁定，并清除当前统计周期内的失败次数。
+     *
+     * @param userId 用户ID
+     */
+    public void unlockLogin(Long userId) {
+        User user = userService.getById(userId);
+        if (user == null) {
+            throw new CommonException("用户不存在");
+        }
+        commonHandler.checkDataScope(StpUtil.getLoginIdAsLong(), user.getDeptId());
+        loginRiskHandler.clear(user);
     }
 
     @Transactional(rollbackFor = Exception.class)

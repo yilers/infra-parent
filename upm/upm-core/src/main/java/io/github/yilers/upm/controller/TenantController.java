@@ -6,7 +6,10 @@ import io.github.yilers.core.util.Result;
 import io.github.yilers.upm.entity.Tenant;
 import io.github.yilers.upm.handler.CommonHandler;
 import io.github.yilers.upm.handler.TenantHandler;
+import io.github.yilers.upm.handler.TenantLoginPolicyHandler;
 import io.github.yilers.upm.handler.TenantPermissionSyncHandler;
+import io.github.yilers.upm.entity.TenantLoginPolicy;
+import io.github.yilers.upm.request.TenantLoginPolicyRequest;
 import io.github.yilers.upm.request.TenantRequest;
 import io.github.yilers.upm.response.TenantPermissionSyncResponse;
 import io.github.yilers.upm.service.TenantService;
@@ -34,6 +37,7 @@ public class TenantController {
     private final CommonHandler commonHandler;
     private final TenantHandler tenantHandler;
     private final TenantPermissionSyncHandler tenantPermissionSyncHandler;
+    private final TenantLoginPolicyHandler tenantLoginPolicyHandler;
 
     @Operation(summary = "查询所有租户(没有删除的)")
     @GetMapping("/findAll")
@@ -88,6 +92,35 @@ public class TenantController {
     @SaCheckPermission("system:tenant:sync")
     public Result<TenantPermissionSyncResponse> syncPermission(@PathVariable Long id) {
         return Result.ok(tenantPermissionSyncHandler.sync(id));
+    }
+
+    @Operation(summary = "查询租户账号密码登录策略",
+            description = "未配置时data为null，表示该租户不限制密码失败次数。")
+    @GetMapping("/login-policy/find/{id}")
+    @SaCheckPermission("system:tenant:edit")
+    public Result<TenantLoginPolicy> findLoginPolicy(@PathVariable Long id) {
+        return Result.ok(tenantLoginPolicyHandler.find(id));
+    }
+
+    @Operation(summary = "保存租户账号密码登录策略",
+            description = "策略不存在时新增，已经存在时按version乐观锁修改。")
+    @PostMapping("/login-policy/save/{id}")
+    @SysLog(module = "租户模块", value = "保存租户登录策略")
+    @SaCheckPermission("system:tenant:edit")
+    public Result<?> saveLoginPolicy(@PathVariable Long id,
+                                     @Validated @RequestBody TenantLoginPolicyRequest request) {
+        tenantLoginPolicyHandler.save(id, request);
+        return Result.ok();
+    }
+
+    @Operation(summary = "删除租户账号密码登录策略",
+            description = "物理删除策略；删除后该租户不限制密码失败次数。")
+    @PostMapping("/login-policy/delete/{id}")
+    @SysLog(module = "租户模块", value = "删除租户登录策略")
+    @SaCheckPermission("system:tenant:edit")
+    public Result<?> deleteLoginPolicy(@PathVariable Long id) {
+        tenantLoginPolicyHandler.delete(id);
+        return Result.ok();
     }
 
 

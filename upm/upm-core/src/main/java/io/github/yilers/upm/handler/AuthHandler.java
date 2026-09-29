@@ -14,6 +14,7 @@ import io.github.yilers.core.constant.CommonConst;
 import io.github.yilers.upm.entity.Permission;
 import io.github.yilers.upm.entity.Role;
 import io.github.yilers.upm.entity.Tenant;
+import io.github.yilers.upm.entity.TenantLoginPolicy;
 import io.github.yilers.upm.entity.User;
 import io.github.yilers.upm.request.LoginRequest;
 import io.github.yilers.upm.response.LoginResponse;
@@ -44,6 +45,7 @@ public class AuthHandler implements AuthService {
     private final CacheManager cacheManager;
     private final ApplicationAccessHandler applicationAccessHandler;
     private final SaSsoServerTemplate ssoServerTemplate;
+    private final LoginRiskHandler loginRiskHandler;
 
     public LoginResponse login(LoginRequest loginRequest) {
         String account = loginRequest.getAccount();
@@ -52,11 +54,14 @@ public class AuthHandler implements AuthService {
         User user = userService.findByAccount(account);
         if (ObjUtil.isEmpty(user)) {
             throw new CommonException("账号或密码错误");
-        } else if (BCrypt.checkpw(password, user.getPassword())) {
-            return login(user, device);
-        } else {
-            throw new CommonException("账号或密码错误");
         }
+        TenantLoginPolicy policy = loginRiskHandler.check(user);
+        if (BCrypt.checkpw(password, user.getPassword())) {
+            loginRiskHandler.clear(user);
+            return login(user, device);
+        }
+        loginRiskHandler.recordFailure(user, policy);
+        throw new CommonException("账号或密码错误");
     }
 
     /**

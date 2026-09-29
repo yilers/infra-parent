@@ -93,6 +93,16 @@ public class CommonConst {
     public static final String THIRD_AUTH_LOGIN_STATE_CACHE_NAME = "thirdAuth:loginState:";
 
     /**
+     * 账号密码登录失败次数缓存名称
+     */
+    public static final String LOGIN_FAILURE_CACHE_NAME = "loginRisk:failure:";
+
+    /**
+     * 账号密码登录锁定缓存名称
+     */
+    public static final String LOGIN_LOCK_CACHE_NAME = "loginRisk:lock:";
+
+    /**
      * 部门缓存名称
      */
     public static final String DEPT_CACHE_NAME = "dept:";
