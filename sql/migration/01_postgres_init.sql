@@ -345,7 +345,7 @@ VALUES (143, 140, NULL, NULL, 3, 'system:position:edit', '修改', 2, 0, 1, 0, 1
 INSERT INTO upm_permission (id, parent_id, menu_icon, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, create_time, update_time, component, cache, link, device, create_id)
 VALUES (144, 140, NULL, NULL, 4, 'system:position:delete', '删除', 2, 0, 1, 0, 1, 1, '2025-06-10 11:03:04.015', '2025-06-20 09:36:11.998', '', 0, 0, 'web', 1);
 INSERT INTO upm_permission (id, parent_id, menu_icon, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, create_time, update_time, component, cache, link, device, create_id)
-VALUES (150, 10, 'ph:users-light', 'tenant', 10, '', '租户管理', 1, 0, 1, 0, 1, 3, '2025-06-10 15:34:04.749', '2025-06-20 09:36:12.088', 'system/tenant/index', 1, 0, 'web', 1);
+VALUES (150, 10, 'carbon:workspace', 'tenant', 10, '', '租户管理', 1, 0, 1, 0, 1, 3, '2025-06-10 15:34:04.749', '2025-06-20 09:36:12.088', 'system/tenant/index', 1, 0, 'web', 1);
 INSERT INTO upm_permission (id, parent_id, menu_icon, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, create_time, update_time, component, cache, link, device, create_id)
 VALUES (151, 150, NULL, NULL, 1, 'system:tenant:list', '列表', 2, 0, 1, 0, 1, 1, '2025-06-10 11:03:04.015', '2025-06-20 09:36:12.165', '', 0, 0, 'web', 1);
 INSERT INTO upm_permission (id, parent_id, menu_icon, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, create_time, update_time, component, cache, link, device, create_id)
