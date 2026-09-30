@@ -9,6 +9,9 @@ public class SsoApplicationResponse {
     @Schema(description = "完整SSO客户端标识", example = "yilers.com:oa")
     private String clientId;
 
+    @Schema(description = "租户ID，业务系统可用于恢复可信的租户上下文", example = "1")
+    private Long tenantId;
+
     @Schema(description = "租户编码", example = "yilers.com")
     private String tenantCode;
 

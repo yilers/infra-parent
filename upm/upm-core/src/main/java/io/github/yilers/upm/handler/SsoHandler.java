@@ -129,6 +129,7 @@ public class SsoHandler {
     private SsoApplicationResponse toApplicationResponse(SsoClientResolver.Client client) {
         SsoApplicationResponse response = new SsoApplicationResponse();
         response.setClientId(client.clientId());
+        response.setTenantId(client.tenant().getId());
         response.setTenantCode(client.tenant().getCode());
         response.setTenantName(client.tenant().getName());
         response.setTenantLogo(readTenantLogo(client.tenant().getExpand()));

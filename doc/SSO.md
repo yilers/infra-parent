@@ -103,6 +103,7 @@ POST /sso/pushS
 请求参数、签名、ticket 一次性消费和单点注销登记均使用 Sa-Token 原生协议。成功响应中的 `upmContext` 包含：
 
 - `application`：租户及应用公开信息。
+- `application.tenantId`：UPM 租户 ID，业务后端用于恢复租户上下文，不接受前端自行传入。
 - `user`：用户 ID、账号、姓名、头像、部门和职位。
 - `roles`：当前用户的有效角色。
 - `menus`：当前应用和登录终端下的菜单、按钮。
