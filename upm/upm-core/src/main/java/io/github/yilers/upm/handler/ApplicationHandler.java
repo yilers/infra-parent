@@ -93,8 +93,9 @@ public class ApplicationHandler {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public ApplicationSecretResponse resetSecret(Long id) {
+    public ApplicationSecretResponse resetSecret(Long id, Integer version) {
         Application application = findOperable(id);
+        application.setVersion(version);
         byte[] value = new byte[32];
         secureRandom.nextBytes(value);
         String secret = Base64.getUrlEncoder().withoutPadding().encodeToString(value);
@@ -104,7 +105,8 @@ public class ApplicationHandler {
             throw new CommonException("更新失败 数据已经变更");
         }
         String tenantCode = tenantService.getById(application.getTenantId()).getCode();
-        return new ApplicationSecretResponse(clientId(tenantCode, application.getCode()), secret);
+        return new ApplicationSecretResponse(clientId(tenantCode, application.getCode()), secret,
+                application.getVersion(), application.getSecretUpdateTime());
     }
 
     @Transactional(rollbackFor = Exception.class)

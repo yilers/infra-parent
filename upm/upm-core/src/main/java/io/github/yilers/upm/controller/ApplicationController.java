@@ -8,6 +8,7 @@ import io.github.yilers.api.validated.Update;
 import io.github.yilers.core.util.Result;
 import io.github.yilers.upm.handler.ApplicationHandler;
 import io.github.yilers.upm.request.ApplicationRequest;
+import io.github.yilers.upm.request.ApplicationSecretResetRequest;
 import io.github.yilers.upm.response.ApplicationResponse;
 import io.github.yilers.upm.response.ApplicationSecretResponse;
 import io.github.yilers.web.log.SysLog;
@@ -65,7 +66,8 @@ public class ApplicationController {
             description = "密钥明文仅在本次响应中返回。重置后旧密钥立即失效，应立即更新业务系统配置。")
     @SysLog(module = "应用模块", value = "重置SSO客户端密钥")
     @SaCheckPermission("system:application:edit")
-    public Result<ApplicationSecretResponse> resetSecret(@Validated @RequestBody BaseOperateRequest dto) {
-        return Result.ok(applicationHandler.resetSecret(dto.getId()));
+    public Result<ApplicationSecretResponse> resetSecret(
+            @Validated @RequestBody ApplicationSecretResetRequest request) {
+        return Result.ok(applicationHandler.resetSecret(request.getId(), request.getVersion()));
     }
 }

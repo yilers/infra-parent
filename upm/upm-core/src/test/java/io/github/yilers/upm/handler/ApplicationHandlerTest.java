@@ -1,7 +1,9 @@
 package io.github.yilers.upm.handler;
 
 import io.github.yilers.upm.entity.Application;
+import io.github.yilers.upm.entity.Tenant;
 import io.github.yilers.upm.request.ApplicationRequest;
+import io.github.yilers.upm.response.ApplicationSecretResponse;
 import io.github.yilers.upm.service.ApplicationService;
 import io.github.yilers.upm.service.TenantService;
 import io.github.yilers.upm.sso.SsoSecretCipher;
@@ -14,8 +16,9 @@ import static org.mockito.Mockito.*;
 
 class ApplicationHandlerTest {
     private final ApplicationService service = mock(ApplicationService.class);
-    private final ApplicationHandler handler = new ApplicationHandler(service, mock(TenantService.class),
-            mock(SsoSecretCipher.class));
+    private final TenantService tenantService = mock(TenantService.class);
+    private final SsoSecretCipher secretCipher = mock(SsoSecretCipher.class);
+    private final ApplicationHandler handler = new ApplicationHandler(service, tenantService, secretCipher);
 
     @Test
     void createsOnlyAnEmptyEnabledOperableApplication() {
@@ -63,5 +66,32 @@ class ApplicationHandlerTest {
         assertThrows(CommonException.class, () -> handler.update(request));
         request.setCode("oa");
         assertThrows(CommonException.class, () -> handler.save(request));
+    }
+
+    @Test
+    void returnsNewVersionAfterResettingSecret() {
+        Application application = new Application();
+        application.setId(2L);
+        application.setTenantId(1L);
+        application.setOperable(1);
+        application.setCode("oa");
+        application.setVersion(2);
+        Tenant tenant = new Tenant();
+        tenant.setCode("yilers.com");
+        when(service.getById(2L)).thenReturn(application);
+        when(service.updateById(application)).thenAnswer(invocation -> {
+            application.setVersion(application.getVersion() + 1);
+            return true;
+        });
+        when(tenantService.getById(1L)).thenReturn(tenant);
+        when(secretCipher.encrypt(anyString())).thenReturn("encrypted-secret");
+
+        ApplicationSecretResponse response = handler.resetSecret(2L, 2);
+
+        assertEquals(3, response.version());
+        assertEquals("yilers.com:oa", response.clientId());
+        assertNotNull(response.secret());
+        assertNotNull(response.secretUpdateTime());
+        assertEquals("encrypted-secret", application.getSsoSecret());
     }
 }
