@@ -69,6 +69,8 @@
         <mybatis-plus.version>3.5.17</mybatis-plus.version>
         <!-- https://central.sonatype.com/artifact/com.baizhukui/knife4j-openapi3-boot4-spring-boot-starter/versions -->
         <knife4j-next.version>5.7.6</knife4j-next.version>
+        <!-- 与 Knife4j 5.7.6 使用的 Swagger 注解版本保持一致 -->
+        <swagger-annotations.version>2.2.47</swagger-annotations.version>
         <!-- https://central.sonatype.com/artifact/com.baomidou/dynamic-datasource-spring-boot-starter/versions -->
         <dynamic-datasource.version>4.5.0</dynamic-datasource.version>
         <!-- https://central.sonatype.com/artifact/tech.powerjob/powerjob-worker-spring-boot-starter/versions -->
