@@ -38,7 +38,7 @@ build/
 ### Mac OS ###
 .DS_Store
 
-log/
+/log/
 
 /**/.flattened-pom.xml
 /.flattened-pom.xml
