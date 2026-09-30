@@ -349,6 +349,8 @@ VALUES (116, 110, NULL, NULL, 6, 'system:user:updatePwd', '重置密码', 2, 0, 
 INSERT INTO upm_permission (id, parent_id, menu_icon, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, create_time, update_time, component, cache, link, device, create_id, app_id)
 VALUES (117, 110, NULL, NULL, 7, 'system:user:unlock', '解除登录锁定', 2, 1, 1, 0, 1, 1, '2026-09-29 00:00:00.000', '2026-09-29 00:00:00.000', '', 0, 0, 'web', 1, 1);
 INSERT INTO upm_permission (id, parent_id, menu_icon, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, create_time, update_time, component, cache, link, device, create_id, app_id)
+VALUES (118, 110, NULL, NULL, 8, 'system:user:batch:add', '批量新增', 2, 1, 1, 0, 1, 1, '2026-09-30 00:00:00.000', '2026-09-30 00:00:00.000', '', 0, 0, 'web', 1, 1);
+INSERT INTO upm_permission (id, parent_id, menu_icon, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, create_time, update_time, component, cache, link, device, create_id, app_id)
 VALUES (120, 10, 'ic:sharp-menu', 'menu', 20, '', '菜单管理', 1, 0, 1, 0, 1, 1, '2025-06-09 13:35:10.730', '2025-06-20 09:36:10.268', 'system/menu/index', 1, 0, 'web', 1, 1);
 INSERT INTO upm_permission (id, parent_id, menu_icon, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, create_time, update_time, component, cache, link, device, create_id, app_id)
 VALUES (121, 120, NULL, NULL, 1, 'system:menu:list', '列表', 2, 0, 1, 0, 1, 1, '2025-06-10 11:03:04.015', '2025-06-20 09:36:10.402', '', 0, 0, 'web', 1, 1);
@@ -436,6 +438,7 @@ INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALU
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 115, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 116, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 117, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 118, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 120, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 121, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 122, 1, 'web');
@@ -476,6 +479,7 @@ INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALU
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 115, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 116, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 117, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 118, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 130, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 131, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 132, 1, 'web');

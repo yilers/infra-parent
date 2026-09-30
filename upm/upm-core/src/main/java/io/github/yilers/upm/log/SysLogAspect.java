@@ -74,7 +74,7 @@ public class SysLogAspect {
             String className = joinPoint.getTarget().getClass().getName();
             String methodName = signature.getName();
             Object[] args = joinPoint.getArgs();
-            String params = JSONUtil.toJsonStr(args);
+            String params = sysLog.recordParams() ? JSONUtil.toJsonStr(args) : "[]";
 
 //            Method method = signature.getMethod();
 //            SysLog syslog = SYS_LOG_CACHE.computeIfAbsent(method,

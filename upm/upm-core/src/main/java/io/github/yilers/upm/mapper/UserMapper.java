@@ -9,6 +9,8 @@ import io.github.yilers.web.mybatis.CustomMapper;
 import io.github.yilers.web.permission.DataPermission;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 public interface UserMapper extends CustomMapper<User> {
 
     /**
@@ -17,6 +19,8 @@ public interface UserMapper extends CustomMapper<User> {
      * <p>租户采用逻辑删除，重新使用相同租户编码时，必须排除已删除租户遗留的同名账号。</p>
      */
     User findByAccount(@Param("account") String account);
+
+    List<User> findByAccountList(@Param("accountList") List<String> accountList);
 
     UserInfoResponse currentInfo(Long userId);
 

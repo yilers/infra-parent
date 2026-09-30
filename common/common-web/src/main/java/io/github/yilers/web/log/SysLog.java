@@ -26,6 +26,11 @@ public @interface SysLog {
     String value() default "";
 
     /**
+     * 是否记录方法参数。批量、文件等大请求应关闭，避免操作日志字段过大。
+     */
+    boolean recordParams() default true;
+
+    /**
      * 隐藏字段
      * eg:{"password"}
      */

@@ -18,6 +18,14 @@ public interface UserService extends IService<User> {
 
     User findByAccount(String account);
 
+    /**
+     * 批量查询所有有效租户中的账号，用于新增用户前的全局账号去重。
+     *
+     * @param accountList 账号列表
+     * @return 已存在的用户
+     */
+    List<User> findByAccountList(List<String> accountList);
+
     List<User> findByDeptId(Long deptId);
 
     UserInfoResponse currentInfo(Long userId);

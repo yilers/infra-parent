@@ -39,6 +39,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
+    public List<User> findByAccountList(List<String> accountList) {
+        if (accountList == null || accountList.isEmpty()) {
+            return List.of();
+        }
+        try {
+            // 与单账号查询保持一致：账号在所有未删除租户中唯一。
+            InterceptorIgnoreHelper.handle(IgnoreStrategy.builder().tenantLine(true).build());
+            return userMapper.findByAccountList(accountList);
+        } finally {
+            InterceptorIgnoreHelper.clearIgnoreStrategy();
+        }
+    }
+
+    @Override
     public List<User> findByDeptId(Long deptId) {
         LambdaQueryWrapper<User> query = Wrappers.lambdaQuery(User.class);
         query.eq(User::getDeptId, deptId);
