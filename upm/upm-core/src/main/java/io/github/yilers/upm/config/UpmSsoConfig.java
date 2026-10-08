@@ -12,6 +12,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestClient;
 
 /**
  * Sa-Token SSO Server 配置。客户端清单来自 UPM 应用表，不使用静态配置。
@@ -36,6 +37,11 @@ public class UpmSsoConfig {
                     .setAutoRenewTimeout(true);
             config.setMode("ticket");
             SaSsoManager.setServerConfig(config);
+
+            // Sa-Token 默认 HTTP 处理器不发送请求，单点注销时需向客户端推送签名消息。
+            RestClient restClient = RestClient.create();
+            template.strategy.sendRequest = url ->
+                    restClient.get().uri(url).retrieve().body(String.class);
 
             // ticket 校验已经由 Sa-Token 完成签名和一次性消费，这里仅追加可信业务上下文。
             template.strategy.checkTicketAppendData = (loginId, result) -> {

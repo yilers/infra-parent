@@ -25,11 +25,11 @@
             <version>${revision}</version>
         </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>io.github.yilers</groupId>-->
-<!--            <artifactId>ai-chatbot</artifactId>-->
-<!--            <version>${revision}</version>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>io.github.yilers</groupId>
+            <artifactId>ai-chatbot</artifactId>
+            <version>${revision}</version>
+        </dependency>
     </dependencies>
 
     <build>
