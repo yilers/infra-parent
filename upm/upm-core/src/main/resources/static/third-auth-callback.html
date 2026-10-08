@@ -9,7 +9,13 @@
       const params = new URLSearchParams(window.location.search);
       const loginFlow = params.get('state')?.startsWith('login_');
       const callbackPath = loginFlow ? '/auth/login' : '/profile';
-      if (!loginFlow) {
+      if (loginFlow) {
+        // 恢复外部认证前的登录目标，继续完成业务应用的 SSO 授权。
+        const redirect = sessionStorage.getItem('infra-third-auth-login-redirect');
+        if (redirect) {
+          params.set('redirect', redirect);
+        }
+      } else {
         params.set('setting', 'thirdAuth');
       }
       const target = `/#${callbackPath}?${params.toString()}`;

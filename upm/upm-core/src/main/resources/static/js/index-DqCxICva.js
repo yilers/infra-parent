@@ -1,0 +1,1 @@
+import{dx as p}from"./bootstrap-BY24L7Mg.js";function n(){return p.get("/application/findAll")}function e(t){return p.post("/application/save",t)}function o(t){return p.post("/application/update",t)}function c(t){return p.post("/application/usable",{id:t})}function r(t,i){return p.post("/application/resetSecret",{id:t,version:i})}export{c as a,o as b,e as c,r as d,n as h};

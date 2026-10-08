@@ -1,5 +1,7 @@
 # UPM 单点登录设计
 
+业务应用的配置步骤、Spring Boot 后端和浏览器代码示例见 [SSO Client 接入指南](SSO_CLIENT.md)。本文说明 UPM 认证中心的协议与安全边界。
+
 ## 目标
 
 独立部署的 UPM 作为唯一认证中心。租户在 UPM 中维护应用、菜单、角色和用户；业务应用完成一次 SSO 后，使用自己的 Sa-Token 登录态访问自身接口。应用之间跳转时复用 UPM 的认证会话，因此用户无需再次输入账号密码。
@@ -115,7 +117,7 @@ POST /sso/pushS
 业务前端发起登录时跳转：
 
 ```text
-https://upm.example.com/sso/authorize?client=baidu.com:oa&redirect=https%3A%2F%2Foa.example.com%2Fsso%2Fcallback&state=...
+https://upm.example.com/#/sso/authorize?client=baidu.com:oa&redirect=https%3A%2F%2Foa.example.com%2Fsso%2Fcallback&state=...
 ```
 
 业务回调页必须先校验自己保存的 `state`，再把 ticket 提交到同域业务后端。业务后端校验 ticket 后签发自身 Sa-Token，并根据 `upmContext` 初始化当前会话。客户端密钥只能放在业务后端配置或密钥管理系统中。
