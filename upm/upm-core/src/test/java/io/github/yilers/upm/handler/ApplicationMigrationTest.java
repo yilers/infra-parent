@@ -35,7 +35,7 @@ class ApplicationMigrationTest {
                     RunScript.execute(connection, new StringReader(statement));
                 }
                 assertEquals(1, count(connection, "SELECT COUNT(*) FROM upm_application WHERE code='infra' AND operable=0"));
-                assertEquals(50, count(connection, "SELECT COUNT(*) FROM upm_permission"));
+                assertEquals(51, count(connection, "SELECT COUNT(*) FROM upm_permission"));
                 assertEquals(0, count(connection, "SELECT COUNT(*) FROM upm_permission WHERE app_id<>1 OR app_id IS NULL"));
                 assertEquals(1, count(connection, "SELECT COUNT(*) FROM upm_permission WHERE permission_code='system:tenant:sync' AND source_id IS NULL"));
                 assertEquals(1, count(connection, "SELECT COUNT(*) FROM upm_permission WHERE permission_code='system:user:unlock' AND operable=1"));

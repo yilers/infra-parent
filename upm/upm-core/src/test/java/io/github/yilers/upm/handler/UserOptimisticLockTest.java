@@ -4,6 +4,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.v7.crypto.digest.BCrypt;
 import io.github.yilers.upm.entity.User;
 import io.github.yilers.upm.request.UserRequest;
+import io.github.yilers.upm.request.UserProfileUpdateRequest;
 import io.github.yilers.upm.request.UserUpdatePwdRequest;
 import io.github.yilers.upm.service.RolePermissionService;
 import io.github.yilers.upm.service.UserRoleService;
@@ -18,6 +19,8 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -33,6 +36,34 @@ class UserOptimisticLockTest {
     private final UserHandler handler = new UserHandler(userService, userRoleService,
             mock(RolePermissionService.class), commonHandler, authHandler,
             mock(ApplicationAccessHandler.class), mock(LoginRiskHandler.class));
+
+    @Test
+    void profileUpdateOnlyWritesCurrentUsersPersonalFields() {
+        UserProfileUpdateRequest request = new UserProfileUpdateRequest();
+        request.setVersion(3);
+        request.setName("张三");
+        request.setNickname("小张");
+        request.setPhoto("avatar.png");
+        when(userService.updateById(any())).thenReturn(true);
+
+        try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+            stp.when(StpUtil::getLoginIdAsLong).thenReturn(10L);
+            handler.updateProfile(request);
+        }
+
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userService).updateById(captor.capture());
+        User update = captor.getValue();
+        assertEquals(10L, update.getId());
+        assertEquals(3, update.getVersion());
+        assertEquals("小张", update.getNickname());
+        assertNull(update.getAccount());
+        assertNull(update.getDeptId());
+        assertNull(update.getPositionId());
+        assertNull(update.getPassword());
+        verify(userRoleService, never()).deleteByUserId(any());
+        verify(userService).cleanCache(10L);
+    }
 
     @Test
     void updateUsesClientVersionAndReportsConflict() {

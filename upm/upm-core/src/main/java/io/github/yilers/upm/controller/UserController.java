@@ -9,6 +9,7 @@ import io.github.yilers.upm.handler.UserBatchHandler;
 import io.github.yilers.upm.handler.UserHandler;
 import io.github.yilers.upm.request.UserBatchAddRequest;
 import io.github.yilers.upm.request.UserPageRequest;
+import io.github.yilers.upm.request.UserProfileUpdateRequest;
 import io.github.yilers.upm.request.UserRequest;
 import io.github.yilers.upm.request.UserUpdatePwdRequest;
 import io.github.yilers.upm.response.UserBatchAddResponse;
@@ -42,6 +43,14 @@ public class UserController {
     public Result<UserInfoResponse> currentInfo() {
         UserInfoResponse userInfo = userHandler.currentInfo();
         return Result.ok(userInfo);
+    }
+
+    @PostMapping("/profile/update")
+    @Operation(summary = "修改当前用户个人资料")
+    @SysLog(module = "用户模块", value = "修改个人资料")
+    public Result<?> updateProfile(@Validated @RequestBody UserProfileUpdateRequest request) {
+        userHandler.updateProfile(request);
+        return Result.ok();
     }
 
     @PostMapping("/addUser")

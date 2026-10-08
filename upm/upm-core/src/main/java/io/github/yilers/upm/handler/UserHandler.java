@@ -16,6 +16,7 @@ import io.github.yilers.upm.entity.Permission;
 import io.github.yilers.upm.entity.Role;
 import io.github.yilers.upm.entity.User;
 import io.github.yilers.upm.request.UserPageRequest;
+import io.github.yilers.upm.request.UserProfileUpdateRequest;
 import io.github.yilers.upm.request.UserRequest;
 import io.github.yilers.upm.request.UserUpdatePwdRequest;
 import io.github.yilers.upm.response.UserInfoResponse;
@@ -56,6 +57,27 @@ public class UserHandler {
         userInfo.setPermissionList(applicationAccessHandler.currentPermissions(userId));
         userInfo.setInitPwd(UserExpandHelper.isInitPwd(userInfo.getExpand()));
         return userInfo;
+    }
+
+    /**
+     * 只更新当前登录用户的个人字段，不接受客户端提供用户ID或管理字段。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void updateProfile(UserProfileUpdateRequest request) {
+        long userId = StpUtil.getLoginIdAsLong();
+        User updateUser = new User();
+        updateUser.setId(userId);
+        updateUser.setVersion(request.getVersion());
+        updateUser.setName(request.getName());
+        updateUser.setNickname(request.getNickname());
+        updateUser.setGender(request.getGender());
+        updateUser.setPhoto(request.getPhoto());
+        updateUser.setEmail(request.getEmail());
+        updateUser.setPhone(request.getPhone());
+        if (!userService.updateById(updateUser)) {
+            throw new CommonException("更新失败 数据已经变更，请刷新后重试");
+        }
+        userService.cleanCache(userId);
     }
 
     /**
