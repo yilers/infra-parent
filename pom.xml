@@ -47,7 +47,7 @@
 
     <properties>
         <skipTests>true</skipTests>
-        <revision>1.1.1</revision>
+        <revision>1.2.0</revision>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -60,7 +60,7 @@
         <!-- https://central.sonatype.com/artifact/com.dtflys.forest/forest-spring-boot-starter -->
         <forest.version>1.8.1</forest.version>
         <!-- https://central.sonatype.com/artifact/org.redisson/redisson-spring-boot-starter/versions -->
-        <redisson.version>4.7.0</redisson.version>
+        <redisson.version>4.8.0</redisson.version>
         <!-- https://central.sonatype.com/artifact/cn.dev33/sa-token-spring-boot-starter/versions -->
         <sa-token.version>1.45.0</sa-token.version>
         <!-- https://central.sonatype.com/artifact/org.dromara.dynamictp/dynamic-tp-spring-boot-starter-common/versions -->
@@ -68,9 +68,9 @@
         <!-- https://central.sonatype.com/artifact/com.baomidou/mybatis-plus/versions -->
         <mybatis-plus.version>3.5.17</mybatis-plus.version>
         <!-- https://central.sonatype.com/artifact/com.baizhukui/knife4j-openapi3-boot4-spring-boot-starter/versions -->
-        <knife4j-next.version>5.7.6</knife4j-next.version>
-        <!-- 与 Knife4j 5.7.6 使用的 Swagger 注解版本保持一致 -->
-        <swagger-annotations.version>2.2.47</swagger-annotations.version>
+        <knife4j-next.version>5.7.8</knife4j-next.version>
+        <!-- 与knife4j-next使用的 Swagger 注解版本保持一致 https://central.sonatype.com/artifact/com.baizhukui/knife4j-openapi3-boot4-spring-boot-starter/dependencies -->
+        <swagger-annotations.version>2.2.55</swagger-annotations.version>
         <!-- https://central.sonatype.com/artifact/com.baomidou/dynamic-datasource-spring-boot-starter/versions -->
         <dynamic-datasource.version>4.5.0</dynamic-datasource.version>
         <!-- https://central.sonatype.com/artifact/tech.powerjob/powerjob-worker-spring-boot-starter/versions -->
@@ -81,27 +81,27 @@
         <jetcache.version>2.8.0.RC</jetcache.version>
         <!-- https://central.sonatype.com/artifact/org.lionsoul/ip2region/versions -->
         <ip2region.version>3.3.7</ip2region.version>
-        <!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
+        <!-- https://central.sonatype.com/artifact/org.projectlombok/lombok/versions -->
         <lombok.version>1.18.48</lombok.version>
-        <!-- https://mvnrepository.com/artifact/org.roaringbitmap/RoaringBitmap -->
-        <RoaringBitmap.version>1.6.23</RoaringBitmap.version>
-        <!-- https://mvnrepository.com/artifact/com.julien-dubois.bootui/bootui-spring-boot-starter -->
-        <bootui.version>1.20.0</bootui.version>
-        <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-compiler-plugin -->
+        <!-- https://central.sonatype.com/artifact/org.roaringbitmap/RoaringBitmap/versions -->
+        <RoaringBitmap.version>1.6.24</RoaringBitmap.version>
+        <!-- https://central.sonatype.com/artifact/com.julien-dubois.bootui/bootui-spring-boot-starter/versions -->
+        <bootui.version>2.0.0</bootui.version>
+        <!-- https://central.sonatype.com/artifact/org.apache.maven.plugins/maven-compiler-plugin/versions -->
         <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
-        <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-javadoc-plugin -->
+        <!-- https://central.sonatype.com/artifact/org.apache.maven.plugins/maven-javadoc-plugin/versions -->
         <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
-        <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-source-plugin -->
+        <!-- https://central.sonatype.com/artifact/org.apache.maven.plugins/maven-source-plugin/versions -->
         <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
-        <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-gpg-plugin -->
+        <!-- https://central.sonatype.com/artifact/org.apache.maven.plugins/maven-gpg-plugin/versions -->
         <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
-        <!-- https://mvnrepository.com/artifact/org.sonatype.central/central-publishing-maven-plugin -->
+        <!-- https://central.sonatype.com/artifact/org.sonatype.central/central-publishing-maven-plugin/versions -->
         <central-publishing-maven-plugin.version>0.11.0</central-publishing-maven-plugin.version>
-        <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-surefire-plugin -->
+        <!-- https://central.sonatype.com/artifact/org.apache.maven.plugins/maven-surefire-plugin/versions -->
         <maven-surefire-plugin.version>3.6.0</maven-surefire-plugin.version>
-        <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-deploy-plugin -->
+        <!-- https://central.sonatype.com/artifact/org.apache.maven.plugins/maven-deploy-plugin/versions -->
         <maven-deploy-plugin.version>3.2.0</maven-deploy-plugin.version>
-        <!-- https://mvnrepository.com/artifact/org.codehaus.mojo/flatten-maven-plugin -->
+        <!-- https://central.sonatype.com/artifact/org.codehaus.mojo/flatten-maven-plugin/versions -->
         <flatten-maven-plugin.version>1.8.0</flatten-maven-plugin.version>
     </properties>
 
