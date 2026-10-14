@@ -3,6 +3,7 @@ package io.github.yilers.upm.handler;
 import io.github.yilers.upm.entity.Dept;
 import io.github.yilers.upm.request.SortMoveRequest;
 import io.github.yilers.upm.service.DeptService;
+import io.github.yilers.upm.service.DeptLeaderService;
 import io.github.yilers.upm.service.UserService;
 import io.github.yilers.web.exception.CommonException;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,8 @@ import static org.mockito.Mockito.when;
 
 class DeptOptimisticLockTest {
     private final DeptService service = mock(DeptService.class);
-    private final DeptHandler handler = new DeptHandler(service, mock(UserService.class), mock(CommonHandler.class));
+    private final DeptHandler handler = new DeptHandler(service, mock(DeptLeaderService.class),
+            mock(UserService.class), mock(CommonHandler.class));
 
     @Test
     void sortingUsesLoadedVersionsAndReportsConflict() {

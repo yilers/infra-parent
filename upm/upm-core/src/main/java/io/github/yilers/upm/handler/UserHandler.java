@@ -20,7 +20,9 @@ import io.github.yilers.upm.request.UserProfileUpdateRequest;
 import io.github.yilers.upm.request.UserRequest;
 import io.github.yilers.upm.request.UserUpdatePwdRequest;
 import io.github.yilers.upm.response.UserInfoResponse;
+import io.github.yilers.upm.response.DeptLeaderResponse;
 import io.github.yilers.upm.service.RolePermissionService;
+import io.github.yilers.upm.service.DeptLeaderService;
 import io.github.yilers.upm.service.UserRoleService;
 import io.github.yilers.upm.service.UserService;
 import io.github.yilers.api.base.BaseOperateRequest;
@@ -49,6 +51,8 @@ public class UserHandler {
     private final AuthHandler authHandler;
     private final ApplicationAccessHandler applicationAccessHandler;
     private final LoginRiskHandler loginRiskHandler;
+    private final DeptLeaderHandler deptLeaderHandler;
+    private final DeptLeaderService deptLeaderService;
 
     public UserInfoResponse currentInfo() {
         long userId = StpUtil.getLoginIdAsLong();
@@ -56,6 +60,8 @@ public class UserHandler {
         userInfo.setRoleList(userRoleService.findRoleListByUserId(userId));
         userInfo.setPermissionList(applicationAccessHandler.currentPermissions(userId));
         userInfo.setInitPwd(UserExpandHelper.isInitPwd(userInfo.getExpand()));
+        userInfo.setDeptLeaderList(deptLeaderHandler.findCurrentByUserIds(List.of(userId))
+                .getOrDefault(userId, List.of()));
         return userInfo;
     }
 
@@ -187,6 +193,9 @@ public class UserHandler {
             throw new CommonException("不能操作自己");
         }
         boolean disable = CommonConst.YES.equals(user.getUsable());
+        if (disable && !deptLeaderService.findCurrentByUserIds(List.of(id)).isEmpty()) {
+            throw new CommonException("该用户仍担任部门主管，请先调整部门主管");
+        }
         // 切换可用状态
         user.setUsable(disable ? CommonConst.NO : CommonConst.YES);
         user.setUpdateTime(LocalDateTime.now());
@@ -214,8 +223,11 @@ public class UserHandler {
         }
         if (CollUtil.isNotEmpty(userIdList)) {
             Map<Long, List<Role>> map = userRoleService.findRoleByUserIdList(userIdList);
+            Map<Long, List<DeptLeaderResponse>> leaderMap =
+                    deptLeaderHandler.findCurrentByUserIds(userIdList);
             for (UserInfoResponse record : records) {
                 record.setRoleList(map.get(record.getId()));
+                record.setDeptLeaderList(leaderMap.getOrDefault(record.getId(), List.of()));
             }
         }
         return page;
@@ -224,6 +236,9 @@ public class UserHandler {
     @Transactional(rollbackFor = Exception.class)
     public void deleteById(Long userId) {
         User user = userService.getById(userId);
+        if (!deptLeaderService.findCurrentByUserIds(List.of(userId)).isEmpty()) {
+            throw new CommonException("该用户仍担任部门主管，请先调整部门主管");
+        }
         if (CommonConst.NO.equals(user.getOperable())) {
             throw new CommonException("数据不可操作");
         }

@@ -11,6 +11,7 @@ import io.github.yilers.upm.entity.User;
 import io.github.yilers.upm.request.DeptRequest;
 import io.github.yilers.upm.request.SortMoveRequest;
 import io.github.yilers.upm.service.DeptService;
+import io.github.yilers.upm.service.DeptLeaderService;
 import io.github.yilers.upm.service.UserService;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DeptHandler {
     private final DeptService deptService;
+    private final DeptLeaderService deptLeaderService;
     private final UserService userService;
     private final CommonHandler commonHandler;
 
@@ -100,6 +102,9 @@ public class DeptHandler {
             List<Dept> deptList = deptService.findByParentId(dept.getId(), null);
             if (CollUtil.isNotEmpty(deptList)) {
                 throw new CommonException("部门下有子部门，不能删除");
+            }
+            if (!deptLeaderService.findCurrentByDeptId(id).isEmpty()) {
+                throw new CommonException("部门已设置主管，请先撤销主管任职");
             }
             commonHandler.checkDataScope(StpUtil.getLoginIdAsLong(), id);
         } else {

@@ -3,6 +3,7 @@ package io.github.yilers.upm.handler;
 import cn.dev33.satoken.stp.StpUtil;
 import io.github.yilers.upm.entity.User;
 import io.github.yilers.upm.service.RolePermissionService;
+import io.github.yilers.upm.service.DeptLeaderService;
 import io.github.yilers.upm.service.UserRoleService;
 import io.github.yilers.upm.service.UserService;
 import io.github.yilers.web.exception.CommonException;
@@ -22,7 +23,8 @@ class UserLoginUnlockTest {
     private final LoginRiskHandler loginRiskHandler = mock(LoginRiskHandler.class);
     private final UserHandler handler = new UserHandler(userService, mock(UserRoleService.class),
             mock(RolePermissionService.class), commonHandler, mock(AuthHandler.class),
-            mock(ApplicationAccessHandler.class), loginRiskHandler);
+            mock(ApplicationAccessHandler.class), loginRiskHandler,
+            mock(DeptLeaderHandler.class), mock(DeptLeaderService.class));
 
     @Test
     void clearsLoginRiskStateForVisibleUser() {

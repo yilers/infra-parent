@@ -4,6 +4,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import io.github.yilers.upm.entity.User;
 import io.github.yilers.upm.request.UserRequest;
 import io.github.yilers.upm.service.RolePermissionService;
+import io.github.yilers.upm.service.DeptLeaderService;
 import io.github.yilers.upm.service.UserRoleService;
 import io.github.yilers.upm.service.UserService;
 import io.github.yilers.web.exception.CommonException;
@@ -22,7 +23,8 @@ class UserDataScopeUpdateTest {
     private final CommonHandler commonHandler = mock(CommonHandler.class);
     private final UserHandler handler = new UserHandler(userService, userRoleService,
             mock(RolePermissionService.class), commonHandler, mock(AuthHandler.class),
-            mock(ApplicationAccessHandler.class), mock(LoginRiskHandler.class));
+            mock(ApplicationAccessHandler.class), mock(LoginRiskHandler.class),
+            mock(DeptLeaderHandler.class), mock(DeptLeaderService.class));
 
     private User existingUser() {
         User user = new User();

@@ -370,6 +370,8 @@ INSERT INTO upm_permission (id, parent_id, menu_icon, menu_url, sort_number, per
 VALUES (133, 130, NULL, NULL, 3, 'system:dept:edit', '修改', 2, 0, 1, 0, 1, 1, '2025-06-10 11:03:04.015', '2025-06-20 09:36:11.419', '', 0, 0, 'web', 1, 1);
 INSERT INTO upm_permission (id, parent_id, menu_icon, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, create_time, update_time, component, cache, link, device, create_id, app_id)
 VALUES (134, 130, NULL, NULL, 4, 'system:dept:delete', '删除', 2, 0, 1, 0, 1, 1, '2025-06-10 11:03:04.015', '2025-06-20 09:36:11.584', '', 0, 0, 'web', 1, 1);
+INSERT INTO upm_permission (id, parent_id, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, create_time, update_time, component, cache, link, device, create_id, app_id)
+VALUES (196, 130, 5, 'system:dept:leader:edit', '设置主管', 2, 1, 1, 0, 1, 1, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3), '', 0, 0, 'web', 1, 1);
 INSERT INTO upm_permission (id, parent_id, menu_icon, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, create_time, update_time, component, cache, link, device, create_id, app_id)
 VALUES (140, 10, 'carbon:align-vertical-center', 'post', 60, '', '岗位管理', 1, 0, 1, 0, 1, 2, '2025-06-10 10:49:45.307', '2025-06-20 09:36:11.655', 'system/post/index', 1, 0, 'web', 1, 1);
 INSERT INTO upm_permission (id, parent_id, menu_icon, menu_url, sort_number, permission_code, permission_name, permission_type, operable, usable, deleted, tenant_id, version, create_time, update_time, component, cache, link, device, create_id, app_id)
@@ -449,6 +451,7 @@ INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALU
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 132, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 133, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 134, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 196, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 140, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 141, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (10, 142, 1, 'web');
@@ -485,6 +488,7 @@ INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALU
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 132, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 133, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 134, 1, 'web');
+INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 196, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 140, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 141, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 142, 1, 'web');
@@ -846,13 +850,15 @@ COMMENT ON TABLE upm_dept_leader IS '部门主管配置';
 COMMENT ON COLUMN upm_dept_leader.id IS '主键ID';
 COMMENT ON COLUMN upm_dept_leader.dept_id IS '部门ID';
 COMMENT ON COLUMN upm_dept_leader.user_id IS '主管员工ID';
-COMMENT ON COLUMN upm_dept_leader.leader_type IS '主管类型 待定';
+COMMENT ON COLUMN upm_dept_leader.leader_type IS '主管类型 1-主管 2-副主管';
 COMMENT ON COLUMN upm_dept_leader.remark IS '备注';
 COMMENT ON COLUMN upm_dept_leader.start_date IS '任职开始日期';
-COMMENT ON COLUMN upm_dept_leader.end_date IS '任职结束日期, NULL表示当前任职';
+COMMENT ON COLUMN upm_dept_leader.end_date IS '任职结束日期（不包含当天）, NULL表示仍在任';
 COMMENT ON COLUMN upm_dept_leader.tenant_id IS '租户ID';
 COMMENT ON COLUMN upm_dept_leader.create_time IS '创建时间';
 COMMENT ON COLUMN upm_dept_leader.update_time IS '更新时间';
+CREATE INDEX idx_dept_leader_dept ON upm_dept_leader (tenant_id, dept_id, end_date);
+CREATE INDEX idx_dept_leader_user ON upm_dept_leader (tenant_id, user_id, end_date);
 
 CREATE OR REPLACE FUNCTION update_upm_dept_leader_update_time()
 RETURNS TRIGGER AS $$

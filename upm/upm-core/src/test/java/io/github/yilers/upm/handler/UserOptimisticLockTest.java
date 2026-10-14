@@ -7,6 +7,7 @@ import io.github.yilers.upm.request.UserRequest;
 import io.github.yilers.upm.request.UserProfileUpdateRequest;
 import io.github.yilers.upm.request.UserUpdatePwdRequest;
 import io.github.yilers.upm.service.RolePermissionService;
+import io.github.yilers.upm.service.DeptLeaderService;
 import io.github.yilers.upm.service.UserRoleService;
 import io.github.yilers.upm.service.UserService;
 import io.github.yilers.web.exception.CommonException;
@@ -35,7 +36,8 @@ class UserOptimisticLockTest {
     private final AuthHandler authHandler = mock(AuthHandler.class);
     private final UserHandler handler = new UserHandler(userService, userRoleService,
             mock(RolePermissionService.class), commonHandler, authHandler,
-            mock(ApplicationAccessHandler.class), mock(LoginRiskHandler.class));
+            mock(ApplicationAccessHandler.class), mock(LoginRiskHandler.class),
+            mock(DeptLeaderHandler.class), mock(DeptLeaderService.class));
 
     @Test
     void profileUpdateOnlyWritesCurrentUsersPersonalFields() {

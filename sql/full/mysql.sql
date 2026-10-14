@@ -180,6 +180,7 @@ INSERT INTO `upm_permission` (`id`, `parent_id`, `menu_icon`, `menu_url`, `sort_
 INSERT INTO `upm_permission` (`id`, `parent_id`, `menu_icon`, `menu_url`, `sort_number`, `permission_code`, `permission_name`, `permission_type`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `create_time`, `update_time`, `component`, `cache`, `link`, `device`, `create_id`, app_id) VALUES (132, 130, NULL, NULL, 2, 'system:dept:add', '新增', 2, 0, 1, 0, 1, 1, '2025-06-10 11:03:04.015', '2025-06-20 09:36:11.299', '', 0, 0, 'web', 1, 1);
 INSERT INTO `upm_permission` (`id`, `parent_id`, `menu_icon`, `menu_url`, `sort_number`, `permission_code`, `permission_name`, `permission_type`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `create_time`, `update_time`, `component`, `cache`, `link`, `device`, `create_id`, app_id) VALUES (133, 130, NULL, NULL, 3, 'system:dept:edit', '修改', 2, 0, 1, 0, 1, 1, '2025-06-10 11:03:04.015', '2025-06-20 09:36:11.419', '', 0, 0, 'web', 1, 1);
 INSERT INTO `upm_permission` (`id`, `parent_id`, `menu_icon`, `menu_url`, `sort_number`, `permission_code`, `permission_name`, `permission_type`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `create_time`, `update_time`, `component`, `cache`, `link`, `device`, `create_id`, app_id) VALUES (134, 130, NULL, NULL, 4, 'system:dept:delete', '删除', 2, 0, 1, 0, 1, 1, '2025-06-10 11:03:04.015', '2025-06-20 09:36:11.584', '', 0, 0, 'web', 1, 1);
+INSERT INTO `upm_permission` (`id`, `parent_id`, `sort_number`, `permission_code`, `permission_name`, `permission_type`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `create_time`, `update_time`, `component`, `cache`, `link`, `device`, `create_id`, `app_id`) VALUES (196, 130, 5, 'system:dept:leader:edit', '设置主管', 2, 1, 1, 0, 1, 1, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3), '', 0, 0, 'web', 1, 1);
 INSERT INTO `upm_permission` (`id`, `parent_id`, `menu_icon`, `menu_url`, `sort_number`, `permission_code`, `permission_name`, `permission_type`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `create_time`, `update_time`, `component`, `cache`, `link`, `device`, `create_id`, app_id) VALUES (140, 10, 'carbon:align-vertical-center', 'post', 60, '', '岗位管理', 1, 0, 1, 0, 1, 2, '2025-06-10 10:49:45.307', '2025-06-20 09:36:11.655', 'system/post/index', 1, 0, 'web', 1, 1);
 INSERT INTO `upm_permission` (`id`, `parent_id`, `menu_icon`, `menu_url`, `sort_number`, `permission_code`, `permission_name`, `permission_type`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `create_time`, `update_time`, `component`, `cache`, `link`, `device`, `create_id`, app_id) VALUES (141, 140, NULL, NULL, 1, 'system:position:list', '列表', 2, 0, 1, 0, 1, 1, '2025-06-10 11:03:04.015', '2025-06-20 09:36:11.746', '', 0, 0, 'web', 1, 1);
 INSERT INTO `upm_permission` (`id`, `parent_id`, `menu_icon`, `menu_url`, `sort_number`, `permission_code`, `permission_name`, `permission_type`, `operable`, `usable`, `deleted`, `tenant_id`, `version`, `create_time`, `update_time`, `component`, `cache`, `link`, `device`, `create_id`, app_id) VALUES (142, 140, NULL, NULL, 2, 'system:position:add', '新增', 2, 0, 1, 0, 1, 1, '2025-06-10 11:03:04.015', '2025-06-20 09:36:11.830', '', 0, 0, 'web', 1, 1);
@@ -232,6 +233,7 @@ INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `dev
 INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 132, 1, 'web');
 INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 133, 1, 'web');
 INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 134, 1, 'web');
+INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 196, 1, 'web');
 INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 140, 1, 'web');
 INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 141, 1, 'web');
 INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (10, 142, 1, 'web');
@@ -268,6 +270,7 @@ INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `dev
 INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 132, 1, 'web');
 INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 133, 1, 'web');
 INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 134, 1, 'web');
+INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 196, 1, 'web');
 INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 140, 1, 'web');
 INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 141, 1, 'web');
 INSERT INTO `upm_role_permission` (`role_id`, `permission_id`, `tenant_id`, `device`) VALUES (20, 142, 1, 'web');
@@ -447,14 +450,16 @@ CREATE TABLE upm_dept_leader (
     id             BIGINT COMMENT '主键ID',
     dept_id        BIGINT NOT NULL COMMENT '部门ID',
     user_id        BIGINT NOT NULL COMMENT '主管员工ID',
-    leader_type    TINYINT NOT NULL DEFAULT 1 COMMENT '主管类型 待定',
+    leader_type    TINYINT NOT NULL DEFAULT 1 COMMENT '主管类型 1-主管 2-副主管',
     remark         VARCHAR(50) DEFAULT '' COMMENT '备注',
     start_date     DATE NOT NULL COMMENT '任职开始日期',
-    end_date       DATE DEFAULT NULL COMMENT '任职结束日期, NULL表示当前任职',
+    end_date       DATE DEFAULT NULL COMMENT '任职结束日期（不包含当天）, NULL表示仍在任',
     tenant_id BIGINT DEFAULT 1 COMMENT '租户ID',
     create_time    DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
     update_time    DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
-    PRIMARY KEY (id)
+    PRIMARY KEY (id),
+    INDEX idx_dept_leader_dept (tenant_id, dept_id, end_date),
+    INDEX idx_dept_leader_user (tenant_id, user_id, end_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='部门主管配置';
 
 -- 基础管理平台及应用管理初始菜单（仅新库使用）。

@@ -131,7 +131,7 @@ export UPM_SSO_SECRET_KEY="替换为上一步生成的固定值"
 ### 3. 编译安装
 
 ```bash
-mvn clean install -Drevision=1.1.0
+mvn clean install
 ```
 
 也可以使用安装脚本：
@@ -254,13 +254,17 @@ https://upm.example.com/third-auth-callback.html
 <dependency>
     <groupId>io.github.yilers</groupId>
     <artifactId>upm-core</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
 </dependency>
 ```
 
 只需要实体、请求响应对象或服务契约时，可以依赖 `upm-api`。建议业务模块同样采用 `api + core + start` 分层。
 
+上面的依赖版本使用**上一正式发布版**，不是当前源码的 `1.2.0` 开发版本；`1.2.0` 完成并发布后再更新该示例。源码构建版本由父 POM 的 `revision` 决定，无需在每条 Maven 命令中重复指定。
+
 模块集成与独立 SSO 是两种不同部署方式：业务系统已经集成本地 `upm-core` 和 UPM 数据表时，通常直接使用本地登录，不再连接另一套独立 UPM。
+
+部门管理支持设置主管和副主管，任职关系保存在 `upm_dept_leader`；用户列表会展示当前任职标签。主管身份是组织信息，不会自动授予角色、菜单或数据权限。已有数据库升级时执行对应的 `20261014_dept_leader` 增量脚本，并为其他租户同步新按钮后按需授权。
 
 ## 数据权限
 
@@ -302,16 +306,16 @@ permission.column.table=upm_log,upm_user
 
 ```bash
 # 完整构建
-mvn clean install -Drevision=1.1.0
+mvn clean install
 
 # 跳过测试构建
-mvn clean install -DskipTests -Drevision=1.1.0
+mvn clean install -DskipTests
 
 # 打包
-mvn clean package -DskipTests -Drevision=1.1.0
+mvn clean package -DskipTests
 
 # 显式运行测试
-mvn test -DskipTests=false -Drevision=1.1.0
+mvn test -DskipTests=false
 
 # 查看依赖树
 mvn dependency:tree

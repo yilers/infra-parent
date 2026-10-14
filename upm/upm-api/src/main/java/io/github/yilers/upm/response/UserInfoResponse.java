@@ -20,6 +20,9 @@ public class UserInfoResponse extends User {
 
     private List<Role> roleList;
 
+    @Schema(description = "当前有效的部门主管或副主管任职，不代表角色或管理权限")
+    private List<DeptLeaderResponse> deptLeaderList;
+
     private List<Permission> permissionList;
 
     @Schema(description = "是否仍在使用初始化密码")

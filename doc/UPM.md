@@ -23,10 +23,16 @@ UPM 支持两种互斥的接入方式：
 
 平台管理员可以预览并同步租户 1 后续发生的应用菜单变化，具体规则见 [TENANT_PERMISSION_SYNC.md](./TENANT_PERMISSION_SYNC.md)。
 
+## 部门主管
+
+部门管理可设置一位主管及多位副主管，任职记录保存在 `upm_dept_leader`。候选员工默认来自当前部门及下级，也可搜索本租户其他部门；后端始终校验用户与部门同租户且账号有效。只有获得 `system:dept:leader:edit` 按钮权限、且可管理目标部门的用户才能修改配置。用户列表展示当前有效的主管任职标签。
+
+撤销或更换主管时，旧记录以当天为结束日期（不包含当天），保留任职历史；已有审批任务不会自动转交。部门主管身份本身不赋予角色或数据权限。后续 Flow 可通过 `DeptLeaderService.findCurrentByDeptId` 查询部门当前负责人。
+
 ## 本地运行
 
 ```bash
-mvn clean install -Drevision=1.1.0
+mvn clean install
 cd upm/upm-start
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
