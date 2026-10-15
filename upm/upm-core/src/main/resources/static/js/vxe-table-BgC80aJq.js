@@ -1,0 +1,1 @@
+var e,t;function n(n){e=n.useVbenVxeGrid,t=n.preserveTreeTableState}function r(...t){if(!e)throw Error(`VxeTable adapter not registered`);return e(...t)}function i(...e){if(!t)throw Error(`preserveTreeTableState not registered`);return t(...e)}export{n,r,i as t};

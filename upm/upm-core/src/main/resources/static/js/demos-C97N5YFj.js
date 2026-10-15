@@ -1,0 +1,1 @@
+var e=`演示`,t=`Ant Design Vue`,n={title:`项目`,about:`关于`,document:`文档`},r={title:e,antd:t,vben:n};export{t as antd,r as default,e as title,n as vben};

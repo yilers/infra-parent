@@ -1,0 +1,1 @@
+var e;function t(t){e=t.useAuthStore,t.useShopStore}function n(){if(!e)throw Error(`Auth store adapter not registered`);return e()}export{n,t};

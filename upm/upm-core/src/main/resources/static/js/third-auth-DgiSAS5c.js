@@ -1,0 +1,1 @@
+import{n as e}from"./request-Cs38nDBt.js";function t(){return e.get(`/thirdAuth/binding/findAll`)}function n(t){return e.post(`/thirdAuth/binding/authorize`,{platform:t})}function r(t,n){return e.post(`/thirdAuth/binding/bind`,{authCode:t,state:n})}function i(t){return e.post(`/thirdAuth/binding/unbind`,{platform:t})}export{i,r as n,t as r,n as t};

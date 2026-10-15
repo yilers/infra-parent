@@ -1,0 +1,1 @@
+function e(e){var t,n;return(t=(n=e==null?void 0:e.closest(`form`))==null?e==null?void 0:e.parentNode:n)==null?document.body:t}export{e as t};

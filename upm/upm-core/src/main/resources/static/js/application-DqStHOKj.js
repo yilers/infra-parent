@@ -1,0 +1,1 @@
+import{n as e}from"./request-Cs38nDBt.js";function t(){return e.get(`/application/findAll`)}function n(t){return e.post(`/application/save`,t)}function r(t){return e.post(`/application/update`,t)}function i(t){return e.post(`/application/usable`,{id:t})}function a(t,n){return e.post(`/application/resetSecret`,{id:t,version:n})}export{i as a,r as i,a as n,n as r,t};

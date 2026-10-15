@@ -1,0 +1,1 @@
+var e=`请求出错，请稍候重试`,t=`操作成功`,n=`成功提示`,r=`错误提示`,i=`登录已过期, 请重新登录`,a={apiRequestFailed:e,operationSuccess:t,successTip:n,errorTip:r,loginTimeout:i};export{e as apiRequestFailed,a as default,r as errorTip,i as loginTimeout,t as operationSuccess,n as successTip};

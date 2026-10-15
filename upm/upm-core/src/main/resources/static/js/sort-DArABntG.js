@@ -1,0 +1,1 @@
+function e(e,t,n,r=!0){return[...e].sort((e,i)=>{let a=e[t]||0,o=i[t]||0,s=r?a-o:o-a;if(s===0){if(typeof e[n]==`string`&&typeof i[n]==`string`)return r?e[n].localeCompare(i[n]):i[n].localeCompare(e[n]);let t=e[n]||0,a=i[n]||0;return r?t-a:a-t}return s})}export{e as t};

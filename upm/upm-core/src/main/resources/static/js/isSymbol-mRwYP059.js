@@ -1,0 +1,1 @@
+import{d as e,g as t}from"./_getTag-9B1EA6lT.js";var n=`[object Symbol]`;function r(r){return typeof r==`symbol`||e(r)&&t(r)==n}export{r as t};

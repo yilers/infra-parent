@@ -1,0 +1,1 @@
+var e=`Demos`,t=`Ant Design Vue`,n={title:`Project`,about:`About`,document:`Document`},r={title:e,antd:t,vben:n};export{t as antd,r as default,e as title,n as vben};

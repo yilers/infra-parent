@@ -1,0 +1,1 @@
+var e=`Operation failed`,t=`Operation Success`,n=`Success Tip`,r=`Error Tip`,i=`Login timeout, please log in again`,a={apiRequestFailed:e,operationSuccess:t,successTip:n,errorTip:r,loginTimeout:i};export{e as apiRequestFailed,a as default,r as errorTip,i as loginTimeout,t as operationSuccess,n as successTip};

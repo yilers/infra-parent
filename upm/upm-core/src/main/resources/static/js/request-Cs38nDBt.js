@@ -1,0 +1,1 @@
+var e;function t(t){e=t}var n=new Proxy({},{get(t,n){if(!e)throw Error(`requestClient has not been registered!`);let r=e[n];return typeof r==`function`?r.bind(e):r}});export{n,t};

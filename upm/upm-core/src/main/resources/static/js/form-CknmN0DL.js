@@ -1,0 +1,1 @@
+var e;function t(t){e=t.useVbenForm}function n(...t){if(!e)throw Error(`Form adapter not registered`);return e(...t)}export{n,t};

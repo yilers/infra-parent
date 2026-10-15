@@ -1,0 +1,1 @@
+var e={placeholder:`Please select a tenant`,switch:`Switch to tenant: `,reset:`Reset to default tenant`},t={tenantToggle:e};export{t as default,e as tenantToggle};
