@@ -7,6 +7,7 @@ import cn.hutool.v7.core.collection.CollUtil;
 import cn.hutool.v7.crypto.SecureUtil;
 import cn.hutool.v7.crypto.digest.BCrypt;
 import cn.hutool.v7.extra.spring.cglib.CglibUtil;
+import cn.hutool.v7.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import io.github.yilers.core.constant.CommonConst;
 import io.github.yilers.core.enums.DataScopeEnum;
@@ -172,7 +173,7 @@ public class CommonHandler {
 
     @Transactional(rollbackFor = Exception.class)
     public void addTenant(TenantRequest dto) {
-        log.info("添加租户");
+        log.info("添加租户:{}", JSONUtil.toJsonStr(dto));
         Tenant tenant = tenantService.findByCode(dto.getCode());
         if (tenant != null) {
             throw new CommonException("租户编码已存在");
@@ -343,7 +344,7 @@ public class CommonHandler {
         dept.setDeptDeep(1);
         dept.setSortNumber(1);
         dept.setParentId(0L);
-        dept.setOperable(CommonConst.NO);
+        dept.setOperable(CommonConst.YES);
         dept.setUsable(CommonConst.YES);
         deptService.save(dept);
         return dept;

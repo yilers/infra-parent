@@ -46,11 +46,11 @@ public class TenantController {
         return Result.ok(tenantService.list());
     }
 
-    @Operation(summary = "保存租户")
+    @Operation(summary = "添加租户")
     @PostMapping("/save")
-    @SysLog(module = "租户模块", value = "保存租户")
+    @SysLog(module = "租户模块", value = "添加租户")
     @SaCheckPermission("system:tenant:add")
-    public Result<?> save(@Validated(Add.class) @RequestBody TenantRequest dto) {
+    public Result<?> add(@Validated(Add.class) @RequestBody TenantRequest dto) {
         commonHandler.addTenant(dto);
         return Result.ok();
     }

@@ -63,7 +63,7 @@ CREATE TRIGGER trg_upm_dept_update_time
     EXECUTE FUNCTION update_upm_dept_update_time();
 
 INSERT INTO upm_dept (id, parent_id, dept_code, dept_name, dept_desc, sort_number, dept_deep, operable, usable, deleted, tenant_id, version, create_time, update_time)
-VALUES (10, 0, 'yilers', 'yilers', NULL, 1, 1, 0, 1, 0, 1, 1, '2026-01-08 15:42:17.808', '2026-01-08 15:42:17.808');
+VALUES (10, 0, 'yilers', 'yilers', NULL, 1, 1, 1, 1, 0, 1, 1, '2026-01-08 15:42:17.808', '2026-01-08 15:42:17.808');
 
 
 -- 职位表
@@ -112,9 +112,9 @@ CREATE TRIGGER trg_upm_position_update_time
     EXECUTE FUNCTION update_upm_position_update_time();
 
 INSERT INTO upm_position (id, position_code, position_name, position_desc, sort_number, operable, usable, deleted, tenant_id, version, create_time, update_time)
-VALUES (10, 'dev', '开发', NULL, 1, 0, 1, 0, 1, 1, '2025-06-05 10:50:30.000', '2025-06-05 10:50:32.000');
+VALUES (10, 'dev', '开发', NULL, 1, 1, 1, 0, 1, 1, '2025-06-05 10:50:30.000', '2025-06-05 10:50:32.000');
 INSERT INTO upm_position (id, position_code, position_name, position_desc, sort_number, operable, usable, deleted, tenant_id, version, create_time, update_time)
-VALUES (20, 'user', '员工', NULL, 2, 0, 1, 0, 1, 1, '2025-06-05 11:07:01.740', '2025-06-05 11:07:01.740');
+VALUES (20, 'user', '员工', NULL, 2, 1, 1, 0, 1, 1, '2025-06-05 11:07:01.740', '2025-06-05 11:07:01.740');
 
 
 -- 用户表
