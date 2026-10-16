@@ -1,0 +1,1 @@
+import{t as e}from"./crypto-CwW2nXiS.js";import{n as t}from"./request-Cs38nDBt.js";function n(n){let r={oldPwd:e(n.oldPwd),newPwd:e(n.newPwd)};return t.post(`/user/updatePwd`,r)}export{n as t};

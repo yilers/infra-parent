@@ -1,1 +1,0 @@
-import{t as e}from"./preferences-ATnyB38l.js";var t=e.getPreferences.apply(e),n=e.updatePreferences.bind(e),r=e.resetPreferences.bind(e),i=e.clearCache.bind(e),a=e.initPreferences.bind(e);export{n as a,r as i,a as n,t as r,i as t};

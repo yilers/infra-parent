@@ -1,1 +1,0 @@
-export{t as default}from"./profile-panel-t5DrNDyn.js";

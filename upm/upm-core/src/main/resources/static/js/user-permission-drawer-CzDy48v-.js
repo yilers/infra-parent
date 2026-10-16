@@ -1,1 +1,0 @@
-export{t as default}from"./user-permission-drawer-CpMR-XBs.js";

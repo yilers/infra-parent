@@ -1,1 +1,0 @@
-function e(){let e=document.querySelector(`#__app-loading__`);if(e){e.classList.add(`hidden`);let t=document.querySelectorAll(`[data-app-loading^="inject"]`);e.addEventListener(`transitionend`,()=>{e.remove(),t.forEach(e=>e.remove())},{once:!0})}}var t=`infra-third-auth-login-redirect`;export{e as n,t};

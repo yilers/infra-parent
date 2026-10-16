@@ -1,1 +1,0 @@
-export{t as default}from"./dept-drawer-CcoPc-74.js";

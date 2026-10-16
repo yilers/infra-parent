@@ -1,0 +1,1 @@
+function e(e){return ArrayBuffer.isView(e)&&!(e instanceof DataView)}function t(t){return e(t)}function n(e){let t=e==null?void 0:e.constructor;return e===(typeof t==`function`?t.prototype:Object.prototype)}export{t as n,e as r,n as t};

@@ -1,1 +1,0 @@
-export{t as default}from"./table-h1AvOwCZ.js";

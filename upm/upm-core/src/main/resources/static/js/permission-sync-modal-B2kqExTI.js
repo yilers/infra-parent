@@ -1,1 +1,0 @@
-export{t as default}from"./permission-sync-modal-CFpp6gFs.js";

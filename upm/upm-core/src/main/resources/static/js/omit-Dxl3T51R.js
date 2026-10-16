@@ -1,1 +1,0 @@
-import{Ot as e}from"./useConfigInject-lJhoW9_R.js";function t(t,n){let r=e({},t);for(let e=0;e<n.length;e+=1){let t=n[e];delete r[t]}return r}export{t};
