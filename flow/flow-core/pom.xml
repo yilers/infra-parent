@@ -29,6 +29,11 @@
             <artifactId>flow-api</artifactId>
             <version>${revision}</version>
         </dependency>
+        <dependency>
+            <groupId>org.dromara.warm</groupId>
+            <artifactId>warm-flow-mybatis-plus-sb4-starter</artifactId>
+            <version>${warm-flow.version}</version>
+        </dependency>
     </dependencies>
 
 </project>

@@ -22,8 +22,8 @@ flow
 └── flow-core
 ```
 
-- `flow-api`：工作流服务契约、请求响应对象和身份解析扩展接口。
-- `flow-core`：流程定义、实例、任务、审批操作及工作流引擎适配。
+- `flow-api`：工作流服务契约和身份解析扩展接口，不暴露引擎类型。
+- `flow-core`：Warm-Flow 引擎适配、租户隔离和办理人权限接入。
 - `flow-start`：需要独立部署时再创建。
 
 ## 功能范围
@@ -39,7 +39,7 @@ OA 首期作为 `infra` 应用内与“系统管理”同级的菜单，无需�
 
 ## Warm-Flow选型
 
-计划使用 Warm-Flow 作为底层流程引擎。接入前验证其与 Spring Boot 4、JDK 25、MyBatis-Plus、租户插件和当前数据库版本的兼容性。
+选用 Warm-Flow 1.8.9 作为底层流程引擎，`flow-core` 引入官方 `warm-flow-mybatis-plus-sb4-starter`。已通过 JDK 25 的 Maven 编译；实际启动、建表和流程流转仍需在目标数据库上验证。1.8.9 的审批通过和驳回使用 `TaskService.pass/reject`，不再以旧的 `InsService.skipByInsId` 作为新接入的默认入口。
 
 Warm-Flow 类型只允许出现在 `flow-core`，不得暴露到 `flow-api`。业务模块通过项目自己的 `WorkflowService` 操作流程，避免底层引擎升级影响业务契约。
 
@@ -51,19 +51,48 @@ Warm-Flow 原生表保持其 `flow_` 命名。项目新增的应用映射、业�
 flow_ext_xxx
 ```
 
-由 Warm-Flow 自己处理的表不再重复实现。MyBatis-Plus 租户插件与 Warm-Flow 租户机制只能保留一个明确入口，避免同一 SQL 被重复追加租户条件。
+原生七张流程表的结构采用 [Warm-Flow v1.8.9 官方 MySQL 脚本](https://github.com/dromara/warm-flow/blob/v1.8.9/sql/mysql/warm-flow-all.sql) 与 [PostgreSQL 脚本](https://github.com/dromara/warm-flow/blob/v1.8.9/sql/postgresql/postgresql-warm-flow-all.sql)。空库执行 `sql/full/`，已有库只执行相应的 `sql/migration/20261016_flow.*.sql`；不要在已有流程表的库中重复建表。
+
+引擎表的 `tenant_id` 为 `VARCHAR(40)`，UPM 表的 `tenant_id` 为 `BIGINT`。UPM 租户插件忽略 `flow_` 表，`flow-core` 对 `flow_` 表单独追加字符串租户条件，避免重复注入或类型混用。运行时仍需验证流程设计、发起和任务查询全链路的租户隔离。
+
+流程实体的租户值使用 Warm-Flow 的 `TenantHandler`；SQL 条件使用 MyBatis-Plus 的 `TenantLineInnerInterceptor`。两者共用服务端 `RequestContextHolder`，没有租户上下文时直接失败。启动时还会检查 Flow 拦截器确实加入插件链、办理人处理器确实被引擎装载。设计依据见 [官方多租户说明](https://warm-flow.cn/master/advanced/tenant.html) 和 [办理人权限处理器说明](https://warm-flow.cn/master/primary/permission_handler.html)。
 
 ## UPM适配
 
-`flow-core` 不直接依赖 `upm-core`。工作流定义自己的身份查询接口，用于解析用户、角色、部门和部门层级：
+`flow-core` 不直接依赖 `upm-core`。工作流定义自己的当前身份接口：
 
 ```text
 WorkflowIdentityProvider
 ```
 
-本地集成时由组装层调用 UPM Service 实现；独立部署时由 `flow-start` 依赖 `upm-api`，通过 RPC 或 HTTP 获取身份数据。租户、应用和操作人由服务端登录态恢复。
+`infra-start` 中的 `UpmWorkflowIdentityProvider` 通过 UPM Service 提供当前用户ID、角色ID和部门ID；Warm-Flow 的办理人标识采用用户ID（兼容 `user:用户ID`）、`role:角色ID`、`dept:部门ID`。未登录、租户不一致或用户停用时拒绝办理。独立部署时由宿主实现同一接口，通过可信 RPC 或 HTTP 获取身份数据，不能直接复用本地 UPM 实现。
 
-“部门主管审批”通过 UPM 已实现的 `upm_dept_leader` 关系解析，不能将菜单按钮权限当作某条任务的办理权限。任务到达节点时记录实际办理人；主管缺失或重复时明确报错，不自动向上级部门回退。独立部署时还需补齐可信的远程身份校验与权限查询适配，不能仅引入 `common-auth` 的默认空权限实现。
+`WorkflowService` 封装发起、通过和驳回三个原子操作。`WorkflowDefinitionService` 封装定义分页、版本查询、设计 JSON 保存、复制、发布、取消发布和删除。前者仍只提供后端服务契约；后者通过 `WorkflowDefinitionController` 开放管理接口，并使用 `flow:definition:*` 按钮权限保护。其他业务模块直接注入服务时，仍必须自行校验管理权限；流程引擎的任务办理人校验不能替代这些授权。
+
+### 流程定义管理接口
+
+| 接口 | 权限 | 用途 |
+| --- | --- | --- |
+| `GET /flow/definition/page` | `flow:definition:list` | 分页查询，可按流程编码精确筛选 |
+| `GET /flow/definition/versions/{flowCode}` | `flow:definition:list` | 查询全部版本 |
+| `GET /flow/definition/detail/{id}` | `flow:definition:list` | 查询版本摘要 |
+| `GET /flow/definition/design/{id}` | `flow:definition:list` | 导出设计 JSON |
+| `POST /flow/definition/add` | `flow:definition:add` | 新建未发布定义，Body 为设计 JSON |
+| `POST /flow/definition/edit/{id}` | `flow:definition:edit` | 修改未发布且无实例的版本 |
+| `POST /flow/definition/copy/{id}` | `flow:definition:add` | 复制为新版本 |
+| `POST /flow/definition/publish/{id}` | `flow:definition:publish` | 发布版本 |
+| `POST /flow/definition/unpublish/{id}` | `flow:definition:publish` | 无实例时取消发布 |
+| `POST /flow/definition/delete/{id}` | `flow:definition:delete` | 删除未发布且无实例的版本 |
+
+`add` 和 `edit` 的 Body 是 Warm-Flow 1.8.9 `DefJson` 格式的 JSON 对象，暂不接受自行拼装的简化字段；创建时不允许指定 ID，发布状态由服务端固定为未发布。编辑时 ID、流程编码和版本须与原版本一致。流程版本已有任何实例时，即使实例已完成，也不允许编辑或删除；需要变更请复制新版本。接口仅操作当前租户数据。
+
+模板租户的“OA审批 / 流程定义”菜单已经预留，但 `usable=0`，避免前端页面尚未接入时出现无效路由；五个按钮权限可用于后端接口鉴权。前端流程定义页面完成后，再设置菜单组件并启用这两个菜单。其他租户通过现有“同步应用菜单”获得模板权限，随后由租户管理员授权角色。
+
+待办/已办查询、图形化流程设计、请假业务和前端页面仍待后续接入。本阶段不声称通用 Flow 已具备完整 OA 能力。
+
+只依赖 `flow-core` 的其他启动器必须实现 `WorkflowIdentityProvider`，并将 `flowTenantLineInnerInterceptor` 加入自己的 MyBatis-Plus 插件链；否则启动检查会拒绝运行。`upm-start` 不依赖 Flow，不受此配置影响。
+
+“部门主管审批”后续通过 UPM 已实现的 `upm_dept_leader` 关系解析，不能将菜单按钮权限当作某条任务的办理权限。任务到达节点时应固化实际办理人；主管缺失或重复时明确报错，不自动向上级部门回退。此解析与请假流程尚未实现。独立部署时还需补齐可信的远程身份校验与权限查询适配，不能仅引入 `common-auth` 的默认空权限实现。
 
 ## File与Notice集成
 

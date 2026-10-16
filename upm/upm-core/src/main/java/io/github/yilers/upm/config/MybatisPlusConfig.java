@@ -11,6 +11,7 @@ import jakarta.annotation.PostConstruct;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.util.concurrent.TimeUnit;
 
@@ -29,7 +30,8 @@ public class MybatisPlusConfig {
     }
 
     @Bean
-    public MybatisPlusInterceptor mybatisPlusInterceptor() {
+    public MybatisPlusInterceptor mybatisPlusInterceptor(
+            ObjectProvider<TenantLineInnerInterceptor> additionalTenantInterceptors) {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
         // 列数据权限
 //        CustomResultInterceptor customResultInterceptor = new CustomResultInterceptor();
@@ -38,6 +40,8 @@ public class MybatisPlusConfig {
         TenantLineInnerInterceptor tenantInterceptor = new TenantLineInnerInterceptor();
         tenantInterceptor.setTenantLineHandler(new CustomTenantHandler());
         interceptor.addInnerInterceptor(tenantInterceptor);
+        // 按需追加其他模块的租户处理器，例如 Flow 字符串租户ID。
+        additionalTenantInterceptors.orderedStream().forEach(interceptor::addInnerInterceptor);
         // 行数据权限
         DataPermissionInterceptor dataPermissionInterceptor = new DataPermissionInterceptor(new CustomDataPermissionHandler());
         interceptor.addInnerInterceptor(dataPermissionInterceptor);

@@ -16,6 +16,8 @@
 10. 继续执行对应的 `20260929_tenant_login_policy` 脚本，创建租户账号密码登录策略表，并为存量有效租户初始化“10分钟内失败3次、锁定10分钟”的默认策略。策略使用物理删除，删除记录后对应租户不限制密码失败次数。
 11. 继续执行对应的 `20260929_user_login_unlock` 脚本，为平台模板增加“解除登录锁定”按钮权限。其他租户在租户管理中同步应用菜单后，再由租户管理员按需授权角色。
 12. 已执行用户批量新增迁移的数据库，继续执行对应的 `20261014_dept_leader` 脚本，为已有 `upm_dept_leader` 表补索引并增加“设置主管”按钮。执行前确认按钮 ID `196`、权限编码 `system:dept:leader:edit` 和两个索引均不存在；成功后不要重复执行。其他租户通过“同步应用菜单”获得按钮，再按需授权角色。
+13. 接入 Flow 时，先确认数据库没有 `flow_definition`、`flow_node`、`flow_skip`、`flow_instance`、`flow_task`、`flow_his_task`、`flow_user` 表，再执行对应的 `20261016_flow` 脚本一次。该脚本只创建 Warm-Flow 1.8.9 的七张引擎表，不新增菜单或业务数据；已有 Warm-Flow 库应单独评估升级，不能直接重跑建表脚本。
+14. 流程定义管理接口需要执行对应的 `20261016_flow_definition_permissions` 脚本一次。执行前检查菜单 ID `197~203` 均未占用；脚本只给模板租户添加暂时隐藏的“OA审批 / 流程定义”菜单及五个按钮，并授权默认两种管理员角色。其他租户通过“同步应用菜单”获取，再按需授权角色；前端页面接入后才启用菜单。
 
 执行第 7 步前，确认数据库中不存在 `upm_third_auth_config` 表、`system/third-auth/index` 组件和 `system:thirdAuth:*` 权限编码。该脚本不是幂等脚本，已经执行成功后不要重复执行。
 
@@ -56,6 +58,8 @@ SHOW INDEX FROM upm_permission WHERE Key_name = 'idx_permission_app_device';
 如果索引检查已有结果，跳过最后的 `CREATE INDEX idx_permission_app_device ...`；`MODIFY COLUMN app_id BIGINT NOT NULL` 可在字段已为非空时执行。任一计数不为 0，先核对实际执行到哪一步，不要继续插入，也不要删除现有记录后重跑。
 
 ### 迁移完成后的检查
+
+Flow 脚本执行后，应存在 `flow_definition`、`flow_node`、`flow_skip`、`flow_instance`、`flow_task`、`flow_his_task`、`flow_user` 七张表；不要因为官方包中存在可选的表单 Mapper，就手工推测并补建 `flow_form`。表结构以 1.8.9 官方 SQL 为准。
 
 ```sql
 -- 应为0：菜单所属应用与租户必须匹配。

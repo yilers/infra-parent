@@ -35,11 +35,14 @@ class ApplicationMigrationTest {
                     RunScript.execute(connection, new StringReader(statement));
                 }
                 assertEquals(1, count(connection, "SELECT COUNT(*) FROM upm_application WHERE code='infra' AND operable=0"));
-                assertEquals(52, count(connection, "SELECT COUNT(*) FROM upm_permission"));
+                assertEquals(59, count(connection, "SELECT COUNT(*) FROM upm_permission"));
                 assertEquals(0, count(connection, "SELECT COUNT(*) FROM upm_permission WHERE app_id<>1 OR app_id IS NULL"));
                 assertEquals(1, count(connection, "SELECT COUNT(*) FROM upm_permission WHERE permission_code='system:tenant:sync' AND source_id IS NULL"));
                 assertEquals(1, count(connection, "SELECT COUNT(*) FROM upm_permission WHERE permission_code='system:user:unlock' AND operable=1"));
                 assertEquals(1, count(connection, "SELECT COUNT(*) FROM upm_permission WHERE permission_code='system:dept:leader:edit' AND parent_id=130 AND operable=1"));
+                assertEquals(2, count(connection, "SELECT COUNT(*) FROM upm_permission WHERE id IN (197, 198) AND usable=0"));
+                assertEquals(5, count(connection, "SELECT COUNT(*) FROM upm_permission WHERE permission_code LIKE 'flow:definition:%' AND usable=1"));
+                assertEquals(14, count(connection, "SELECT COUNT(*) FROM upm_role_permission WHERE role_id IN (10, 20) AND permission_id BETWEEN 197 AND 203"));
                 assertEquals(1, count(connection, "SELECT COUNT(*) FROM upm_role_permission WHERE role_id=10 AND permission_id=195"));
                 assertEquals(10, count(connection, "SELECT COUNT(*) FROM upm_role_permission rp JOIN upm_permission p ON p.id=rp.permission_id WHERE p.component='system/application/index' OR p.permission_code LIKE 'system:application:%'"));
             }
