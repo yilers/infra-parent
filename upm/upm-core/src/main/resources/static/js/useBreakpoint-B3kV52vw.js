@@ -1,1 +1,0 @@
-import{Dt as e,G as t,K as n,N as r,gt as i}from"./vue.runtime.esm-bundler-D9lAnbr7.js";import{n as a}from"./responsiveObserve-1JOAWc8m.js";r(),i();function o(){let r=e({}),i=null,o=a();return t(()=>{i=o.value.subscribe(e=>{r.value=e})}),n(()=>{o.value.unsubscribe(i)}),r}export{o as t};

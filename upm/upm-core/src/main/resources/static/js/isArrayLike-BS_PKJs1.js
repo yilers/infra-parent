@@ -1,1 +1,0 @@
-function e(e){return Number.isSafeInteger(e)&&e>=0}function t(t){return t!=null&&typeof t!=`function`&&e(t.length)}export{t};

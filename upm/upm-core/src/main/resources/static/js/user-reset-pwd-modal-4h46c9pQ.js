@@ -1,0 +1,1 @@
+export{t as default}from"./user-reset-pwd-modal-C_RHWJxa.js";

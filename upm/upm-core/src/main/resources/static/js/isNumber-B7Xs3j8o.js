@@ -1,0 +1,1 @@
+import{C as e,h as t}from"./_getTag-CjjP8Xdg.js";var n=`[object Number]`;function r(r){return typeof r==`number`||t(r)&&e(r)==n}export{r as t};

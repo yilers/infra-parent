@@ -1,1 +1,0 @@
-import{N as e,P as t,St as n,Y as r,ct as i,gt as a}from"./vue.runtime.esm-bundler-D9lAnbr7.js";import{Et as o}from"./useConfigInject-ChInpsmv.js";e(),a();function s(e){let a=Symbol(`contextKey`);return{useProvide:(e,t)=>{let s=n({});return r(a,s),i(()=>{o(s,e,t||{})}),s},useInject:()=>t(a,e)||{}}}export{s as t};

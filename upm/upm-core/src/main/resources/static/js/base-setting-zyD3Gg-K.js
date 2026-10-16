@@ -1,0 +1,1 @@
+export{t as default}from"./base-setting-BEB0G7NM.js";

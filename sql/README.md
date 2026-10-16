@@ -30,7 +30,9 @@ sql/
     ├── 20261016_flow.mysql.sql
     ├── 20261016_flow.postgres.sql
     ├── 20261016_flow_definition_permissions.mysql.sql
-    └── 20261016_flow_definition_permissions.postgres.sql
+    ├── 20261016_flow_definition_permissions.postgres.sql
+    ├── 20261016_flow_definition_menu.mysql.sql
+    └── 20261016_flow_definition_menu.postgres.sql
 ```
 
 ## 新数据库：执行全量脚本
@@ -60,6 +62,7 @@ mysql -u root -p infra < sql/migration/20260930_user_batch_add.mysql.sql
 mysql -u root -p infra < sql/migration/20261014_dept_leader.mysql.sql
 mysql -u root -p infra < sql/migration/20261016_flow.mysql.sql
 mysql -u root -p infra < sql/migration/20261016_flow_definition_permissions.mysql.sql
+mysql -u root -p infra < sql/migration/20261016_flow_definition_menu.mysql.sql
 psql -U postgres -d infra -v ON_ERROR_STOP=1 -f sql/migration/20260907_application.postgres.sql
 psql -U postgres -d infra -v ON_ERROR_STOP=1 -f sql/migration/20260918_sso.postgres.sql
 psql -U postgres -d infra -v ON_ERROR_STOP=1 -f sql/migration/20260923_third_auth.postgres.sql
@@ -71,6 +74,7 @@ psql -U postgres -d infra -v ON_ERROR_STOP=1 -f sql/migration/20260930_user_batc
 psql -U postgres -d infra -v ON_ERROR_STOP=1 -f sql/migration/20261014_dept_leader.postgres.sql
 psql -U postgres -d infra -v ON_ERROR_STOP=1 -f sql/migration/20261016_flow.postgres.sql
 psql -U postgres -d infra -v ON_ERROR_STOP=1 -f sql/migration/20261016_flow_definition_permissions.postgres.sql
+psql -U postgres -d infra -v ON_ERROR_STOP=1 -f sql/migration/20261016_flow_definition_menu.postgres.sql
 ```
 
 如果旧版脚本在 MySQL 5.7 的 `ROW_NUMBER()` 处失败，不能直接重跑整份增量，更不能改用全量脚本；按 [部分失败续执行说明](migration/README.md#mysql-57-在旧版-row_number-语句处失败时)检查已执行的状态后续执行。

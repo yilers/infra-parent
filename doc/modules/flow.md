@@ -86,9 +86,11 @@ WorkflowIdentityProvider
 
 `add` 和 `edit` 的 Body 是 Warm-Flow 1.8.9 `DefJson` 格式的 JSON 对象，暂不接受自行拼装的简化字段；创建时不允许指定 ID，发布状态由服务端固定为未发布。编辑时 ID、流程编码和版本须与原版本一致。流程版本已有任何实例时，即使实例已完成，也不允许编辑或删除；需要变更请复制新版本。接口仅操作当前租户数据。
 
-模板租户的“OA审批 / 流程定义”菜单已经预留，但 `usable=0`，避免前端页面尚未接入时出现无效路由；五个按钮权限可用于后端接口鉴权。前端流程定义页面完成后，再设置菜单组件并启用这两个菜单。其他租户通过现有“同步应用菜单”获得模板权限，随后由租户管理员授权角色。
+模板租户的“OA审批 / 流程定义”菜单已启用，页面组件为 `flow/definition/index`。新库全量脚本直接包含该配置；已执行早期权限增量脚本的库还需执行 `20261016_flow_definition_menu`。其他租户通过现有“同步应用菜单”获得模板权限；已同步的菜单也会在本次增量中启用。执行后重新登录，以刷新菜单和按钮缓存。
 
-待办/已办查询、图形化流程设计、请假业务和前端页面仍待后续接入。本阶段不声称通用 Flow 已具备完整 OA 能力。
+流程设计器源码固定在前端 pnpm workspace 的 `packages/warm-flow-designer`，来源与本地补丁见该目录 `UPSTREAM.md`。`infra-web` 使用官方 Ant Design Vue 适配器，通过项目 `requestClient` 实现设计器数据接口，不会访问默认的 `/warm-flow/**`。`infra-start` 的 `/flow/designer/handler-*` 接口提供当前租户的角色、部门和用户候选项，办理人标识与 `WorkflowIdentityProvider` 一致；独立部署 Flow 时需要提供等价的目录适配。
+
+待办/已办查询、请假业务和对应前端页面仍待后续接入。本阶段只完成流程定义页面与图形化设计，不声称通用 Flow 已具备完整 OA 能力。
 
 只依赖 `flow-core` 的其他启动器必须实现 `WorkflowIdentityProvider`，并将 `flowTenantLineInnerInterceptor` 加入自己的 MyBatis-Plus 插件链；否则启动检查会拒绝运行。`upm-start` 不依赖 Flow，不受此配置影响。
 

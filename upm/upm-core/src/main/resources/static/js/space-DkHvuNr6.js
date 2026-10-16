@@ -1,0 +1,1 @@
+import{t as e}from"./Compact-BdinFQEU.js";import{n as t,t as n}from"./space-jxGomf1f.js";export{e as Compact,n as default,t as spaceProps};

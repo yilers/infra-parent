@@ -509,13 +509,13 @@ INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALU
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 192, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 193, 1, 'web');
 INSERT INTO upm_role_permission (role_id, permission_id, tenant_id, device) VALUES (20, 194, 1, 'web');
--- Flow 定义管理：页面未接入前隐藏菜单，按钮授权可先用于后端接口。
+-- Flow 定义管理：流程页面接入后直接显示菜单。
 INSERT INTO upm_permission
-    (id, parent_id, app_id, tenant_id, permission_name, permission_type, menu_url, menu_icon,
+    (id, parent_id, app_id, tenant_id, permission_name, permission_type, menu_url, menu_icon, component,
      sort_number, device, operable, usable, deleted, version)
 VALUES
-    (197, 0, 1, 1, 'OA审批', 0, 'flow', 'lucide:workflow', 2, 'web', 1, 0, 0, 1),
-    (198, 197, 1, 1, '流程定义', 1, 'definition', 'lucide:git-branch', 1, 'web', 1, 0, 0, 1);
+    (197, 0, 1, 1, 'OA审批', 0, 'flow', 'lucide:workflow', '', 2, 'web', 1, 1, 0, 1),
+    (198, 197, 1, 1, '流程定义', 1, 'definition', 'lucide:git-branch', 'flow/definition/index', 1, 'web', 1, 1, 0, 1);
 INSERT INTO upm_permission
     (id, parent_id, app_id, tenant_id, permission_name, permission_type, permission_code,
      sort_number, device, operable, usable, deleted, version)

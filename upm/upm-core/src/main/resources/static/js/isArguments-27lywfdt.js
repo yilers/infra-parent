@@ -1,1 +1,0 @@
-import{s as e}from"./get-xANhbQTW.js";function t(t){return typeof t==`object`&&!!t&&e(t)===`[object Arguments]`}export{t};
