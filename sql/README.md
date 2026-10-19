@@ -35,7 +35,7 @@ sql/
     └── 20261016_flow_definition_menu.postgres.sql
 ```
 
-审批中心新增 `migration/20261019_flow_inbox.mysql.sql` 和 `migration/20261019_flow_inbox.postgres.sql`，用于已有库的个人审批中心菜单、查询按钮和索引迁移，执行前置要求见增量目录说明。
+审批中心新增 `migration/20261019_flow_inbox.mysql.sql` 和 `migration/20261019_flow_inbox.postgres.sql`，用于已有库的个人审批中心菜单、查询按钮和索引迁移；随后执行对应的 `20261019_flow_task_actions` 添加通过、退回按钮。执行前置要求见增量目录说明。
 
 ## 新数据库：执行全量脚本
 

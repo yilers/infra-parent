@@ -1,5 +1,6 @@
 package io.github.yilers.flow.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -39,8 +40,10 @@ public class WorkflowWorkItem {
     @Schema(description = "审批意见")
     private String message;
     @Schema(description = "记录创建时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date createTime;
     @Schema(description = "记录更新时间；已办列表中为办理时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date updateTime;
     @Schema(description = "是否为本人当前可办理任务，不替代提交时的再次校验")
     private boolean actionable;

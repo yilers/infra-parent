@@ -22,7 +22,11 @@ import java.sql.Connection;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** 使用真实Mapper、分页插件和Flow租户插件核验MySQL/PostgreSQL兼容查询。 */
 class WorkflowInboxQueryTest {

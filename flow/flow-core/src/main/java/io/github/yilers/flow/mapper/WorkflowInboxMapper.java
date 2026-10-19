@@ -31,4 +31,11 @@ public interface WorkflowInboxMapper {
     List<WorkflowWorkItem> history(@Param("instanceId") Long instanceId, @Param("tenantId") String tenantId);
 
     String chart(@Param("instanceId") Long instanceId, @Param("tenantId") String tenantId);
+
+    /** 锁定任务所在实例，串行化同一实例的或签、会签及并行分支办理。 */
+    Long lockInstanceByTask(@Param("taskId") Long taskId, @Param("tenantId") String tenantId);
+
+    /** 加锁后重新校验当前任务及候选身份，不能信任页面的actionable字段。 */
+    int actionableTaskCount(@Param("taskId") Long taskId, @Param("tenantId") String tenantId,
+                            @Param("userId") String userId, @Param("flags") List<String> flags);
 }

@@ -1,13 +1,21 @@
 package io.github.yilers.flow.service.impl;
 
+import io.github.yilers.flow.mapper.WorkflowInboxMapper;
 import io.github.yilers.flow.service.WorkflowIdentityProvider;
 import io.github.yilers.flow.service.WorkflowService;
+import io.github.yilers.web.context.RequestContextHolder;
+import io.github.yilers.web.exception.CommonException;
 import org.dromara.warm.flow.core.FlowEngine;
 import org.dromara.warm.flow.core.dto.FlowParams;
 import org.dromara.warm.flow.core.entity.Instance;
+import org.dromara.warm.flow.core.enums.FlowStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -18,9 +26,11 @@ import java.util.Map;
 public class WorkflowServiceImpl implements WorkflowService {
 
     private final WorkflowIdentityProvider identityProvider;
+    private final WorkflowInboxMapper inboxMapper;
 
-    public WorkflowServiceImpl(WorkflowIdentityProvider identityProvider) {
+    public WorkflowServiceImpl(WorkflowIdentityProvider identityProvider, WorkflowInboxMapper inboxMapper) {
         this.identityProvider = identityProvider;
+        this.inboxMapper = inboxMapper;
     }
 
     @Override
@@ -29,25 +39,72 @@ public class WorkflowServiceImpl implements WorkflowService {
         requireText(flowCode, "流程编码");
         requireText(businessId, "业务单据ID");
         identityProvider.currentUserId();
-        FlowParams params = FlowParams.build().flowCode(flowCode).variable(variablesOrEmpty(variables));
+        FlowParams params = FlowParams.build().flowCode(flowCode).flowStatus(FlowStatus.APPROVAL.getKey())
+                .variable(variablesOrEmpty(variables));
         Instance instance = FlowEngine.insService().start(businessId, params);
+        validateAssignees(instance.getId());
         return instance.getId();
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED)
     public Long pass(Long taskId, String message, Map<String, Object> variables) {
         requireTaskId(taskId);
-        identityProvider.currentUserId();
-        return FlowEngine.taskService().pass(taskId, message, variablesOrEmpty(variables)).getId();
+        lockAndAuthorize(taskId);
+        Long instanceId = FlowEngine.taskService().pass(taskId, message, variablesOrEmpty(variables)).getId();
+        validateAssignees(instanceId);
+        return instanceId;
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED)
     public Long reject(Long taskId, String message, Map<String, Object> variables) {
         requireTaskId(taskId);
-        identityProvider.currentUserId();
-        return FlowEngine.taskService().reject(taskId, message, variablesOrEmpty(variables)).getId();
+        lockAndAuthorize(taskId);
+        Long instanceId = FlowEngine.taskService().reject(taskId, message, variablesOrEmpty(variables)).getId();
+        validateAssignees(instanceId);
+        return instanceId;
+    }
+
+    /**
+     * 行锁属于当前业务事务，跨节点部署也有效；锁持有到业务与流程一起提交。
+     * 多人同时点击同一任务时，后到请求必须重新检查任务和候选人。
+     */
+    private void lockAndAuthorize(Long taskId) {
+        if (!Integer.valueOf(java.sql.Connection.TRANSACTION_READ_COMMITTED)
+                .equals(TransactionSynchronizationManager.getCurrentTransactionIsolationLevel())) {
+            throw new CommonException("流程审批必须在READ_COMMITTED事务中执行，请检查业务外层事务配置");
+        }
+        String userId = identityProvider.currentUserId();
+        Long tenantId = RequestContextHolder.getTenantId();
+        if (tenantId == null) {
+            throw new CommonException("Flow租户上下文不能为空");
+        }
+        if (inboxMapper.lockInstanceByTask(taskId, tenantId.toString()) == null) {
+            throw new CommonException("任务已处理、不存在或无权办理，请刷新待办");
+        }
+        List<String> flags = identityProvider.currentPermissionFlags();
+        if (flags == null || flags.isEmpty()
+                || inboxMapper.actionableTaskCount(taskId, tenantId.toString(), userId, flags) != 1) {
+            throw new CommonException("任务已处理、不存在或无权办理，请刷新待办");
+        }
+    }
+
+    /**
+     * 引擎的办理人转换异常会被内部捕获，因此落库后仍需检查转换结果。
+     * 未解析的角色/部门、空办理人均回滚，避免生成无人可办或不安全的任务。
+     */
+    private void validateAssignees(Long instanceId) {
+        FlowEngine.taskService().list(FlowEngine.newTask().setInstanceId(instanceId)).forEach(task -> {
+            var users = FlowEngine.userService().listByAssociatedAndTypes(task.getId());
+            if (users == null || users.isEmpty() || users.stream().anyMatch(user ->
+                    user.getProcessedBy() == null || user.getProcessedBy().isBlank()
+                            || user.getProcessedBy().startsWith("user:")
+                            || user.getProcessedBy().startsWith("role:")
+                            || user.getProcessedBy().startsWith("dept:"))) {
+                throw new CommonException("节点“" + task.getNodeName() + "”未解析出有效审批人，请检查办理人配置");
+            }
+        });
     }
 
     private static void requireText(String value, String fieldName) {
@@ -63,6 +120,6 @@ public class WorkflowServiceImpl implements WorkflowService {
     }
 
     private static Map<String, Object> variablesOrEmpty(Map<String, Object> variables) {
-        return variables == null ? Map.of() : variables;
+        return variables == null ? new HashMap<>() : new HashMap<>(variables);
     }
 }

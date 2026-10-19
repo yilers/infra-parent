@@ -84,4 +84,18 @@
         SELECT def_json FROM flow_instance
         WHERE id = #{instanceId} AND tenant_id = #{tenantId} AND del_flag = '0'
     </select>
+    <select id="lockInstanceByTask" resultType="long">
+        SELECT i.id FROM flow_instance i
+        WHERE i.id = (SELECT t.instance_id FROM flow_task t
+                      WHERE t.id = #{taskId} AND t.tenant_id = #{tenantId} AND t.del_flag = '0')
+          AND i.tenant_id = #{tenantId} AND i.del_flag = '0'
+        FOR UPDATE
+    </select>
+    <select id="actionableTaskCount" resultType="int">
+        SELECT COUNT(*) FROM flow_task t
+        JOIN flow_instance i ON i.id = t.instance_id AND i.tenant_id = #{tenantId} AND i.del_flag = '0'
+        <include refid="definitionJoin"/>
+        WHERE t.id = #{taskId} AND t.tenant_id = #{tenantId} AND t.del_flag = '0'
+          AND <include refid="actionable"/>
+    </select>
 </mapper>

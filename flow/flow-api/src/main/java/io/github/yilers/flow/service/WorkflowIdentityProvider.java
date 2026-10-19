@@ -20,4 +20,20 @@ public interface WorkflowIdentityProvider {
      * 当前用户能够匹配的流程办理人标识，例如用户ID、role:角色ID和dept:部门ID。
      */
     List<String> currentPermissionFlags();
+
+    /**
+     * 将设计器办理人标识解析为实际用户ID，供引擎创建任务时固化候选人。
+     * 默认支持用户标识；角色、部门由宿主实现，不能让Flow直接依赖UPM。
+     */
+    default List<String> resolveUserIds(List<String> permissionFlags) {
+        return permissionFlags.stream().map(flag -> {
+            if (flag.startsWith("user:")) {
+                return flag.substring(5);
+            }
+            if (flag.contains(":")) {
+                throw new IllegalStateException("宿主尚未实现角色或部门办理人解析");
+            }
+            return flag;
+        }).distinct().toList();
+    }
 }

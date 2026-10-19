@@ -1,6 +1,7 @@
 package io.github.yilers.flow.config;
 
 import io.github.yilers.flow.service.WorkflowIdentityProvider;
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.warm.flow.core.FlowEngine;
 import org.dromara.warm.flow.core.handler.PermissionHandler;
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -13,6 +14,7 @@ import java.util.List;
  * 将宿主系统的登录身份接入 Warm-Flow 1.8.9 办理人校验。
  */
 @Configuration
+@Slf4j
 public class FlowPermissionConfig {
 
     @Bean
@@ -26,6 +28,17 @@ public class FlowPermissionConfig {
             @Override
             public String getHandler() {
                 return identityProvider.currentUserId();
+            }
+
+            @Override
+            public List<String> convertPermissions(List<String> permissions) {
+                try {
+                    return identityProvider.resolveUserIds(permissions);
+                } catch (RuntimeException e) {
+                    // 引擎会忽略转换异常并沿用原标识；显式返回空集合交由业务校验回滚。
+                    log.warn("流程办理人解析失败，拒绝生成待办任务", e);
+                    return List.of();
+                }
             }
         };
     }
