@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,10 +26,13 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     private final WorkflowIdentityProvider identityProvider;
     private final WorkflowInboxMapper inboxMapper;
+    private final WorkflowAssigneeResolver assigneeResolver;
 
-    public WorkflowServiceImpl(WorkflowIdentityProvider identityProvider, WorkflowInboxMapper inboxMapper) {
+    public WorkflowServiceImpl(WorkflowIdentityProvider identityProvider, WorkflowInboxMapper inboxMapper,
+                               WorkflowAssigneeResolver assigneeResolver) {
         this.identityProvider = identityProvider;
         this.inboxMapper = inboxMapper;
+        this.assigneeResolver = assigneeResolver;
     }
 
     @Override
@@ -38,9 +40,9 @@ public class WorkflowServiceImpl implements WorkflowService {
     public Long start(String flowCode, String businessId, Map<String, Object> variables) {
         requireText(flowCode, "流程编码");
         requireText(businessId, "业务单据ID");
-        identityProvider.currentUserId();
+        String applicantId = identityProvider.currentUserId();
         FlowParams params = FlowParams.build().flowCode(flowCode).flowStatus(FlowStatus.APPROVAL.getKey())
-                .variable(variablesOrEmpty(variables));
+                .variable(assigneeResolver.prepare(flowCode, applicantId, variables));
         Instance instance = FlowEngine.insService().start(businessId, params);
         validateAssignees(instance.getId());
         return instance.getId();
@@ -51,7 +53,7 @@ public class WorkflowServiceImpl implements WorkflowService {
     public Long pass(Long taskId, String message, Map<String, Object> variables) {
         requireTaskId(taskId);
         lockAndAuthorize(taskId);
-        Long instanceId = FlowEngine.taskService().pass(taskId, message, variablesOrEmpty(variables)).getId();
+        Long instanceId = FlowEngine.taskService().pass(taskId, message, assigneeResolver.copyBusinessVariables(variables)).getId();
         validateAssignees(instanceId);
         return instanceId;
     }
@@ -61,7 +63,7 @@ public class WorkflowServiceImpl implements WorkflowService {
     public Long reject(Long taskId, String message, Map<String, Object> variables) {
         requireTaskId(taskId);
         lockAndAuthorize(taskId);
-        Long instanceId = FlowEngine.taskService().reject(taskId, message, variablesOrEmpty(variables)).getId();
+        Long instanceId = FlowEngine.taskService().reject(taskId, message, assigneeResolver.copyBusinessVariables(variables)).getId();
         validateAssignees(instanceId);
         return instanceId;
     }
@@ -101,6 +103,7 @@ public class WorkflowServiceImpl implements WorkflowService {
                     user.getProcessedBy() == null || user.getProcessedBy().isBlank()
                             || user.getProcessedBy().startsWith("user:")
                             || user.getProcessedBy().startsWith("role:")
+                            || user.getProcessedBy().contains("${")
                             || user.getProcessedBy().startsWith("dept:"))) {
                 throw new CommonException("节点“" + task.getNodeName() + "”未解析出有效审批人，请检查办理人配置");
             }
@@ -117,9 +120,5 @@ public class WorkflowServiceImpl implements WorkflowService {
         if (taskId == null || taskId <= 0) {
             throw new IllegalArgumentException("任务ID必须为正数");
         }
-    }
-
-    private static Map<String, Object> variablesOrEmpty(Map<String, Object> variables) {
-        return variables == null ? new HashMap<>() : new HashMap<>(variables);
     }
 }

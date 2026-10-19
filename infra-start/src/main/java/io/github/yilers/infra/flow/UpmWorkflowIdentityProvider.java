@@ -1,20 +1,26 @@
 package io.github.yilers.infra.flow;
 
 import cn.dev33.satoken.stp.StpUtil;
+import io.github.yilers.flow.model.WorkflowAssigneeRule;
 import io.github.yilers.flow.service.WorkflowIdentityProvider;
 import io.github.yilers.upm.entity.Dept;
+import io.github.yilers.upm.entity.DeptLeader;
 import io.github.yilers.upm.entity.Role;
 import io.github.yilers.upm.entity.User;
 import io.github.yilers.upm.service.DeptService;
+import io.github.yilers.upm.service.DeptLeaderService;
 import io.github.yilers.upm.service.RoleService;
 import io.github.yilers.upm.service.UserRoleService;
 import io.github.yilers.upm.service.UserService;
 import io.github.yilers.web.context.RequestContextHolder;
+import io.github.yilers.web.exception.CommonException;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -30,13 +36,15 @@ public class UpmWorkflowIdentityProvider implements WorkflowIdentityProvider {
     private final UserRoleService userRoleService;
     private final RoleService roleService;
     private final DeptService deptService;
+    private final DeptLeaderService deptLeaderService;
 
     public UpmWorkflowIdentityProvider(UserService userService, UserRoleService userRoleService,
-                                       RoleService roleService, DeptService deptService) {
+                                       RoleService roleService, DeptService deptService, DeptLeaderService deptLeaderService) {
         this.userService = userService;
         this.userRoleService = userRoleService;
         this.roleService = roleService;
         this.deptService = deptService;
+        this.deptLeaderService = deptLeaderService;
     }
 
     @Override
@@ -109,6 +117,108 @@ public class UpmWorkflowIdentityProvider implements WorkflowIdentityProvider {
         }
         return userService.listByIds(userIds).stream()
                 .filter(user -> tenantId.equals(user.getTenantId()) && Integer.valueOf(1).equals(user.getUsable()))
+                .map(user -> user.getId().toString()).distinct().toList();
+    }
+
+    /** 仅解析当前租户的展示名称；历史流程中的已删除或无效标识由流程图明确提示。 */
+    @Override
+    public Map<String, String> resolvePermissionNames(List<String> permissionFlags) {
+        currentUser();
+        Long tenantId = RequestContextHolder.getTenantId();
+        Map<String, String> names = new LinkedHashMap<>();
+        for (String flag : new LinkedHashSet<>(permissionFlags)) {
+            WorkflowAssigneeRule rule = WorkflowAssigneeRule.fromExpression(flag);
+            if (rule != null) {
+                names.put(flag, rule.getLabel());
+                continue;
+            }
+            String[] parts = flag.split(":", 2);
+            String type = parts.length == 1 ? "user" : parts[0];
+            String value = parts.length == 1 ? parts[0] : parts[1];
+            if (!value.matches("[0-9]{1,19}")) {
+                continue;
+            }
+            Long id;
+            try {
+                id = Long.valueOf(value);
+            } catch (NumberFormatException ignored) {
+                continue;
+            }
+            String name = switch (type) {
+                case "role" -> {
+                    Role role = roleService.getById(id);
+                    yield role != null && tenantId.equals(role.getTenantId()) ? role.getRoleName() : null;
+                }
+                case "dept" -> {
+                    Dept dept = deptService.getById(id);
+                    yield dept != null && tenantId.equals(dept.getTenantId()) ? dept.getDeptName() : null;
+                }
+                case "user" -> {
+                    User user = userService.getById(id);
+                    yield user != null && tenantId.equals(user.getTenantId())
+                            ? (user.getName() == null || user.getName().isBlank() ? user.getAccount() : user.getName()) : null;
+                }
+                default -> null;
+            };
+            if (name != null && !name.isBlank()) {
+                names.put(flag, name);
+            }
+        }
+        return names;
+    }
+
+    /** 申请人的组织关系取自可信登录身份；部门与主管记录均再次校验租户。 */
+    @Override
+    public List<String> resolveDynamicAssignees(String applicantId, WorkflowAssigneeRule rule) {
+        User applicant = currentUser();
+        if (!applicant.getId().toString().equals(applicantId)) {
+            throw new CommonException("动态办理人只能依据当前申请人的组织信息生成");
+        }
+        if (rule == WorkflowAssigneeRule.APPLICANT) {
+            return List.of(applicantId);
+        }
+        Long tenantId = RequestContextHolder.getTenantId();
+        Dept department = applicant.getDeptId() == null ? null : deptService.getById(applicant.getDeptId());
+        requireActiveDepartment(department, tenantId, "申请人所在部门不存在或已停用");
+        if (rule == WorkflowAssigneeRule.PARENT_DEPARTMENT_APPROVERS) {
+            Dept parent = department.getParentId() == null ? null : deptService.getById(department.getParentId());
+            requireActiveDepartment(parent, tenantId, "申请人所在部门没有有效的上一级部门");
+            List<String> leaders = activeLeaders(parent.getId(), 1, applicant.getId(), tenantId);
+            if (leaders.isEmpty()) {
+                throw new CommonException("上一级部门未配置有效主管，或主管就是申请人本人");
+            }
+            return leaders;
+        }
+        List<String> deputies = activeLeaders(department.getId(), 2, applicant.getId(), tenantId);
+        if (!deputies.isEmpty()) {
+            return deputies;
+        }
+        List<String> leaders = activeLeaders(department.getId(), 1, applicant.getId(), tenantId);
+        if (leaders.isEmpty()) {
+            throw new CommonException("本部门未配置有效副主管或主管，或审批人就是申请人本人");
+        }
+        return leaders;
+    }
+
+    private void requireActiveDepartment(Dept dept, Long tenantId, String message) {
+        if (dept == null || !tenantId.equals(dept.getTenantId()) || !Integer.valueOf(1).equals(dept.getUsable())) {
+            throw new CommonException(message);
+        }
+    }
+
+    /** 任职有效期由组织Service筛选，这里过滤本人、跨租户、已停用或已删除的账号。 */
+    private List<String> activeLeaders(Long deptId, int type, Long applicantId, Long tenantId) {
+        List<Long> ids = deptLeaderService.findCurrentByDeptId(deptId).stream()
+                .filter(leader -> tenantId.equals(leader.getTenantId()) && deptId.equals(leader.getDeptId())
+                        && Integer.valueOf(type).equals(leader.getLeaderType()) && leader.getUserId() != null
+                        && !applicantId.equals(leader.getUserId()))
+                .map(DeptLeader::getUserId).distinct().toList();
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return userService.listByIds(ids).stream()
+                .filter(user -> tenantId.equals(user.getTenantId()) && Integer.valueOf(1).equals(user.getUsable())
+                        && ids.contains(user.getId()))
                 .map(user -> user.getId().toString()).distinct().toList();
     }
 

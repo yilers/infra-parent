@@ -36,6 +36,7 @@ import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /** 不依赖开发数据库和Redis，用真实引擎验证发布、发起、或签、退回与事务回滚。 */
@@ -64,6 +65,56 @@ class WorkflowRuntimeIntegrationTest {
     }
 
     @Test
+    void dynamicRulesPersistApplicantSnapshotAcrossApprovalAndReturn() {
+        String code = "dynamic_rules";
+        String json = """
+                {"flowCode":"dynamic_rules","flowName":"动态办理人测试","version":"1","modelValue":"CLASSICS",
+                 "nodeList":[
+                  {"nodeCode":"start","nodeName":"开始","nodeType":0,"nodeRatio":"0","coordinate":"100,100",
+                   "skipList":[{"nowNodeCode":"start","nextNodeCode":"apply","skipType":"PASS"}]},
+                  {"nodeCode":"apply","nodeName":"申请人提交","nodeType":1,"permissionFlag":"${wfApplicant}",
+                   "nodeRatio":"0","coordinate":"300,100",
+                   "skipList":[{"nowNodeCode":"apply","nextNodeCode":"review","skipType":"PASS"}]},
+                  {"nodeCode":"review","nodeName":"本部门审核","nodeType":1,"permissionFlag":"${wfDepartmentApprovers}",
+                   "nodeRatio":"0","coordinate":"500,100",
+                   "skipList":[{"nowNodeCode":"review","nextNodeCode":"parent","skipType":"PASS"},
+                               {"nowNodeCode":"review","nextNodeCode":"apply","skipType":"REJECT"}]},
+                  {"nodeCode":"parent","nodeName":"上级主管审核","nodeType":1,"permissionFlag":"${wfParentDepartmentApprovers}",
+                   "nodeRatio":"0","coordinate":"700,100",
+                   "skipList":[{"nowNodeCode":"parent","nextNodeCode":"end","skipType":"PASS"}]},
+                  {"nodeCode":"end","nodeName":"结束","nodeType":2,"nodeRatio":"0","coordinate":"900,100","skipList":[]}]}
+                """;
+        Long definitionId = definitionService.create(json);
+        definitionService.publish(definitionId);
+        assertThrows(CommonException.class, () -> workflowService.start(code, "forged", Map.of("wfApplicant", List.of("99"))));
+        login("99");
+        assertThrows(CommonException.class, () -> workflowService.start(code, "missing-assignee", Map.of()));
+        assertEquals(0, inboxService.started(code, 1, 20).total());
+        login("10");
+        Long instanceId = workflowService.start(code, "dynamic-1", Map.of());
+        var apply = inboxService.todo(code, 1, 20).records().getFirst();
+        assertEquals("申请人提交", apply.getNodeName());
+        workflowService.pass(apply.getTaskId(), "提交", Map.of());
+        login("20");
+        var review = inboxService.todo(code, 1, 20).records().getFirst();
+        assertThrows(CommonException.class, () -> workflowService.pass(review.getTaskId(), "伪造", Map.of("wfParentDepartmentApprovers", List.of("99"))));
+        workflowService.reject(review.getTaskId(), "请补充", Map.of());
+        login("10");
+        workflowService.pass(inboxService.todo(code, 1, 20).records().getFirst().getTaskId(), "再次提交", Map.of());
+        login("20");
+        workflowService.pass(inboxService.todo(code, 1, 20).records().getFirst().getTaskId(), "同意", Map.of());
+        assertEquals(0, inboxService.todo(code, 1, 20).total());
+        login("30");
+        assertEquals(0, inboxService.todo(code, 1, 20).total());
+        login("40");
+        var parent = inboxService.todo(code, 1, 20).records().getFirst();
+        assertEquals("上级主管审核", parent.getNodeName());
+        assertEquals(instanceId, parent.getInstanceId());
+        workflowService.pass(parent.getTaskId(), "同意", Map.of());
+        assertEquals("8", inboxService.detail(instanceId).instance().getFlowStatus());
+    }
+
+    @Test
     void completeOrSignAndKeepBusinessDataPrivate() {
         String code = publish("runtime_or", "user:20@@user:30");
         Long instanceId = workflowService.start(code, "leave-1", Map.of("secret", "不可返回浏览器"));
@@ -71,11 +122,14 @@ class WorkflowRuntimeIntegrationTest {
         assertEquals("1", mine.instance().getFlowStatus());
         assertFalse(mine.chartJson().contains("listenerPath"));
         assertFalse(mine.chartJson().contains("permissionFlag"));
+        assertTrue(mine.chartJson().contains("审批人甲、审批人乙"));
+        assertTrue(mine.chartJson().contains("permissionLabel"));
         assertFalse(mine.chartJson().contains("不可返回浏览器"));
 
         login("99");
         assertThrows(CommonException.class, () -> inboxService.detail(instanceId));
         login("20");
+        assertTrue(inboxService.detail(instanceId).chartJson().contains("审批人甲、审批人乙"));
         var task = inboxService.todo(code, 1, 20).records().getFirst();
         assertEquals(instanceId, task.getInstanceId());
         login("30");
@@ -192,6 +246,7 @@ class WorkflowRuntimeIntegrationTest {
     @EnableTransactionManagement
     @Import({FlowAutoConfig.class, FlowQueryConfig.class, FlowTenantConfig.class, FlowPermissionConfig.class,
             WorkflowServiceImpl.class, WorkflowInboxServiceImpl.class, WorkflowDefinitionServiceImpl.class,
+            io.github.yilers.flow.service.impl.WorkflowAssigneeResolver.class,
             io.github.yilers.flow.leave.config.LeaveProperties.class,
             io.github.yilers.flow.leave.service.LeaveServiceImpl.class,
             io.github.yilers.flow.leave.service.LeaveBusinessProvider.class})
@@ -222,6 +277,9 @@ class WorkflowRuntimeIntegrationTest {
         SqlSessionFactory sqlSessionFactory(DataSource dataSource, MybatisPlusInterceptor interceptor) throws Exception {
             var factory = new MybatisSqlSessionFactoryBean();
             factory.setDataSource(dataSource);
+            // 与真实宿主一致启用公共填充器，覆盖任务deleteByIds触发updateFill的路径。
+            factory.setGlobalConfig(new com.baomidou.mybatisplus.core.config.GlobalConfig()
+                    .setMetaObjectHandler(new io.github.yilers.web.mybatis.MyMetaObjectHandler()));
             factory.setPlugins(interceptor);
             factory.setMapperLocations(new PathMatchingResourcePatternResolver().getResources("classpath*:mapper/**/*.xml"));
             var configuration = new com.baomidou.mybatisplus.core.MybatisConfiguration();
@@ -235,6 +293,17 @@ class WorkflowRuntimeIntegrationTest {
             return new WorkflowIdentityProvider() {
                 public String currentUserId() { return USER.get(); }
                 public List<String> currentPermissionFlags() { return List.of(USER.get(), "user:" + USER.get()); }
+                public Map<String, String> resolvePermissionNames(List<String> flags) {
+                    return Map.of("user:10", "申请人", "user:20", "审批人甲", "user:30", "审批人乙");
+                }
+                public List<String> resolveDynamicAssignees(String applicantId, io.github.yilers.flow.model.WorkflowAssigneeRule rule) {
+                    if ("99".equals(applicantId)) return List.of();
+                    return switch (rule) {
+                        case APPLICANT -> List.of(applicantId);
+                        case DEPARTMENT_APPROVERS -> List.of("20", "30");
+                        case PARENT_DEPARTMENT_APPROVERS -> List.of("40");
+                    };
+                }
             };
         }
     }

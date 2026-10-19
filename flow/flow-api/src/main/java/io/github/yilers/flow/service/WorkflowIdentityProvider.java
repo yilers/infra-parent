@@ -1,6 +1,9 @@
 package io.github.yilers.flow.service;
 
+import io.github.yilers.flow.model.WorkflowAssigneeRule;
+
 import java.util.List;
+import java.util.Map;
 
 /**
  * 工作流所需的登录身份能力。
@@ -25,6 +28,25 @@ public interface WorkflowIdentityProvider {
      * 当前用户能够匹配的流程办理人标识，例如用户ID、role:角色ID和dept:部门ID。
      */
     List<String> currentPermissionFlags();
+
+    /**
+     * 解析当前租户中办理人标识的展示名称，供已授权的实例流程图使用。
+     * 不展开候选账号、不授予目录查询权限；无法解析的标识不返回名称。
+     */
+    default Map<String, String> resolvePermissionNames(List<String> permissionFlags) {
+        return Map.of();
+    }
+
+    /**
+     * 按可信申请人解析规则对应的有效用户ID，宿主负责租户、组织和任职有效期校验。
+     * 发起时解析并持久化为实例变量，不根据后续办理人的部门重新选人。
+     */
+    default List<String> resolveDynamicAssignees(String applicantId, WorkflowAssigneeRule rule) {
+        if (rule == WorkflowAssigneeRule.APPLICANT) {
+            return List.of(applicantId);
+        }
+        throw new IllegalStateException("宿主尚未实现动态办理人规则：" + rule.getLabel());
+    }
 
     /**
      * 将设计器办理人标识解析为实际用户ID，供引擎创建任务时固化候选人。

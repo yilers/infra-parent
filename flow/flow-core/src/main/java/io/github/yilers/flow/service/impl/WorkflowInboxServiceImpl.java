@@ -16,9 +16,12 @@ import org.dromara.warm.flow.core.FlowEngine;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 通用审批中心查询。所有查询先确定可信身份，详情先授权再加载历史与流程图。
@@ -101,16 +104,43 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
             return null;
         }
         Map<String, Object> chart = FlowEngine.jsonConvert.strToMap(json);
-        stripPrivateFields(chart);
+        Set<String> flags = new LinkedHashSet<>();
+        collectChartFlags(chart, flags);
+        Map<String, String> names = flags.isEmpty() ? Map.of() : identityProvider.resolvePermissionNames(List.copyOf(flags));
+        stripPrivateFields(chart, names);
         return FlowEngine.jsonConvert.objToStr(chart);
     }
 
-    private void stripPrivateFields(Object value) {
+    /** 先汇总去重，避免同一办理人在多个节点重复查询；原始标识随后仍会过滤。 */
+    private void collectChartFlags(Object value, Set<String> flags) {
         if (value instanceof Map<?, ?> map) {
-            map.keySet().removeIf(PRIVATE_CHART_FIELDS::contains);
-            map.values().forEach(this::stripPrivateFields);
+            Object flag = map.get("permissionFlag");
+            if (flag instanceof String text && !text.isBlank()) {
+                Arrays.stream(text.split("@@")).map(String::trim).filter(item -> !item.isEmpty()).forEach(flags::add);
+            }
+            map.values().forEach(item -> collectChartFlags(item, flags));
         } else if (value instanceof List<?> list) {
-            list.forEach(this::stripPrivateFields);
+            list.forEach(item -> collectChartFlags(item, flags));
+        }
+    }
+
+    private void stripPrivateFields(Object value, Map<String, String> names) {
+        if (value instanceof Map<?, ?> map) {
+            if (map.containsKey("nodeType")) {
+                // 展示名称不是办理权限。空配置或已失效标识不能被前端误显示成“所有人”。
+                Object flag = map.get("permissionFlag");
+                String label = flag instanceof String text && !text.isBlank()
+                        ? Arrays.stream(text.split("@@")).map(String::trim).filter(item -> !item.isEmpty())
+                            .map(item -> names.getOrDefault(item, "指定审批人（无法解析）")).distinct().collect(Collectors.joining("、"))
+                        : "未指定审批人";
+                @SuppressWarnings("unchecked")
+                Map<String, Object> node = (Map<String, Object>) map;
+                node.put("permissionLabel", label);
+            }
+            map.keySet().removeIf(PRIVATE_CHART_FIELDS::contains);
+            map.values().forEach(item -> stripPrivateFields(item, names));
+        } else if (value instanceof List<?> list) {
+            list.forEach(item -> stripPrivateFields(item, names));
         }
     }
 

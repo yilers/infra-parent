@@ -38,6 +38,11 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
 
     @Override
     public void updateFill(MetaObject metaObject) {
-        this.fillStrategy(metaObject, "updateTime", LocalDateTime.now()); // 也可以使用(3.3.0 该方法有bug)
+        // 公共填充器会作用于第三方Mapper。仅填充本项目的LocalDateTime字段，
+        // Warm-Flow等使用Date的实体由其自身维护，不能按同名字段直接赋值。
+        if (metaObject.hasGetter("updateTime") && metaObject.hasSetter("updateTime")
+                && LocalDateTime.class.equals(metaObject.getSetterType("updateTime"))) {
+            this.fillStrategy(metaObject, "updateTime", LocalDateTime.now());
+        }
     }
 }

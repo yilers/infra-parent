@@ -4,6 +4,7 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.github.yilers.core.util.Result;
+import io.github.yilers.flow.model.WorkflowAssigneeRule;
 import io.github.yilers.upm.entity.Dept;
 import io.github.yilers.upm.entity.Role;
 import io.github.yilers.upm.entity.User;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -44,7 +46,7 @@ public class WorkflowDesignerDirectoryController {
     @SaCheckPermission("flow:definition:list")
     @Operation(summary = "获取办理人类型")
     public Result<List<String>> handlerType() {
-        return Result.ok(List.of("角色", "部门", "用户"));
+        return Result.ok(List.of("角色", "部门", "用户", "动态规则"));
     }
 
     @GetMapping("/handler-dict")
@@ -52,12 +54,13 @@ public class WorkflowDesignerDirectoryController {
     @Operation(summary = "获取办理人类型字典")
     public Result<List<HandlerDict>> handlerDict() {
         return Result.ok(List.of(new HandlerDict("角色", "role", List.of()),
-                new HandlerDict("部门", "dept", List.of()), new HandlerDict("用户", "user", List.of())));
+                new HandlerDict("部门", "dept", List.of()), new HandlerDict("用户", "user", List.of()),
+                new HandlerDict("动态规则", "dynamic", List.of())));
     }
 
     @GetMapping("/handler-result")
     @SaCheckPermission("flow:definition:list")
-    @Operation(summary = "分页搜索当前租户的流程办理人")
+    @Operation(summary = "分页搜索当前租户的流程办理人", description = "支持角色、部门、用户及动态规则；动态规则只返回配置选项，实际审批人在发起流程时由服务端解析")
     public Result<HandlerResult> handlerResult(@RequestParam(defaultValue = "角色") String handlerType,
                                                @RequestParam(required = false) String userName,
                                                @RequestParam(required = false) Long groupId,
@@ -65,6 +68,15 @@ public class WorkflowDesignerDirectoryController {
                                                @RequestParam(defaultValue = "10") long pageSize) {
         if (pageNum < 1 || pageSize < 1 || pageSize > 100) {
             throw new IllegalArgumentException("办理人分页参数不合法");
+        }
+        // 动态规则是配置选项而非组织成员；不查询或展示某个具体用户的主管信息。
+        if ("动态规则".equals(handlerType)) {
+            List<HandlerRow> rules = Arrays.stream(WorkflowAssigneeRule.values())
+                    .filter(rule -> userName == null || userName.isBlank() || rule.getLabel().contains(userName.trim()))
+                    .map(rule -> new HandlerRow(rule.expression(), rule.name(), rule.getLabel(), "动态规则", null)).toList();
+            long offset = Math.multiplyExact(pageNum - 1, pageSize);
+            return Result.ok(new HandlerResult(new HandlerPage(rules.stream().skip(offset).limit(pageSize).toList(),
+                    rules.size()), null));
         }
         List<Dept> depts = deptService.lambdaQuery().eq(Dept::getUsable, 1).list();
         Page<HandlerRow> rows;
@@ -113,11 +125,21 @@ public class WorkflowDesignerDirectoryController {
         Long tenantId = RequestContextHolder.getTenantId();
         List<HandlerFeedback> result = new ArrayList<>();
         for (String raw : storageIds.split("[,，@]+")) {
-            String[] parts = raw.split(":", 2);
-            if (parts.length != 2 || !parts[1].matches("[0-9]+")) {
+            WorkflowAssigneeRule rule = WorkflowAssigneeRule.fromExpression(raw.trim());
+            if (rule != null) {
+                result.add(new HandlerFeedback(rule.expression(), rule.getLabel()));
                 continue;
             }
-            Long id = Long.valueOf(parts[1]);
+            String[] parts = raw.trim().split(":", 2);
+            if (parts.length != 2 || !parts[1].matches("[0-9]{1,19}")) {
+                continue;
+            }
+            Long id;
+            try {
+                id = Long.valueOf(parts[1]);
+            } catch (NumberFormatException ignored) {
+                continue;
+            }
             String name = switch (parts[0]) {
                 case "role" -> {
                     Role role = roleService.getById(id);
