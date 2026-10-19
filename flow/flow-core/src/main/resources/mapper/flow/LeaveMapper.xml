@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.github.yilers.flow.leave.mapper.LeaveMapper">
+    <sql id="info">
+        SELECT l.*,
+               CASE WHEN l.instance_id IS NULL THEN 'DRAFT' ELSE i.flow_status END AS flow_status,
+               i.node_name
+        FROM flow_ext_leave l
+        LEFT JOIN flow_instance i ON i.id = l.instance_id AND i.tenant_id = #{tenantId} AND i.del_flag = '0'
+    </sql>
+    <select id="pageMine" resultType="io.github.yilers.flow.leave.model.LeaveInfo">
+        <include refid="info"/>
+        WHERE l.tenant_id = #{tenantId} AND l.applicant_id = #{userId}
+        <if test="status != null">
+            <choose>
+                <when test="status == 'DRAFT'">AND l.instance_id IS NULL</when>
+                <otherwise>AND i.flow_status = #{status}</otherwise>
+            </choose>
+        </if>
+        ORDER BY l.create_time DESC, l.id DESC
+    </select>
+    <select id="info" resultType="io.github.yilers.flow.leave.model.LeaveInfo">
+        <include refid="info"/> WHERE l.id = #{id} AND l.tenant_id = #{tenantId}
+    </select>
+    <select id="lockMine" resultType="io.github.yilers.flow.leave.entity.LeaveApplication">
+        SELECT * FROM flow_ext_leave
+        WHERE id = #{id} AND tenant_id = #{tenantId} AND applicant_id = #{userId}
+        FOR UPDATE
+    </select>
+    <update id="editDraft">
+        UPDATE flow_ext_leave SET leave_type = #{request.leaveType}, start_time = #{request.startTime},
+            end_time = #{request.endTime}, duration_hours = #{request.durationHours}, reason = #{request.reason},
+            version = version + 1, update_time = CURRENT_TIMESTAMP
+        WHERE id = #{id} AND tenant_id = #{tenantId} AND applicant_id = #{userId}
+          AND version = #{request.version} AND instance_id IS NULL
+    </update>
+    <update id="bindInstance">
+        UPDATE flow_ext_leave SET instance_id = #{instanceId}, version = version + 1, update_time = CURRENT_TIMESTAMP
+        WHERE id = #{id} AND tenant_id = #{tenantId} AND applicant_id = #{userId}
+          AND version = #{version} AND instance_id IS NULL
+    </update>
+    <delete id="deleteDraft">
+        DELETE FROM flow_ext_leave
+        WHERE id = #{id} AND tenant_id = #{tenantId} AND applicant_id = #{userId}
+          AND version = #{version} AND instance_id IS NULL
+    </delete>
+    <select id="idByInstance" resultType="long">
+        SELECT id FROM flow_ext_leave WHERE instance_id = #{instanceId} AND tenant_id = #{tenantId}
+    </select>
+</mapper>

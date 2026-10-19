@@ -33,6 +33,12 @@
 
 ## 核验
 
+### 请假申请迁移（20261019_flow_leave）
+
+已完成审批中心两批迁移的库，停写、备份后执行对应的 `20261019_flow_leave` 一次。确认尚无 `flow_ext_leave` 表、`flow/leave/index` 菜单及 `flow:leave:*` 按钮，且模板租户1的infra应用下恰有一个OA目录。脚本只新增业务表、请假菜单和五个按钮，并将公共四个页面的默认排序校正为1至4，保留是否可操作、启停和原授权；请假页面排序5。其他租户同步应用菜单后授权并重新登录。
+
+新库只执行全量脚本。脚本不创建或发布流程，提交时由服务端使用当前租户已发布的 `leave` 流程，配置项为 `flow.leave.flow-code`。当前申请尚未实现退回补件、动态部门主管、通知及附件，详细使用见 [请假说明](../../doc/modules/flow-leave.md)。
+
 ### 审批中心旧脚本出现1137错误时
 
 旧版 `20261019_flow_inbox`、`20261019_flow_task_actions` 曾在同一条 `UNION ALL` 语句中重复读取临时表，MySQL会报 `Can't reopen table`。修正版拆成逐条 `INSERT ... SELECT`，保留同一临时表中的起始ID和父子关系；MySQL/PostgreSQL增量与全量脚本均已同步。

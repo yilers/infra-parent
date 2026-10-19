@@ -16,6 +16,11 @@ public interface WorkflowIdentityProvider {
      */
     String currentUserId();
 
+    /** 当前人姓名，仅用于业务单据的展示快照；宿主未提供时使用用户ID。 */
+    default String currentUserName() {
+        return currentUserId();
+    }
+
     /**
      * 当前用户能够匹配的流程办理人标识，例如用户ID、role:角色ID和dept:部门ID。
      */

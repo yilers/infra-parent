@@ -5,6 +5,8 @@ import io.github.yilers.flow.mapper.WorkflowInboxMapper;
 import io.github.yilers.flow.model.WorkflowInstanceDetail;
 import io.github.yilers.flow.model.WorkflowPage;
 import io.github.yilers.flow.model.WorkflowWorkItem;
+import io.github.yilers.flow.model.WorkflowBusinessReference;
+import io.github.yilers.flow.service.WorkflowBusinessProvider;
 import io.github.yilers.flow.service.WorkflowIdentityProvider;
 import io.github.yilers.flow.service.WorkflowInboxService;
 import io.github.yilers.web.context.RequestContextHolder;
@@ -30,6 +32,7 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
 
     private final WorkflowIdentityProvider identityProvider;
     private final WorkflowInboxMapper mapper;
+    private final List<WorkflowBusinessProvider> businessProviders;
 
     @Override
     public WorkflowPage todo(String flowCode, int pageNum, int pageSize) {
@@ -61,13 +64,35 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
         String userId = identityProvider.currentUserId();
         String tenantId = tenantId();
         List<String> flags = flags();
+        WorkflowWorkItem instance = requireVisible(instanceId, tenantId, userId, flags);
+        return new WorkflowInstanceDetail(instance, mapper.tasks(instanceId, tenantId, userId, flags),
+                mapper.history(instanceId, tenantId), sanitizeChart(mapper.chart(instanceId, tenantId)), business(instanceId));
+    }
+
+    @Override
+    public void checkInstanceAccess(Long instanceId) {
+        if (instanceId == null || instanceId <= 0) {
+            throw new CommonException("流程实例ID必须为正数");
+        }
+        String userId = identityProvider.currentUserId();
+        requireVisible(instanceId, tenantId(), userId, flags());
+    }
+
+    private WorkflowWorkItem requireVisible(Long instanceId, String tenantId, String userId, List<String> flags) {
         WorkflowWorkItem instance = mapper.visibleInstance(instanceId, tenantId, userId, flags);
         if (instance == null) {
-            // 未授权与不存在使用相同响应，避免通过实例ID探测其他人的流程。
             throw new CommonException(404, "流程不存在或无权查看");
         }
-        return new WorkflowInstanceDetail(instance, mapper.tasks(instanceId, tenantId, userId, flags),
-                mapper.history(instanceId, tenantId), sanitizeChart(mapper.chart(instanceId, tenantId)));
+        return instance;
+    }
+
+    private WorkflowBusinessReference business(Long instanceId) {
+        List<WorkflowBusinessReference> references = businessProviders.stream()
+                .map(provider -> provider.findReference(instanceId)).filter(java.util.Objects::nonNull).toList();
+        if (references.size() > 1) {
+            throw new CommonException("流程实例关联了多个业务单据，请检查业务配置");
+        }
+        return references.isEmpty() ? null : references.getFirst();
     }
 
     /** 流程图只保留展示数据，不把运行变量、监听器配置和业务扩展正文交给浏览器。 */

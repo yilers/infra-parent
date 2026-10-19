@@ -87,7 +87,7 @@ class WorkflowInboxQueryTest {
             public String currentUserId() { return userId; }
             public List<String> currentPermissionFlags() { return flags; }
         };
-        return new WorkflowInboxServiceImpl(identity, session.getMapper(WorkflowInboxMapper.class));
+        return new WorkflowInboxServiceImpl(identity, session.getMapper(WorkflowInboxMapper.class), List.of());
     }
 
     private SqlSession session(String mode) throws Exception {

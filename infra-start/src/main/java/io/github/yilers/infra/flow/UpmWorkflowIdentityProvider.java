@@ -45,6 +45,12 @@ public class UpmWorkflowIdentityProvider implements WorkflowIdentityProvider {
     }
 
     @Override
+    public String currentUserName() {
+        User user = currentUser();
+        return user.getName() == null || user.getName().isBlank() ? user.getAccount() : user.getName();
+    }
+
+    @Override
     public List<String> currentPermissionFlags() {
         User user = currentUser();
         Set<String> flags = new LinkedHashSet<>();

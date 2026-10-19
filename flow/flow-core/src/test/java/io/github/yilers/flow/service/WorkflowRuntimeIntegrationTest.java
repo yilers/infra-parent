@@ -26,6 +26,7 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.sql.DataSource;
@@ -39,9 +40,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /** 不依赖开发数据库和Redis，用真实引擎验证发布、发起、或签、退回与事务回滚。 */
 @SpringJUnitConfig(WorkflowRuntimeIntegrationTest.Config.class)
+@TestPropertySource(properties = "flow.leave.enabled=true")
 class WorkflowRuntimeIntegrationTest {
 
-    private static final ThreadLocal<String> USER = new ThreadLocal<>();
+    static final ThreadLocal<String> USER = new ThreadLocal<>();
 
     @Autowired
     private WorkflowService workflowService;
@@ -189,14 +191,18 @@ class WorkflowRuntimeIntegrationTest {
     @Configuration
     @EnableTransactionManagement
     @Import({FlowAutoConfig.class, FlowQueryConfig.class, FlowTenantConfig.class, FlowPermissionConfig.class,
-            WorkflowServiceImpl.class, WorkflowInboxServiceImpl.class, WorkflowDefinitionServiceImpl.class})
+            WorkflowServiceImpl.class, WorkflowInboxServiceImpl.class, WorkflowDefinitionServiceImpl.class,
+            io.github.yilers.flow.leave.config.LeaveProperties.class,
+            io.github.yilers.flow.leave.service.LeaveServiceImpl.class,
+            io.github.yilers.flow.leave.service.LeaveBusinessProvider.class})
     static class Config {
 
         @Bean
         DataSource dataSource() {
             return new EmbeddedDatabaseBuilder().setType(EmbeddedDatabaseType.H2)
                     .setName("flow-runtime-" + java.util.UUID.randomUUID() + ";MODE=MySQL")
-                    .setScriptEncoding("UTF-8").addScript(new ClassPathResource("flow-engine-schema.sql").getPath()).build();
+                    .setScriptEncoding("UTF-8").addScript(new ClassPathResource("flow-engine-schema.sql").getPath())
+                    .addScript("flow-leave-schema.sql").build();
         }
 
         @Bean

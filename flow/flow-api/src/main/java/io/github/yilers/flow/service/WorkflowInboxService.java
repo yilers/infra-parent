@@ -20,4 +20,7 @@ public interface WorkflowInboxService {
 
     /** 仅发起人、历史办理人或当前待办候选人可查看实例详情。 */
     WorkflowInstanceDetail detail(Long instanceId);
+
+    /** 校验当前人能否访问实例，供业务详情入口复用；不读取正文或流程变量。 */
+    void checkInstanceAccess(Long instanceId);
 }
