@@ -90,7 +90,15 @@ WorkflowIdentityProvider
 
 流程设计器源码固定在前端 pnpm workspace 的 `packages/warm-flow-designer`，来源与本地补丁见该目录 `UPSTREAM.md`。`infra-web` 使用官方 Ant Design Vue 适配器，通过项目 `requestClient` 实现设计器数据接口，不会访问默认的 `/warm-flow/**`。`infra-start` 的 `/flow/designer/handler-*` 接口提供当前租户的角色、部门和用户候选项，办理人标识与 `WorkflowIdentityProvider` 一致；独立部署 Flow 时需要提供等价的目录适配。
 
-待办/已办查询、请假业务和对应前端页面仍待后续接入。本阶段只完成流程定义页面与图形化设计，不声称通用 Flow 已具备完整 OA 能力。
+审批中心第一批已接入“我的待办 / 我的已办 / 我发起的”及实例详情、审批记录和只读运行图。发起人、历史办理人或当前候选人可查看实例详情；管理员没有默认旁路。待办使用 `flow_user` 权限交集及 EXISTS 查询，避免同时命中用户、角色、部门时重复显示。未配置办理人的任务不会向全租户开放。挂起实例和流程不列入可办理任务。
+
+接口为 `GET /flow/inbox/todo`、`GET /flow/inbox/done`、`GET /flow/inbox/started` 和 `GET /flow/inbox/detail/{id}`，分别要求 `flow:task:todo`、`flow:task:done`、`flow:instance:mine`；详情满足任意一种菜单查询权限后仍须通过实例参与人授权。分页支持 `flowCode` 精确匹配，`pageNum >= 1`，`1 <= pageSize <= 100`。已办按本人实际办理的审批节点记录展示，不将发起记录混入已办。
+
+列表与详情不返回原始流程变量、业务扩展正文、监听器和表单路径。运行图保留引擎的节点/连线状态，不使用流程定义替代实例快照。业务单据ID只用于关联，不代表获取业务正文的授权；业务详情入口与业务鉴权仍由后续业务模块实现。
+
+已有库执行 `20261019_flow_inbox` 对应数据库脚本一次：在模板租户新增三个菜单、三个查询按钮及查询索引，停写期间从现有最大菜单ID后连续分配ID。其他租户同步应用菜单后授权，重新登录刷新菜单。新库已包含在全量脚本内，不再执行增量。
+
+请假业务、动态部门主管解析、通知和其他流程操作尚未接入，不声称通用 Flow 已具备完整 OA 能力。
 
 只依赖 `flow-core` 的其他启动器必须实现 `WorkflowIdentityProvider`，并将 `flowTenantLineInnerInterceptor` 加入自己的 MyBatis-Plus 插件链；否则启动检查会拒绝运行。`upm-start` 不依赖 Flow，不受此配置影响。
 

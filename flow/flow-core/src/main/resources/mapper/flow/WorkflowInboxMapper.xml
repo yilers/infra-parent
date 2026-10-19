@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.github.yilers.flow.mapper.WorkflowInboxMapper">
+    <!-- t、i 必须为同租户的任务和实例。未配置任何办理人时不向全租户开放。 -->
+    <sql id="candidate">
+        EXISTS (SELECT 1 FROM flow_user u
+                WHERE u.associated = t.id AND u.tenant_id = #{tenantId} AND u.del_flag = '0'
+                  AND u.type IN ('1', '2', '3')
+                  AND u.processed_by IN
+                  <foreach collection="flags" item="flag" open="(" separator="," close=")">#{flag}</foreach>)
+    </sql>
+    <sql id="actionable">
+        t.node_type = 1 AND i.activity_status = 1 AND d.activity_status = 1
+        AND <include refid="candidate"/>
+    </sql>
+    <sql id="instanceColumns">
+        i.id AS instance_id, i.business_id, i.flow_status, i.create_by AS initiator_id,
+        d.flow_code, d.flow_name, d.version
+    </sql>
+    <sql id="definitionJoin">
+        JOIN flow_definition d ON d.id = i.definition_id
+          AND d.tenant_id = #{tenantId} AND d.del_flag = '0'
+    </sql>
+    <sql id="flowFilter">
+        <if test="flowCode != null">AND d.flow_code = #{flowCode}</if>
+    </sql>
+    <select id="todo" resultType="io.github.yilers.flow.model.WorkflowWorkItem">
+        SELECT t.id, t.id AS task_id, <include refid="instanceColumns"/>,
+               t.node_name, t.create_time, t.update_time, 1 AS actionable
+        FROM flow_task t
+        JOIN flow_instance i ON i.id = t.instance_id AND i.tenant_id = #{tenantId} AND i.del_flag = '0'
+        <include refid="definitionJoin"/>
+        WHERE t.tenant_id = #{tenantId} AND t.del_flag = '0'
+          AND <include refid="actionable"/>
+        <include refid="flowFilter"/>
+        ORDER BY t.create_time DESC, t.id DESC
+    </select>
+    <select id="done" resultType="io.github.yilers.flow.model.WorkflowWorkItem">
+        SELECT h.id, h.task_id, <include refid="instanceColumns"/>,
+               h.node_name, h.approver AS approver_id, h.skip_type, h.message, h.create_time, h.update_time
+        FROM flow_his_task h
+        JOIN flow_instance i ON i.id = h.instance_id AND i.tenant_id = #{tenantId} AND i.del_flag = '0'
+        <include refid="definitionJoin"/>
+        WHERE h.tenant_id = #{tenantId} AND h.del_flag = '0' AND h.approver = #{userId}
+          AND h.node_type = 1 AND h.skip_type IN ('PASS', 'REJECT')
+        <include refid="flowFilter"/>
+        ORDER BY h.update_time DESC, h.id DESC
+    </select>
+    <select id="started" resultType="io.github.yilers.flow.model.WorkflowWorkItem">
+        SELECT i.id, <include refid="instanceColumns"/>, i.node_name, i.create_time, i.update_time
+        FROM flow_instance i <include refid="definitionJoin"/>
+        WHERE i.tenant_id = #{tenantId} AND i.del_flag = '0' AND i.create_by = #{userId}
+        <include refid="flowFilter"/>
+        ORDER BY i.create_time DESC, i.id DESC
+    </select>
+    <select id="visibleInstance" resultType="io.github.yilers.flow.model.WorkflowWorkItem">
+        SELECT i.id, <include refid="instanceColumns"/>, i.node_name, i.create_time, i.update_time
+        FROM flow_instance i <include refid="definitionJoin"/>
+        WHERE i.id = #{instanceId} AND i.tenant_id = #{tenantId} AND i.del_flag = '0'
+          AND (i.create_by = #{userId}
+            OR EXISTS (SELECT 1 FROM flow_his_task h WHERE h.instance_id = i.id
+                       AND h.tenant_id = #{tenantId} AND h.del_flag = '0' AND h.approver = #{userId})
+            OR EXISTS (SELECT 1 FROM flow_task t WHERE t.instance_id = i.id
+                       AND t.tenant_id = #{tenantId} AND t.del_flag = '0' AND <include refid="candidate"/>))
+    </select>
+    <select id="tasks" resultType="io.github.yilers.flow.model.WorkflowWorkItem">
+        SELECT t.id, t.id AS task_id, <include refid="instanceColumns"/>,
+               t.node_name, t.create_time, t.update_time,
+               CASE WHEN <include refid="actionable"/> THEN 1 ELSE 0 END AS actionable
+        FROM flow_task t
+        JOIN flow_instance i ON i.id = t.instance_id AND i.tenant_id = #{tenantId} AND i.del_flag = '0'
+        <include refid="definitionJoin"/>
+        WHERE t.instance_id = #{instanceId} AND t.tenant_id = #{tenantId} AND t.del_flag = '0'
+        ORDER BY t.create_time, t.id
+    </select>
+    <select id="history" resultType="io.github.yilers.flow.model.WorkflowWorkItem">
+        SELECT h.id, h.task_id, h.instance_id, h.node_name, h.flow_status,
+               h.approver AS approver_id, h.skip_type, h.message, h.create_time, h.update_time
+        FROM flow_his_task h
+        WHERE h.instance_id = #{instanceId} AND h.tenant_id = #{tenantId} AND h.del_flag = '0'
+        ORDER BY h.update_time, h.id
+    </select>
+    <select id="chart" resultType="string">
+        SELECT def_json FROM flow_instance
+        WHERE id = #{instanceId} AND tenant_id = #{tenantId} AND del_flag = '0'
+    </select>
+</mapper>

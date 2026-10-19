@@ -68,7 +68,7 @@ infra-parent
 │   └── upm-start         # UPM 独立部署入口
 ├── file                  # 文件服务预留模块（规划中）
 ├── notice                # 通知服务预留模块（规划中）
-├── flow                  # Warm-Flow 1.8.9 工作流底座（流程定义页面已接入）
+├── flow                  # Warm-Flow 1.8.9 工作流底座、流程定义与个人审批中心
 ├── ai                    # AI 能力预留模块
 ├── infra-start           # 基础能力统一部署入口
 ├── doc                   # 架构与接入文档
