@@ -33,6 +33,28 @@
 
 ## 核验
 
+### 审批中心旧脚本出现1137错误时
+
+旧版 `20261019_flow_inbox`、`20261019_flow_task_actions` 曾在同一条 `UNION ALL` 语句中重复读取临时表，MySQL会报 `Can't reopen table`。修正版拆成逐条 `INSERT ... SELECT`，保留同一临时表中的起始ID和父子关系；MySQL/PostgreSQL增量与全量脚本均已同步。
+
+如果客户端在第一条菜单INSERT报错后立即停止、没有继续执行，且仍在同一数据库连接：临时表已创建，但报错的整条INSERT没有插入菜单。直接从修正版脚本的第一条 `INSERT INTO upm_permission` 开始执行到末尾，不要重复执行开头的 `CREATE TEMPORARY TABLE`。
+
+如果客户端继续执行了后续语句，或者已断开连接，不要盲目重跑整份脚本。先检查模板租户中三个页面及五个按钮是否存在，并核对脚本末尾五个索引。临时表已消失且本次菜单/按钮均不存在时，可重新执行创建临时表及插入、授权部分；索引只执行尚不存在的语句。存在部分菜单或授权时先核对已生效范围，不要重新计算起始ID或删除既有菜单后重跑。
+
+```sql
+SELECT id, parent_id, component, permission_code
+FROM upm_permission
+WHERE tenant_id = 1
+  AND (component IN ('flow/todo/index', 'flow/done/index', 'flow/started/index')
+       OR permission_code IN ('flow:task:todo', 'flow:task:done', 'flow:instance:mine',
+                              'flow:task:pass', 'flow:task:reject'));
+
+SHOW INDEX FROM flow_instance WHERE Key_name = 'idx_flow_instance_mine';
+SHOW INDEX FROM flow_his_task WHERE Key_name IN ('idx_flow_history_approver', 'idx_flow_history_instance');
+SHOW INDEX FROM flow_task WHERE Key_name = 'idx_flow_task_instance';
+SHOW INDEX FROM flow_user WHERE Key_name = 'idx_flow_user_candidate';
+```
+
 ### MySQL 5.7 在旧版 ROW_NUMBER 语句处失败时
 
 MySQL 脚本已改为兼容 5.7 的关联计数，不再使用窗口函数。**不要从头重跑**：前面的建表、加列和数据更新可能已经生效。以下续执行说明仅适用于旧脚本在创建 `migration_application_menu` 临时表时失败、尚未成功插入任何应用管理菜单的情况。

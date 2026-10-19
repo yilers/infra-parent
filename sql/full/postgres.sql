@@ -1251,19 +1251,31 @@ WHERE p.tenant_id = 1 AND p.deleted = 0 AND p.permission_type = 0 AND p.menu_url
 INSERT INTO upm_permission
 (id, parent_id, app_id, tenant_id, permission_name, permission_type, menu_url, menu_icon,
  component, sort_number, device, operable, usable, deleted, version)
-SELECT base_id + 1, parent_id, app_id, 1, '我的待办', 1, 'todo', 'lucide:inbox', 'flow/todo/index', 2, 'web', 1, 1, 0, 1 FROM migration_flow_inbox_ids
-UNION ALL
-SELECT base_id + 2, parent_id, app_id, 1, '我的已办', 1, 'done', 'lucide:circle-check', 'flow/done/index', 3, 'web', 1, 1, 0, 1 FROM migration_flow_inbox_ids
-UNION ALL
+SELECT base_id + 1, parent_id, app_id, 1, '我的待办', 1, 'todo', 'lucide:inbox', 'flow/todo/index', 2, 'web', 1, 1, 0, 1 FROM migration_flow_inbox_ids;
+
+INSERT INTO upm_permission
+(id, parent_id, app_id, tenant_id, permission_name, permission_type, menu_url, menu_icon,
+ component, sort_number, device, operable, usable, deleted, version)
+SELECT base_id + 2, parent_id, app_id, 1, '我的已办', 1, 'done', 'lucide:circle-check', 'flow/done/index', 3, 'web', 1, 1, 0, 1 FROM migration_flow_inbox_ids;
+
+INSERT INTO upm_permission
+(id, parent_id, app_id, tenant_id, permission_name, permission_type, menu_url, menu_icon,
+ component, sort_number, device, operable, usable, deleted, version)
 SELECT base_id + 3, parent_id, app_id, 1, '我发起的', 1, 'started', 'lucide:send', 'flow/started/index', 4, 'web', 1, 1, 0, 1 FROM migration_flow_inbox_ids;
 
 INSERT INTO upm_permission
 (id, parent_id, app_id, tenant_id, permission_name, permission_type, permission_code,
  sort_number, device, operable, usable, deleted, version)
-SELECT base_id + 4, base_id + 1, app_id, 1, '查询', 2, 'flow:task:todo', 1, 'web', 1, 1, 0, 1 FROM migration_flow_inbox_ids
-UNION ALL
-SELECT base_id + 5, base_id + 2, app_id, 1, '查询', 2, 'flow:task:done', 1, 'web', 1, 1, 0, 1 FROM migration_flow_inbox_ids
-UNION ALL
+SELECT base_id + 4, base_id + 1, app_id, 1, '查询', 2, 'flow:task:todo', 1, 'web', 1, 1, 0, 1 FROM migration_flow_inbox_ids;
+
+INSERT INTO upm_permission
+(id, parent_id, app_id, tenant_id, permission_name, permission_type, permission_code,
+ sort_number, device, operable, usable, deleted, version)
+SELECT base_id + 5, base_id + 2, app_id, 1, '查询', 2, 'flow:task:done', 1, 'web', 1, 1, 0, 1 FROM migration_flow_inbox_ids;
+
+INSERT INTO upm_permission
+(id, parent_id, app_id, tenant_id, permission_name, permission_type, permission_code,
+ sort_number, device, operable, usable, deleted, version)
 SELECT base_id + 6, base_id + 3, app_id, 1, '查询', 2, 'flow:instance:mine', 1, 'web', 1, 1, 0, 1 FROM migration_flow_inbox_ids;
 
 INSERT INTO upm_role_permission(role_id, permission_id, tenant_id, device)
@@ -1292,8 +1304,11 @@ WHERE p.tenant_id = 1 AND p.deleted = 0 AND p.component = 'flow/todo/index';
 INSERT INTO upm_permission
 (id, parent_id, app_id, tenant_id, permission_name, permission_type, permission_code,
  sort_number, device, operable, usable, deleted, version)
-SELECT base_id + 1, parent_id, app_id, 1, '通过', 2, 'flow:task:pass', 2, 'web', 1, 1, 0, 1 FROM migration_flow_task_ids
-UNION ALL
+SELECT base_id + 1, parent_id, app_id, 1, '通过', 2, 'flow:task:pass', 2, 'web', 1, 1, 0, 1 FROM migration_flow_task_ids;
+
+INSERT INTO upm_permission
+(id, parent_id, app_id, tenant_id, permission_name, permission_type, permission_code,
+ sort_number, device, operable, usable, deleted, version)
 SELECT base_id + 2, parent_id, app_id, 1, '退回', 2, 'flow:task:reject', 3, 'web', 1, 1, 0, 1 FROM migration_flow_task_ids;
 
 INSERT INTO upm_role_permission(role_id, permission_id, tenant_id, device)

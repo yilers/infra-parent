@@ -11,8 +11,11 @@ WHERE p.tenant_id = 1 AND p.deleted = 0 AND p.component = 'flow/todo/index';
 INSERT INTO upm_permission
 (id, parent_id, app_id, tenant_id, permission_name, permission_type, permission_code,
  sort_number, device, operable, usable, deleted, version)
-SELECT base_id + 1, parent_id, app_id, 1, '通过', 2, 'flow:task:pass', 2, 'web', 1, 1, 0, 1 FROM migration_flow_task_ids
-UNION ALL
+SELECT base_id + 1, parent_id, app_id, 1, '通过', 2, 'flow:task:pass', 2, 'web', 1, 1, 0, 1 FROM migration_flow_task_ids;
+
+INSERT INTO upm_permission
+(id, parent_id, app_id, tenant_id, permission_name, permission_type, permission_code,
+ sort_number, device, operable, usable, deleted, version)
 SELECT base_id + 2, parent_id, app_id, 1, '退回', 2, 'flow:task:reject', 3, 'web', 1, 1, 0, 1 FROM migration_flow_task_ids;
 
 INSERT INTO upm_role_permission(role_id, permission_id, tenant_id, device)
