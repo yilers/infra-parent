@@ -6,6 +6,7 @@ import io.github.yilers.core.util.Result;
 import io.github.yilers.flow.leave.model.LeaveInfo;
 import io.github.yilers.flow.leave.model.LeavePage;
 import io.github.yilers.flow.leave.request.LeaveSaveRequest;
+import io.github.yilers.flow.leave.request.LeaveSubmitRequest;
 import io.github.yilers.flow.leave.request.LeaveVersionRequest;
 import io.github.yilers.flow.leave.service.LeaveService;
 import io.github.yilers.web.log.SysLog;
@@ -57,17 +58,17 @@ public class LeaveController {
 
     @PostMapping("/edit/{id}")
     @SaCheckPermission("flow:leave:edit")
-    @Operation(summary = "编辑本人请假草稿", description = "必须携带version，提交后不可通过本接口修改")
+    @Operation(summary = "编辑本人可修改的请假申请", description = "草稿须携带version；已发起的申请仅在轮到本人申请提交任务时可编辑，并须携带submissionTaskId")
     public Result<LeaveInfo> edit(@PathVariable Long id, @Valid @RequestBody LeaveSaveRequest request) {
         return Result.ok(leaveService.edit(id, request));
     }
 
     @PostMapping("/submit/{id}")
     @SaCheckPermission("flow:leave:submit")
-    @SysLog(module = "请假模块", value = "提交审批")
-    @Operation(summary = "提交本人请假草稿", description = "锁定草稿后启动已发布的leave流程并绑定实例，任一步失败整笔回滚")
-    public Result<Long> submit(@PathVariable Long id, @Valid @RequestBody LeaveVersionRequest request) {
-        return Result.ok(leaveService.submit(id, request.version()));
+    @SysLog(module = "请假模块", value = "提交申请")
+    @Operation(summary = "提交或重新提交本人请假申请", description = "首次提交启动流程并自动完成申请提交节点；重新提交校验submissionTaskId和version，继续原实例，任一步失败整笔回滚")
+    public Result<Long> submit(@PathVariable Long id, @Valid @RequestBody LeaveSubmitRequest request) {
+        return Result.ok(leaveService.submit(id, request.version(), request.submissionTaskId()));
     }
 
     @PostMapping("/delete/{id}")

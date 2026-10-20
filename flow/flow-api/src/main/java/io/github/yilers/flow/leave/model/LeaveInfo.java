@@ -15,4 +15,8 @@ public class LeaveInfo extends LeaveApplication {
     private String flowStatus;
     @Schema(description = "当前审批节点")
     private String nodeName;
+    @Schema(description = "是否可由本人编辑：未提交草稿或当前轮到本人的申请提交任务；提交时仍会重新校验")
+    private boolean editable;
+    @Schema(description = "当前申请提交任务ID，退回后保存修改和重新提交必须携带；草稿或审批中为空")
+    private Long submissionTaskId;
 }

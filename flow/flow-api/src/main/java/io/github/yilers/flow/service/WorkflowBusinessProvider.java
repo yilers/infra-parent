@@ -10,4 +10,12 @@ public interface WorkflowBusinessProvider {
 
     /** 返回当前租户的关联；实例不属于本业务时返回null。 */
     WorkflowBusinessReference findReference(Long instanceId);
+
+    /**
+     * 业务表单提交任务的可信关联；普通审批任务返回null。
+     * 此类任务必须由业务Service保存、校验单据后完成，不能使用通用审批通过/退回接口。
+     */
+    default WorkflowBusinessReference findSubmissionTask(Long instanceId, String nodeCode) {
+        return null;
+    }
 }

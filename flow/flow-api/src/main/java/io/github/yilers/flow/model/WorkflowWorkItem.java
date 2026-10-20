@@ -29,6 +29,10 @@ public class WorkflowWorkItem {
     private String version;
     @Schema(description = "节点名称")
     private String nodeName;
+    @Schema(description = "流程节点编码，用于可信业务任务识别，不使用节点名称判断业务行为")
+    private String nodeCode;
+    @Schema(description = "业务表单提交任务关联；非空时须走业务表单办理，不能使用通用通过或退回")
+    private WorkflowBusinessReference submission;
     @Schema(description = "当前实例状态，采用Warm-Flow状态编码")
     private String flowStatus;
     @Schema(description = "发起人用户ID")

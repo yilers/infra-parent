@@ -6,6 +6,7 @@ import io.github.yilers.flow.leave.request.LeaveSaveRequest;
 import io.github.yilers.flow.leave.service.LeaveService;
 import io.github.yilers.web.context.RequestContextHolder;
 import io.github.yilers.web.exception.CommonException;
+import org.dromara.warm.flow.core.enums.FlowStatus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,9 +22,11 @@ import java.util.UUID;
 import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** 请假业务与真实引擎、数据库事务一起测试，不在开发库生成测试单据。 */
 @SpringJUnitConfig(WorkflowRuntimeIntegrationTest.Config.class)
@@ -58,6 +61,86 @@ class LeaveApplicationIntegrationTest {
     }
 
     @Test
+    void applicantNodeAutomaticallySubmitsThenSupportsReturnedEditsInTheSameInstance() {
+        publishWithApplication("user:20");
+        LeaveInfo draft = leaveService.create(request(null));
+        Long instanceId = leaveService.submit(draft.getId(), 1);
+        assertFalse(leaveService.detail(draft.getId()).isEditable());
+        assertEquals(0, inboxService.todo(flowCode, 1, 20).total());
+        assertTrue(inboxService.detail(instanceId).history().stream()
+                .anyMatch(item -> item.getSubmission() != null && "PASS".equals(item.getSkipType())));
+        login("20", 1L);
+        var review = inboxService.todo(flowCode, 1, 20).records().getFirst();
+        assertNull(review.getSubmission());
+        workflowService.reject(review.getTaskId(), "请补充请假原因", Map.of());
+        login("10", 1L);
+        LeaveInfo returned = leaveService.detail(draft.getId());
+        assertTrue(returned.isEditable());
+        assertNotNull(returned.getSubmissionTaskId());
+        var applicationTask = inboxService.todo(flowCode, 1, 20).records().getFirst();
+        assertEquals("leave", applicationTask.getSubmission().type());
+        assertThrows(CommonException.class, () -> workflowService.pass(applicationTask.getTaskId(), "绕过表单", Map.of()));
+        assertThrows(CommonException.class, () -> workflowService.reject(applicationTask.getTaskId(), "拒绝自己", Map.of()));
+        assertThrows(CommonException.class, () -> leaveService.edit(draft.getId(), request(returned.getVersion())));
+        assertThrows(CommonException.class, () -> leaveService.submit(draft.getId(), returned.getVersion()));
+        var corrected = new LeaveSaveRequest("PERSONAL", request(null).startTime(), request(null).endTime(),
+                new BigDecimal("4"), "补充后的请假原因", returned.getVersion(), returned.getSubmissionTaskId());
+        LeaveInfo edited = leaveService.edit(draft.getId(), corrected);
+        assertEquals(returned.getVersion() + 1, edited.getVersion());
+        assertEquals("补充后的请假原因", edited.getReason());
+        assertThrows(CommonException.class, () -> leaveService.edit(draft.getId(), corrected));
+        login("20", 1L);
+        assertThrows(CommonException.class, () -> leaveService.edit(draft.getId(), corrected));
+        assertThrows(CommonException.class, () -> leaveService.submit(draft.getId(), edited.getVersion(), edited.getSubmissionTaskId()));
+        login("10", 2L);
+        assertThrows(CommonException.class, () -> leaveService.submit(draft.getId(), edited.getVersion(), edited.getSubmissionTaskId()));
+        login("10", 1L);
+        assertEquals(instanceId, leaveService.submit(draft.getId(), edited.getVersion(), edited.getSubmissionTaskId()));
+        assertThrows(CommonException.class, () -> leaveService.submit(draft.getId(), edited.getVersion(), edited.getSubmissionTaskId()));
+        assertFalse(leaveService.detail(draft.getId()).isEditable());
+        assertEquals(1, inboxService.started(flowCode, 1, 20).total());
+        login("20", 1L);
+        assertEquals("补充后的请假原因", leaveService.detail(draft.getId()).getReason());
+        workflowService.pass(inboxService.todo(flowCode, 1, 20).records().getFirst().getTaskId(), "同意", Map.of());
+        login("10", 1L);
+        LeaveInfo completed = leaveService.detail(draft.getId());
+        assertEquals(FlowStatus.FINISHED.getKey(), completed.getFlowStatus());
+        assertFalse(completed.isEditable());
+        assertThrows(CommonException.class, () -> leaveService.edit(draft.getId(), corrected));
+        assertTrue(inboxService.detail(instanceId).history().stream()
+                .anyMatch(item -> "重新提交申请".equals(item.getMessage())));
+    }
+
+    @Test
+    void automaticApplicationSubmissionRollsBackTheWholeStartIfReviewerIsMissing() {
+        publishWithApplication("");
+        LeaveInfo draft = leaveService.create(request(null));
+        assertThrows(CommonException.class, () -> leaveService.submit(draft.getId(), 1));
+        assertNull(leaveService.detail(draft.getId()).getInstanceId());
+        assertEquals(1, leaveService.detail(draft.getId()).getVersion());
+        assertEquals(0, inboxService.started(flowCode, 1, 20).total());
+    }
+
+    @Test
+    void concurrentResubmissionsCompleteOnlyOneApplicationTask() throws Exception {
+        publishWithApplication("user:20");
+        LeaveInfo draft = leaveService.create(request(null));
+        leaveService.submit(draft.getId(), 1);
+        login("20", 1L);
+        workflowService.reject(inboxService.todo(flowCode, 1, 20).records().getFirst().getTaskId(), "补充", Map.of());
+        login("10", 1L);
+        LeaveInfo returned = leaveService.detail(draft.getId());
+        try (var executor = Executors.newFixedThreadPool(2)) {
+            var results = executor.invokeAll(List.of(() -> resubmit(returned), () -> resubmit(returned)));
+            int succeeded = 0;
+            for (var result : results) if (Boolean.TRUE.equals(result.get())) succeeded++;
+            assertEquals(1, succeeded);
+        }
+        assertEquals(returned.getVersion() + 1, leaveService.detail(draft.getId()).getVersion());
+        assertEquals(1, inboxService.started(flowCode, 1, 20).total());
+    }
+
+    @Test
     void draftEditsRequireOwnershipAndTheCurrentVersion() {
         LeaveInfo draft = leaveService.create(request(null));
         assertEquals("DRAFT", draft.getFlowStatus());
@@ -86,7 +169,7 @@ class LeaveApplicationIntegrationTest {
         var draft = leaveService.create(request(null));
         Long instanceId = leaveService.submit(draft.getId(), draft.getVersion());
         assertEquals(instanceId, leaveService.detail(draft.getId()).getInstanceId());
-        assertEquals("1", leaveService.detail(draft.getId()).getFlowStatus());
+        assertEquals(FlowStatus.APPROVAL.getKey(), leaveService.detail(draft.getId()).getFlowStatus());
         assertThrows(CommonException.class, () -> leaveService.submit(draft.getId(), draft.getVersion()));
         assertThrows(CommonException.class, () -> leaveService.edit(draft.getId(), request(2)));
         assertThrows(CommonException.class, () -> leaveService.deleteDraft(draft.getId(), 2));
@@ -100,9 +183,9 @@ class LeaveApplicationIntegrationTest {
         assertEquals(draft.getId(), detail.business().id());
         assertEquals("外出办事", leaveService.detail(draft.getId()).getReason());
         workflowService.pass(detail.tasks().getFirst().getTaskId(), "同意", Map.of());
-        assertEquals("8", leaveService.detail(draft.getId()).getFlowStatus());
+        assertEquals(FlowStatus.FINISHED.getKey(), leaveService.detail(draft.getId()).getFlowStatus());
         login("10", 1L);
-        assertEquals(1, leaveService.page("8", 1, 20).total());
+        assertEquals(1, leaveService.page(FlowStatus.FINISHED.getKey(), 1, 20).total());
         assertEquals(0, leaveService.page("DRAFT", 1, 20).total());
     }
 
@@ -154,6 +237,35 @@ class LeaveApplicationIntegrationTest {
             WorkflowRuntimeIntegrationTest.USER.remove();
             RequestContextHolder.clear();
         }
+    }
+
+    private boolean resubmit(LeaveInfo returned) {
+        try {
+            login("10", 1L);
+            leaveService.submit(returned.getId(), returned.getVersion(), returned.getSubmissionTaskId());
+            return true;
+        } catch (CommonException expected) {
+            return false;
+        } finally {
+            WorkflowRuntimeIntegrationTest.USER.remove();
+            RequestContextHolder.clear();
+        }
+    }
+
+    private void publishWithApplication(String reviewer) {
+        String json = """
+                {"flowCode":"%s","flowName":"请假","version":"1","modelValue":"MIMIC","nodeList":[
+                 {"nodeCode":"start","nodeName":"开始","nodeType":0,"nodeRatio":"0","coordinate":"300,100",
+                  "skipList":[{"nowNodeCode":"start","nextNodeCode":"write_leave","skipType":"PASS"}]},
+                 {"nodeCode":"write_leave","nodeName":"填写请假信息","nodeType":1,"permissionFlag":"${wfApplicant}",
+                  "nodeRatio":"0","coordinate":"300,300",
+                  "skipList":[{"nowNodeCode":"write_leave","nextNodeCode":"review","skipType":"PASS"}]},
+                 {"nodeCode":"review","nodeName":"主管审核","nodeType":1,"permissionFlag":"%s","nodeRatio":"0",
+                  "anyNodeSkip":"write_leave","coordinate":"300,500",
+                  "skipList":[{"nowNodeCode":"review","nextNodeCode":"end","skipType":"PASS"}]},
+                 {"nodeCode":"end","nodeName":"结束","nodeType":2,"nodeRatio":"0","coordinate":"300,700","skipList":[]}]}
+                """.formatted(flowCode, reviewer);
+        definitionService.publish(definitionService.create(json));
     }
 
     private void login(String userId, Long tenantId) {

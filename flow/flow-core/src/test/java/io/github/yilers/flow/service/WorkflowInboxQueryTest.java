@@ -102,11 +102,11 @@ class WorkflowInboxQueryTest {
                       del_flag CHAR DEFAULT '0', business_id VARCHAR(40), flow_status VARCHAR(20), create_by VARCHAR(64),
                       node_name VARCHAR(100), activity_status INT DEFAULT 1, create_time TIMESTAMP, update_time TIMESTAMP, def_json TEXT);
                     CREATE TABLE flow_task(id BIGINT PRIMARY KEY, instance_id BIGINT, tenant_id VARCHAR(40),
-                      del_flag CHAR DEFAULT '0', node_name VARCHAR(100), node_type INT DEFAULT 1, create_time TIMESTAMP, update_time TIMESTAMP);
+                      del_flag CHAR DEFAULT '0', node_name VARCHAR(100), node_code VARCHAR(100), node_type INT DEFAULT 1, create_time TIMESTAMP, update_time TIMESTAMP);
                     CREATE TABLE flow_user(id BIGINT PRIMARY KEY, associated BIGINT, tenant_id VARCHAR(40),
                       del_flag CHAR DEFAULT '0', type CHAR DEFAULT '1', processed_by VARCHAR(80));
                     CREATE TABLE flow_his_task(id BIGINT PRIMARY KEY, instance_id BIGINT, task_id BIGINT, tenant_id VARCHAR(40),
-                      del_flag CHAR DEFAULT '0', node_name VARCHAR(100), node_type INT, approver VARCHAR(40), skip_type VARCHAR(10),
+                      del_flag CHAR DEFAULT '0', node_name VARCHAR(100), node_code VARCHAR(100), node_type INT, approver VARCHAR(40), skip_type VARCHAR(10),
                       message VARCHAR(500), flow_status VARCHAR(20), create_time TIMESTAMP, update_time TIMESTAMP);
                     INSERT INTO flow_definition(id,tenant_id,flow_code,flow_name,version) VALUES
                       (1,'1','leave','请假','1'),(2,'2','leave','请假','1');

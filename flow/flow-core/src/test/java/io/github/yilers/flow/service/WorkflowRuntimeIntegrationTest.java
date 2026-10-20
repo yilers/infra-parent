@@ -249,6 +249,7 @@ class WorkflowRuntimeIntegrationTest {
             io.github.yilers.flow.service.impl.WorkflowAssigneeResolver.class,
             io.github.yilers.flow.leave.config.LeaveProperties.class,
             io.github.yilers.flow.leave.service.LeaveServiceImpl.class,
+            io.github.yilers.flow.leave.service.LeaveApplicationTasks.class,
             io.github.yilers.flow.leave.service.LeaveBusinessProvider.class})
     static class Config {
 

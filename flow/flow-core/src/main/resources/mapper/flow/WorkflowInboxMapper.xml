@@ -26,7 +26,7 @@
     </sql>
     <select id="todo" resultType="io.github.yilers.flow.model.WorkflowWorkItem">
         SELECT t.id, t.id AS task_id, <include refid="instanceColumns"/>,
-               t.node_name, t.create_time, t.update_time, 1 AS actionable
+               t.node_name, t.node_code, t.create_time, t.update_time, 1 AS actionable
         FROM flow_task t
         JOIN flow_instance i ON i.id = t.instance_id AND i.tenant_id = #{tenantId} AND i.del_flag = '0'
         <include refid="definitionJoin"/>
@@ -37,7 +37,7 @@
     </select>
     <select id="done" resultType="io.github.yilers.flow.model.WorkflowWorkItem">
         SELECT h.id, h.task_id, <include refid="instanceColumns"/>,
-               h.node_name, h.approver AS approver_id, h.skip_type, h.message, h.create_time, h.update_time
+               h.node_name, h.node_code, h.approver AS approver_id, h.skip_type, h.message, h.create_time, h.update_time
         FROM flow_his_task h
         JOIN flow_instance i ON i.id = h.instance_id AND i.tenant_id = #{tenantId} AND i.del_flag = '0'
         <include refid="definitionJoin"/>
@@ -65,7 +65,7 @@
     </select>
     <select id="tasks" resultType="io.github.yilers.flow.model.WorkflowWorkItem">
         SELECT t.id, t.id AS task_id, <include refid="instanceColumns"/>,
-               t.node_name, t.create_time, t.update_time,
+               t.node_name, t.node_code, t.create_time, t.update_time,
                CASE WHEN <include refid="actionable"/> THEN 1 ELSE 0 END AS actionable
         FROM flow_task t
         JOIN flow_instance i ON i.id = t.instance_id AND i.tenant_id = #{tenantId} AND i.del_flag = '0'
@@ -74,7 +74,7 @@
         ORDER BY t.create_time, t.id
     </select>
     <select id="history" resultType="io.github.yilers.flow.model.WorkflowWorkItem">
-        SELECT h.id, h.task_id, h.instance_id, h.node_name, h.flow_status,
+        SELECT h.id, h.task_id, h.instance_id, h.node_name, h.node_code, h.flow_status,
                h.approver AS approver_id, h.skip_type, h.message, h.create_time, h.update_time
         FROM flow_his_task h
         WHERE h.instance_id = #{instanceId} AND h.tenant_id = #{tenantId} AND h.del_flag = '0'

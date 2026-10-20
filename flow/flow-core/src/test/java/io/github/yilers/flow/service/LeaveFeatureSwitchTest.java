@@ -24,7 +24,8 @@ class LeaveFeatureSwitchTest {
                 context.getEnvironment().getPropertySources().addFirst(
                         new MapPropertySource("test", Map.of("flow.leave.enabled", value)));
             }
-            context.register(LeaveServiceImpl.class, LeaveBusinessProvider.class, LeaveController.class);
+            context.register(LeaveServiceImpl.class, LeaveBusinessProvider.class, LeaveController.class,
+                    io.github.yilers.flow.leave.service.LeaveApplicationTasks.class);
             context.refresh();
             assertTrue(context.getBeansOfType(LeaveService.class).isEmpty());
             assertTrue(context.getBeansOfType(WorkflowBusinessProvider.class).isEmpty());

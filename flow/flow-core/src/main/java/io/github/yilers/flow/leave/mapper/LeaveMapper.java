@@ -21,6 +21,12 @@ public interface LeaveMapper extends BaseMapper<LeaveApplication> {
     int editDraft(@Param("id") Long id, @Param("tenantId") String tenantId, @Param("userId") String userId,
                    @Param("request") LeaveSaveRequest request);
 
+    int editSubmitted(@Param("id") Long id, @Param("tenantId") String tenantId, @Param("userId") String userId,
+                       @Param("instanceId") Long instanceId, @Param("request") LeaveSaveRequest request);
+
+    int resubmitVersion(@Param("id") Long id, @Param("tenantId") String tenantId, @Param("userId") String userId,
+                         @Param("instanceId") Long instanceId, @Param("version") Integer version);
+
     int bindInstance(@Param("id") Long id, @Param("tenantId") String tenantId, @Param("userId") String userId,
                       @Param("version") Integer version, @Param("instanceId") Long instanceId);
 

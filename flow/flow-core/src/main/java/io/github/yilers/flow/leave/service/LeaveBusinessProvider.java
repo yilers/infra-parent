@@ -14,6 +14,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 @RequiredArgsConstructor
 public class LeaveBusinessProvider implements WorkflowBusinessProvider {
     private final LeaveMapper mapper;
+    private final LeaveApplicationTasks applicationTasks;
 
     @Override
     public WorkflowBusinessReference findReference(Long instanceId) {
@@ -23,5 +24,11 @@ public class LeaveBusinessProvider implements WorkflowBusinessProvider {
         }
         Long id = mapper.idByInstance(instanceId, tenantId.toString());
         return id == null ? null : new WorkflowBusinessReference("leave", id, "请假申请");
+    }
+
+    @Override
+    public WorkflowBusinessReference findSubmissionTask(Long instanceId, String nodeCode) {
+        WorkflowBusinessReference reference = findReference(instanceId);
+        return reference != null && applicationTasks.isSubmissionNode(instanceId, nodeCode) ? reference : null;
     }
 }

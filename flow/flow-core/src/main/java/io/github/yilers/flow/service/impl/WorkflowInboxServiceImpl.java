@@ -2,10 +2,10 @@ package io.github.yilers.flow.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.github.yilers.flow.mapper.WorkflowInboxMapper;
+import io.github.yilers.flow.model.WorkflowBusinessReference;
 import io.github.yilers.flow.model.WorkflowInstanceDetail;
 import io.github.yilers.flow.model.WorkflowPage;
 import io.github.yilers.flow.model.WorkflowWorkItem;
-import io.github.yilers.flow.model.WorkflowBusinessReference;
 import io.github.yilers.flow.service.WorkflowBusinessProvider;
 import io.github.yilers.flow.service.WorkflowIdentityProvider;
 import io.github.yilers.flow.service.WorkflowInboxService;
@@ -16,10 +16,13 @@ import org.dromara.warm.flow.core.FlowEngine;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -68,8 +71,13 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
         String tenantId = tenantId();
         List<String> flags = flags();
         WorkflowWorkItem instance = requireVisible(instanceId, tenantId, userId, flags);
-        return new WorkflowInstanceDetail(instance, mapper.tasks(instanceId, tenantId, userId, flags),
-                mapper.history(instanceId, tenantId), sanitizeChart(mapper.chart(instanceId, tenantId)), business(instanceId));
+        List<WorkflowWorkItem> tasks = mapper.tasks(instanceId, tenantId, userId, flags);
+        List<WorkflowWorkItem> history = mapper.history(instanceId, tenantId);
+        List<WorkflowWorkItem> taskRecords = new ArrayList<>(tasks);
+        taskRecords.addAll(history);
+        decorateTasks(taskRecords);
+        return new WorkflowInstanceDetail(instance, tasks, history,
+                sanitizeChart(mapper.chart(instanceId, tenantId)), business(instanceId));
     }
 
     @Override
@@ -172,8 +180,23 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
     }
 
     private WorkflowPage result(Page<WorkflowWorkItem> page) {
+        decorateTasks(page.getRecords());
         return new WorkflowPage(page.getTotal(), page.getRecords());
     }
+
+    private void decorateTasks(List<WorkflowWorkItem> items) {
+        // 退回多次会有同一节点的多条历史，单次查询内复用关联，避免逐条重复查询业务和定义。
+        Map<TaskKey, Optional<WorkflowBusinessReference>> references = new HashMap<>();
+        items.forEach(item -> {
+            if (item.getTaskId() != null && item.getNodeCode() != null) {
+                TaskKey key = new TaskKey(item.getInstanceId(), item.getNodeCode());
+                item.setSubmission(references.computeIfAbsent(key, value -> Optional.ofNullable(
+                        WorkflowBusinessTasks.submission(businessProviders, value.instanceId(), value.nodeCode()))).orElse(null));
+            }
+        });
+    }
+
+    private record TaskKey(Long instanceId, String nodeCode) { }
 
     private String normalize(String flowCode) {
         return flowCode == null || flowCode.isBlank() ? null : flowCode.trim();

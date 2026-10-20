@@ -28,6 +28,12 @@ public interface WorkflowService {
     Long pass(Long taskId, String message, Map<String, Object> variables);
 
     /**
+     * 业务Service完成申请人的表单提交任务；必须先校验、保存业务单据，再在同一事务内调用。
+     * 只允许已被业务关联识别的提交任务，不对浏览器开放通用HTTP入口。
+     */
+    Long submitBusinessTask(Long taskId, String businessType, String message, Map<String, Object> variables);
+
+    /**
      * 驳回当前待办任务。
      *
      * @return 流程实例ID

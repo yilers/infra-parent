@@ -34,6 +34,19 @@
         WHERE id = #{id} AND tenant_id = #{tenantId} AND applicant_id = #{userId}
           AND version = #{request.version} AND instance_id IS NULL
     </update>
+    <!-- 业务Service已经锁定原实例并验证当前申请任务；SQL仍约束租户、本人、实例和版本。 -->
+    <update id="editSubmitted">
+        UPDATE flow_ext_leave SET leave_type = #{request.leaveType}, start_time = #{request.startTime},
+            end_time = #{request.endTime}, duration_hours = #{request.durationHours}, reason = #{request.reason},
+            version = version + 1, update_time = CURRENT_TIMESTAMP
+        WHERE id = #{id} AND tenant_id = #{tenantId} AND applicant_id = #{userId}
+          AND version = #{request.version} AND instance_id = #{instanceId}
+    </update>
+    <update id="resubmitVersion">
+        UPDATE flow_ext_leave SET version = version + 1, update_time = CURRENT_TIMESTAMP
+        WHERE id = #{id} AND tenant_id = #{tenantId} AND applicant_id = #{userId}
+          AND version = #{version} AND instance_id = #{instanceId}
+    </update>
     <update id="bindInstance">
         UPDATE flow_ext_leave SET instance_id = #{instanceId}, version = version + 1, update_time = CURRENT_TIMESTAMP
         WHERE id = #{id} AND tenant_id = #{tenantId} AND applicant_id = #{userId}
