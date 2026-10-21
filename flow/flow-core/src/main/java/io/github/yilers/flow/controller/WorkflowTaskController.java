@@ -3,6 +3,7 @@ package io.github.yilers.flow.controller;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import io.github.yilers.core.util.Result;
 import io.github.yilers.flow.request.WorkflowTaskActionRequest;
+import io.github.yilers.flow.request.WorkflowTaskAssignRequest;
 import io.github.yilers.flow.service.WorkflowService;
 import io.github.yilers.web.exception.CommonException;
 import io.github.yilers.web.log.SysLog;
@@ -45,6 +46,22 @@ public class WorkflowTaskController {
             throw new CommonException("请填写退回原因");
         }
         return Result.ok(workflowService.reject(id, message, Map.of()));
+    }
+
+    @PostMapping("/transfer/{id}")
+    @SaCheckPermission("flow:task:transfer")
+    @SysLog(module = "流程模块", value = "待办转办")
+    @Operation(summary = "将本人当前待办转办给同租户用户")
+    public Result<Long> transfer(@PathVariable Long id, @Valid @RequestBody WorkflowTaskAssignRequest request) {
+        return Result.ok(workflowService.transfer(id, request.targetUserId(), normalize(request.message())));
+    }
+
+    @PostMapping("/delegate/{id}")
+    @SaCheckPermission("flow:task:delegate")
+    @SysLog(module = "流程模块", value = "待办委派")
+    @Operation(summary = "将本人当前待办委派给同租户用户", description = "受托人办理后任务按Warm-Flow规则返回委派人继续办理")
+    public Result<Long> delegate(@PathVariable Long id, @Valid @RequestBody WorkflowTaskAssignRequest request) {
+        return Result.ok(workflowService.delegate(id, request.targetUserId(), normalize(request.message())));
     }
 
     private String normalize(String value) {

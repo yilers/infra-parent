@@ -40,6 +40,12 @@ public interface WorkflowService {
      */
     Long reject(Long taskId, String message, Map<String, Object> variables);
 
+    /** 将本人当前待办转交给同租户的另一名有效用户。 */
+    Long transfer(Long taskId, Long targetUserId, String message);
+
+    /** 委派本人当前待办；受托人办理后任务按 Warm-Flow 规则回到委派人。 */
+    Long delegate(Long taskId, Long targetUserId, String message);
+
     /** 申请人拿回仍在审批中的实例，退回到自己最近办理过的任务。 */
     Long takeBack(Long instanceId);
 

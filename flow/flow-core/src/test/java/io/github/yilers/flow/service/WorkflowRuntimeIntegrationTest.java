@@ -191,6 +191,34 @@ class WorkflowRuntimeIntegrationTest {
     }
 
     @Test
+    void transferMovesTaskToTargetAndDelegateReturnsTaskToDelegator() {
+        String transferCode = publish("task_transfer", "user:20");
+        Long transferInstance = workflowService.start(transferCode, "transfer-1", Map.of());
+        login("20");
+        Long transferTaskId = inboxService.todo(transferCode, 1, 20).records().getFirst().getTaskId();
+        assertEquals(transferInstance, workflowService.transfer(transferTaskId, 30L, "请代为办理"));
+        assertEquals(0, inboxService.todo(transferCode, 1, 20).total());
+        login("30");
+        assertEquals(1, inboxService.todo(transferCode, 1, 20).total());
+        workflowService.pass(inboxService.todo(transferCode, 1, 20).records().getFirst().getTaskId(), "已办理", Map.of());
+        assertEquals(0, inboxService.todo(transferCode, 1, 20).total());
+
+        String delegateCode = publish("task_delegate", "user:20");
+        Long delegateInstance = workflowService.start(delegateCode, "delegate-1", Map.of());
+        login("20");
+        Long delegateTaskId = inboxService.todo(delegateCode, 1, 20).records().getFirst().getTaskId();
+        assertEquals(delegateInstance, workflowService.delegate(delegateTaskId, 30L, "请先审核"));
+        assertEquals(0, inboxService.todo(delegateCode, 1, 20).total());
+        login("30");
+        workflowService.pass(inboxService.todo(delegateCode, 1, 20).records().getFirst().getTaskId(), "委派处理中", Map.of());
+        assertEquals(0, inboxService.todo(delegateCode, 1, 20).total());
+        login("20");
+        assertEquals(1, inboxService.todo(delegateCode, 1, 20).total());
+        workflowService.pass(inboxService.todo(delegateCode, 1, 20).records().getFirst().getTaskId(), "最终确认", Map.of());
+        assertEquals("8", inboxService.detail(delegateInstance).instance().getFlowStatus());
+    }
+
+    @Test
     void completeOrSignAndKeepBusinessDataPrivate() {
         String code = publish("runtime_or", "user:20@@user:30");
         Long instanceId = workflowService.start(code, "leave-1", Map.of("secret", "不可返回浏览器"));

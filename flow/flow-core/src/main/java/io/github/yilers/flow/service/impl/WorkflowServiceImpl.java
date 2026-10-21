@@ -4,6 +4,7 @@ import io.github.yilers.flow.mapper.WorkflowInboxMapper;
 import io.github.yilers.flow.service.WorkflowBusinessProvider;
 import io.github.yilers.flow.service.WorkflowIdentityProvider;
 import io.github.yilers.flow.service.WorkflowService;
+import io.github.yilers.flow.model.WorkflowUserInfo;
 import io.github.yilers.web.context.RequestContextHolder;
 import io.github.yilers.web.exception.CommonException;
 import org.dromara.warm.flow.core.FlowEngine;
@@ -71,6 +72,56 @@ public class WorkflowServiceImpl implements WorkflowService {
         Long instanceId = FlowEngine.taskService().reject(taskId, message, assigneeResolver.copyBusinessVariables(variables)).getId();
         validateAssignees(instanceId);
         return instanceId;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED)
+    public Long transfer(Long taskId, Long targetUserId, String message) {
+        return changeHandler(taskId, targetUserId, message, false);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED)
+    public Long delegate(Long taskId, Long targetUserId, String message) {
+        return changeHandler(taskId, targetUserId, message, true);
+    }
+
+    /** 转办和委派共用相同的任务锁、办理人校验及目标用户租户校验。 */
+    private Long changeHandler(Long taskId, Long targetUserId, String message, boolean delegation) {
+        requireTaskId(taskId);
+        if (targetUserId == null || targetUserId <= 0) {
+            throw new CommonException("目标用户ID必须为正数");
+        }
+        Task task = lockAndAuthorize(taskId);
+        requireApprovalTask(task);
+        String currentUserId = identityProvider.currentUserId();
+        String targetId = targetUserId.toString();
+        if (currentUserId.equals(targetId)) {
+            throw new CommonException("不能将任务转给自己");
+        }
+        // UPM适配器只会返回当前租户内启用用户；缺失即视为无效目标。
+        List<String> validTargets = identityProvider.resolveUserIds(List.of("user:" + targetId));
+        if (validTargets.size() != 1 || !targetId.equals(validTargets.getFirst())) {
+            throw new CommonException("目标用户不存在、已停用或不属于当前租户");
+        }
+        Map<String, WorkflowUserInfo> users = identityProvider.resolveUsers(List.of(targetId));
+        WorkflowUserInfo target = users.get(targetId);
+        String targetName = target == null || target.name() == null || target.name().isBlank()
+                ? targetId : target.name();
+        String actionName = delegation ? "委派给" : "转办给";
+        String actionMessage = message == null || message.isBlank()
+                ? actionName + targetName : message.trim();
+        List<String> flags = identityProvider.currentPermissionFlags();
+        FlowParams params = FlowParams.build().handler(currentUserId)
+                .permissionFlag(flags == null ? List.of() : flags)
+                .message(actionMessage).addHandlers(List.of(targetId));
+        boolean changed = delegation
+                ? FlowEngine.taskService().depute(taskId, params)
+                : FlowEngine.taskService().transfer(taskId, params);
+        if (!changed) {
+            throw new CommonException(delegation ? "委派失败，请刷新待办后重试" : "转办失败，请刷新待办后重试");
+        }
+        return task.getInstanceId();
     }
 
     @Override

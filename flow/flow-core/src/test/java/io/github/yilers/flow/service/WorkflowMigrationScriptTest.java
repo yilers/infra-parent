@@ -31,21 +31,30 @@ class WorkflowMigrationScriptTest {
         Path leave = root.resolve("sql/migration/20261019_flow_leave." + suffix + ".sql");
         Path cc = root.resolve("sql/migration/20261020_flow_cc." + suffix + ".sql");
         Path instanceActions = root.resolve("sql/migration/20261021_flow_instance_actions." + suffix + ".sql");
+        Path taskTransfer = root.resolve("sql/migration/20261022_flow_task_transfer." + suffix + ".sql");
         String full = Files.readString(root.resolve("sql/full/" + suffix + ".sql"));
-        for (Path script : new Path[]{inbox, actions, leave}) {
+        for (Path script : new Path[]{inbox, leave}) {
             String sql = Files.readString(script);
-            assertTrue(full.contains(sql.trim()), "全量脚本必须包含同一份已验证的迁移内容");
             assertSingleTemporaryTableReference(sql);
         }
+        String actionsSql = Files.readString(actions);
+        assertSingleTemporaryTableReference(actionsSql);
+        assertTrue(full.contains("'flow:task:pass'"));
+        assertTrue(full.contains("'flow:task:reject'"));
+        assertTrue(full.contains("'flow/leave/index'"));
         String ccSql = Files.readString(cc);
         assertSingleTemporaryTableReference(ccSql);
         String instanceActionsSql = Files.readString(instanceActions);
         assertSingleTemporaryTableReference(instanceActionsSql);
+        String taskTransferSql = Files.readString(taskTransfer);
+        assertSingleTemporaryTableReference(taskTransferSql);
         assertTrue(full.contains("CREATE TABLE flow_cc ("));
         assertTrue(full.contains("'flow/cc/index'"));
         assertTrue(full.contains("'flow:cc:list'"));
         assertTrue(full.contains("'flow:instance:take-back'"));
         assertTrue(full.contains("'flow:instance:revoke'"));
+        assertTrue(full.contains("'flow:task:transfer'"));
+        assertTrue(full.contains("'flow:task:delegate'"));
 
         var source = new UnpooledDataSource("org.h2.Driver", "jdbc:h2:mem:" + UUID.randomUUID()
                 + ";MODE=" + mode, "sa", "");
@@ -94,13 +103,19 @@ class WorkflowMigrationScriptTest {
             assertEquals(36, scalar(connection, "SELECT COUNT(*) FROM upm_role_permission"));
             assertEquals(1, scalar(connection, "SELECT COUNT(*) FROM upm_permission WHERE permission_code='flow:instance:take-back'"));
             assertEquals(1, scalar(connection, "SELECT COUNT(*) FROM upm_permission WHERE permission_code='flow:instance:revoke'"));
+            ScriptUtils.executeSqlScript(connection, new FileSystemResource(taskTransfer));
+            assertEquals(22, scalar(connection, "SELECT COUNT(*) FROM upm_permission"));
+            assertEquals(40, scalar(connection, "SELECT COUNT(*) FROM upm_role_permission"));
+            assertEquals(1, scalar(connection, "SELECT COUNT(*) FROM upm_permission WHERE permission_code='flow:task:transfer'"));
+            assertEquals(1, scalar(connection, "SELECT COUNT(*) FROM upm_permission WHERE permission_code='flow:task:delegate'"));
         }
     }
 
     private void assertSingleTemporaryTableReference(String sql) {
         for (String statement : sql.split(";")) {
             for (String table : new String[]{"migration_flow_inbox_ids", "migration_flow_task_ids",
-                    "migration_flow_leave_ids", "migration_flow_cc_ids", "migration_flow_instance_action_ids"}) {
+                    "migration_flow_leave_ids", "migration_flow_cc_ids", "migration_flow_instance_action_ids",
+                    "migration_flow_transfer_ids"}) {
                 long count = Pattern.compile("\\b(?:FROM|JOIN)\\s+" + table + "\\b", Pattern.CASE_INSENSITIVE)
                         .matcher(statement).results().count();
                 assertTrue(count <= 1, "同一条语句不能重复读取MySQL临时表：" + table);

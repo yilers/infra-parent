@@ -45,6 +45,8 @@ sql/
 
 申请人拿回与撤销新增 `migration/20261021_flow_instance_actions.mysql.sql`、`migration/20261021_flow_instance_actions.postgres.sql`。已有库在审批中心及请假迁移后执行一次，新增“拿回”和“撤销”按钮；新库全量已包含，不额外执行增量。
 
+待办转办与委派新增 `migration/20261022_flow_task_transfer.mysql.sql`、`migration/20261022_flow_task_transfer.postgres.sql`。已有库在 `20261019_flow_task_actions` 后执行一次，新增“转办”和“委派”按钮；新库全量已包含，不额外执行增量。其他租户同步应用菜单后按需授权。
+
 先创建一个空数据库，将下列命令中的 `infra` 替换为实际数据库名。选择对应数据库的一个脚本，执行一次即可，包含原有基础数据、内置应用、应用管理和第三方认证管理菜单及按钮，不需要再执行本次增量迁移。
 
 ```bash
