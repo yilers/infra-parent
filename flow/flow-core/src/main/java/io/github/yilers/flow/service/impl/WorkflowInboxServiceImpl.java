@@ -105,6 +105,7 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
         taskRecords.addAll(history);
         taskRecords.add(instance);
         decorateTasks(taskRecords);
+        decorateTaskActions(tasks, mapper.chart(instanceId, tenantId));
         return new WorkflowInstanceDetail(instance, tasks, history,
                 sanitizeChart(mapper.chart(instanceId, tenantId)), business(instanceId));
     }
@@ -275,6 +276,15 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
             WorkflowUserInfo approver = users.get(item.getApproverId());
             if (initiator != null) item.setInitiatorName(initiator.name());
             if (approver != null) item.setApproverName(approver.name());
+        });
+    }
+
+    /** 当前任务操作能力只从实例定义快照读取；权限码由前端角色权限和后端接口共同校验。 */
+    private void decorateTaskActions(List<WorkflowWorkItem> tasks, String chart) {
+        tasks.forEach(task -> {
+            WorkflowTaskActionConfig config = WorkflowTaskActionConfig.fromChart(chart, task.getNodeCode());
+            task.setCanTransfer(config.transferEnabled());
+            task.setCanDelegate(config.delegationEnabled());
         });
     }
 

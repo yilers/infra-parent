@@ -94,6 +94,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         }
         Task task = lockAndAuthorize(taskId);
         requireApprovalTask(task);
+        requireNodeTaskAction(task, delegation);
         String currentUserId = identityProvider.currentUserId();
         String targetId = targetUserId.toString();
         if (currentUserId.equals(targetId)) {
@@ -122,6 +123,17 @@ public class WorkflowServiceImpl implements WorkflowService {
             throw new CommonException(delegation ? "委派失败，请刷新待办后重试" : "转办失败，请刷新待办后重试");
         }
         return task.getInstanceId();
+    }
+
+    /** 节点配置是第一层限制；Controller 的权限码校验仍作为第二层限制。 */
+    private void requireNodeTaskAction(Task task, boolean delegation) {
+        Long tenantId = RequestContextHolder.getTenantId();
+        String chart = tenantId == null ? null : inboxMapper.chart(task.getInstanceId(), tenantId.toString());
+        WorkflowTaskActionConfig config = WorkflowTaskActionConfig.fromChart(chart, task.getNodeCode());
+        boolean allowed = delegation ? config.delegationEnabled() : config.transferEnabled();
+        if (!allowed) {
+            throw new CommonException(delegation ? "当前审批节点未允许委派" : "当前审批节点未允许转办");
+        }
     }
 
     @Override

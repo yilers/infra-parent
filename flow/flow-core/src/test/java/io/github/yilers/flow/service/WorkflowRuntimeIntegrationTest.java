@@ -8,9 +8,11 @@ import io.github.yilers.flow.config.FlowQueryConfig;
 import io.github.yilers.flow.config.FlowTenantConfig;
 import io.github.yilers.flow.config.FlowCcListener;
 import io.github.yilers.flow.mapper.WorkflowCcMapper;
+import io.github.yilers.flow.model.WorkflowWorkItem;
 import io.github.yilers.flow.service.impl.WorkflowDefinitionServiceImpl;
 import io.github.yilers.flow.service.impl.WorkflowInboxServiceImpl;
 import io.github.yilers.flow.service.impl.WorkflowServiceImpl;
+import io.github.yilers.flow.service.impl.WorkflowTaskActionConfig;
 import io.github.yilers.web.context.RequestContextHolder;
 import io.github.yilers.web.exception.CommonException;
 import org.dromara.warm.flow.core.FlowEngine;
@@ -192,10 +194,13 @@ class WorkflowRuntimeIntegrationTest {
 
     @Test
     void transferMovesTaskToTargetAndDelegateReturnsTaskToDelegator() {
-        String transferCode = publish("task_transfer", "user:20");
+        String transferCode = publish("task_transfer", "user:20", false, "0", taskActionsExt(true, false));
         Long transferInstance = workflowService.start(transferCode, "transfer-1", Map.of());
         login("20");
         Long transferTaskId = inboxService.todo(transferCode, 1, 20).records().getFirst().getTaskId();
+        WorkflowWorkItem transferItem = inboxService.detail(transferInstance).tasks().getFirst();
+        assertTrue(transferItem.isCanTransfer());
+        assertFalse(transferItem.isCanDelegate());
         assertEquals(transferInstance, workflowService.transfer(transferTaskId, 30L, "请代为办理"));
         assertEquals(0, inboxService.todo(transferCode, 1, 20).total());
         login("30");
@@ -203,10 +208,13 @@ class WorkflowRuntimeIntegrationTest {
         workflowService.pass(inboxService.todo(transferCode, 1, 20).records().getFirst().getTaskId(), "已办理", Map.of());
         assertEquals(0, inboxService.todo(transferCode, 1, 20).total());
 
-        String delegateCode = publish("task_delegate", "user:20");
+        String delegateCode = publish("task_delegate", "user:20", false, "0", taskActionsExt(false, true));
         Long delegateInstance = workflowService.start(delegateCode, "delegate-1", Map.of());
         login("20");
         Long delegateTaskId = inboxService.todo(delegateCode, 1, 20).records().getFirst().getTaskId();
+        WorkflowWorkItem delegateItem = inboxService.detail(delegateInstance).tasks().getFirst();
+        assertFalse(delegateItem.isCanTransfer());
+        assertTrue(delegateItem.isCanDelegate());
         assertEquals(delegateInstance, workflowService.delegate(delegateTaskId, 30L, "请先审核"));
         assertEquals(0, inboxService.todo(delegateCode, 1, 20).total());
         login("30");
@@ -216,6 +224,21 @@ class WorkflowRuntimeIntegrationTest {
         assertEquals(1, inboxService.todo(delegateCode, 1, 20).total());
         workflowService.pass(inboxService.todo(delegateCode, 1, 20).records().getFirst().getTaskId(), "最终确认", Map.of());
         assertEquals("8", inboxService.detail(delegateInstance).instance().getFlowStatus());
+    }
+
+    @Test
+    void taskAssignmentIsDeniedUnlessEnabledOnTheApprovalNode() {
+        String code = publish("task_actions_disabled", "user:20");
+        workflowService.start(code, "task-actions-disabled", Map.of());
+        login("20");
+        Long taskId = inboxService.todo(code, 1, 20).records().getFirst().getTaskId();
+
+        assertThrows(CommonException.class, () -> workflowService.transfer(taskId, 30L, null));
+        assertThrows(CommonException.class, () -> workflowService.delegate(taskId, 30L, null));
+        WorkflowWorkItem item = inboxService.detail(inboxService.todo(code, 1, 20).records().getFirst().getInstanceId())
+                .tasks().getFirst();
+        assertFalse(item.isCanTransfer());
+        assertFalse(item.isCanDelegate());
     }
 
     @Test
@@ -389,6 +412,12 @@ class WorkflowRuntimeIntegrationTest {
                 {"enabled":true,"includeChildDepartments":false,"recipients":[{"storageId":"%s","handlerName":"知会人"}]}
                 """.formatted(flag);
         return FlowEngine.jsonConvert.objToStr(List.of(Map.of("code", "flowCc",
+                "value", URLEncoder.encode(json, StandardCharsets.UTF_8))));
+    }
+
+    private String taskActionsExt(boolean transfer, boolean delegation) {
+        String json = "{\"transferEnabled\":" + transfer + ",\"delegationEnabled\":" + delegation + "}";
+        return FlowEngine.jsonConvert.objToStr(List.of(Map.of("code", WorkflowTaskActionConfig.EXT_CODE,
                 "value", URLEncoder.encode(json, StandardCharsets.UTF_8))));
     }
 

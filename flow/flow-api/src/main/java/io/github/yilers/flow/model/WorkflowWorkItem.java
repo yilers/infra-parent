@@ -62,4 +62,8 @@ public class WorkflowWorkItem {
     private boolean canTakeBack;
     @Schema(description = "当前用户是否可以撤销该未办结申请")
     private boolean canRevoke;
+    @Schema(description = "当前审批节点是否允许转办；角色仍须拥有对应权限码")
+    private boolean canTransfer;
+    @Schema(description = "当前审批节点是否允许委派；角色仍须拥有对应权限码")
+    private boolean canDelegate;
 }
