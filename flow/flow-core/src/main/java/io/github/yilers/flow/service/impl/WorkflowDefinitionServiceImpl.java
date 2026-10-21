@@ -7,6 +7,7 @@ import io.github.yilers.flow.service.WorkflowIdentityProvider;
 import io.github.yilers.web.exception.CommonException;
 import org.dromara.warm.flow.core.FlowEngine;
 import org.dromara.warm.flow.core.dto.DefJson;
+import org.dromara.warm.flow.core.enums.NodeType;
 import org.dromara.warm.flow.core.entity.Definition;
 import org.dromara.warm.flow.core.enums.PublishStatus;
 import org.dromara.warm.flow.core.utils.page.Page;
@@ -161,11 +162,14 @@ public class WorkflowDefinitionServiceImpl implements WorkflowDefinitionService 
 
     private Definition requireEditable(Long definitionId) {
         Definition definition = requireDefinition(definitionId);
-        if (!PublishStatus.UNPUBLISHED.getKey().equals(definition.getIsPublish())) {
-            throw new CommonException("请先取消发布该流程定义版本");
+        if (PublishStatus.EXPIRED.getKey().equals(definition.getIsPublish())) {
+            throw new CommonException("该流程定义版本已失效，请复制新版本后修改");
         }
         if (FlowEngine.insService().selectCount(FlowEngine.newIns().setDefinitionId(definitionId)) > 0) {
             throw new CommonException("该版本已有流程实例，不能修改或删除");
+        }
+        if (!PublishStatus.UNPUBLISHED.getKey().equals(definition.getIsPublish())) {
+            throw new CommonException("请先取消发布该流程定义版本");
         }
         return definition;
     }
@@ -175,8 +179,18 @@ public class WorkflowDefinitionServiceImpl implements WorkflowDefinitionService 
         try {
             DefJson design = FlowEngine.jsonConvert.strToBean(definitionJson, DefJson.class);
             if (design != null) {
+                if (design.getNodeList() != null) {
+                    design.getNodeList().forEach(node -> {
+                        WorkflowCcConfig config = WorkflowCcConfig.fromExt(node.getExt());
+                        if (config.enabled() && !NodeType.isBetween(node.getNodeType())) {
+                            throw new CommonException("只有审批节点可以配置自动抄送");
+                        }
+                    });
+                }
                 return design;
             }
+        } catch (CommonException e) {
+            throw e;
         } catch (RuntimeException e) {
             throw new CommonException("流程定义JSON格式不正确");
         }

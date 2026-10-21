@@ -3,6 +3,7 @@ package io.github.yilers.infra.flow;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import io.github.yilers.core.constant.CommonConst;
 import io.github.yilers.core.util.Result;
 import io.github.yilers.flow.model.WorkflowAssigneeRule;
 import io.github.yilers.upm.entity.Dept;
@@ -78,11 +79,11 @@ public class WorkflowDesignerDirectoryController {
             return Result.ok(new HandlerResult(new HandlerPage(rules.stream().skip(offset).limit(pageSize).toList(),
                     rules.size()), null));
         }
-        List<Dept> depts = deptService.lambdaQuery().eq(Dept::getUsable, 1).list();
+        List<Dept> depts = deptService.lambdaQuery().eq(Dept::getUsable, CommonConst.YES).list();
         Page<HandlerRow> rows;
         switch (handlerType) {
             case "角色" -> {
-                Page<Role> page = roleService.lambdaQuery().eq(Role::getUsable, 1)
+                Page<Role> page = roleService.lambdaQuery().eq(Role::getUsable, CommonConst.YES)
                         .like(userName != null && !userName.isBlank(), Role::getRoleName, userName)
                         .page(new Page<>(pageNum, pageSize));
                 rows = convert(page, page.getRecords().stream()
@@ -90,7 +91,7 @@ public class WorkflowDesignerDirectoryController {
                         .toList());
             }
             case "部门" -> {
-                Page<Dept> page = deptService.lambdaQuery().eq(Dept::getUsable, 1)
+                Page<Dept> page = deptService.lambdaQuery().eq(Dept::getUsable, CommonConst.YES)
                         .like(userName != null && !userName.isBlank(), Dept::getDeptName, userName)
                         .page(new Page<>(pageNum, pageSize));
                 rows = convert(page, page.getRecords().stream()
@@ -98,7 +99,7 @@ public class WorkflowDesignerDirectoryController {
                         .toList());
             }
             case "用户" -> {
-                Page<User> page = userService.lambdaQuery().eq(User::getUsable, 1)
+                Page<User> page = userService.lambdaQuery().eq(User::getUsable, CommonConst.YES)
                         .eq(groupId != null, User::getDeptId, groupId)
                         .and(userName != null && !userName.isBlank(), query -> query
                                 .like(User::getName, userName).or().like(User::getAccount, userName))

@@ -2,10 +2,13 @@ package io.github.yilers.flow.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.github.yilers.flow.mapper.WorkflowInboxMapper;
+import io.github.yilers.flow.mapper.WorkflowCcMapper;
+import io.github.yilers.flow.entity.WorkflowCc;
 import io.github.yilers.flow.model.WorkflowBusinessReference;
 import io.github.yilers.flow.model.WorkflowInstanceDetail;
 import io.github.yilers.flow.model.WorkflowPage;
 import io.github.yilers.flow.model.WorkflowWorkItem;
+import io.github.yilers.flow.model.WorkflowUserInfo;
 import io.github.yilers.flow.service.WorkflowBusinessProvider;
 import io.github.yilers.flow.service.WorkflowIdentityProvider;
 import io.github.yilers.flow.service.WorkflowInboxService;
@@ -38,6 +41,7 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
 
     private final WorkflowIdentityProvider identityProvider;
     private final WorkflowInboxMapper mapper;
+    private final WorkflowCcMapper ccMapper;
     private final List<WorkflowBusinessProvider> businessProviders;
 
     @Override
@@ -62,6 +66,30 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
     }
 
     @Override
+    public WorkflowPage cc(String flowCode, int pageNum, int pageSize) {
+        return result(mapper.cc(page(pageNum, pageSize), tenantId(),
+                identityProvider.currentUserId(), normalize(flowCode)));
+    }
+
+    @Override
+    @Transactional
+    public void readCc(Long ccId) {
+        if (ccId == null || ccId <= 0) throw new CommonException("抄送记录ID必须为正数");
+        String userId = identityProvider.currentUserId();
+        String tenantId = tenantId();
+        WorkflowCc cc = ccMapper.selectById(ccId);
+        if (cc == null || !tenantId.equals(cc.getTenantId()) || !userId.equals(cc.getRecipientId())) {
+            throw new CommonException(404, "抄送记录不存在或无权查看");
+        }
+        if (cc.getReadTime() == null) {
+            ccMapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<WorkflowCc>()
+                    .eq(WorkflowCc::getId, ccId).eq(WorkflowCc::getTenantId, tenantId)
+                    .eq(WorkflowCc::getRecipientId, userId).isNull(WorkflowCc::getReadTime)
+                    .set(WorkflowCc::getReadTime, new java.util.Date()));
+        }
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public WorkflowInstanceDetail detail(Long instanceId) {
         if (instanceId == null || instanceId <= 0) {
@@ -75,6 +103,7 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
         List<WorkflowWorkItem> history = mapper.history(instanceId, tenantId);
         List<WorkflowWorkItem> taskRecords = new ArrayList<>(tasks);
         taskRecords.addAll(history);
+        taskRecords.add(instance);
         decorateTasks(taskRecords);
         return new WorkflowInstanceDetail(instance, tasks, history,
                 sanitizeChart(mapper.chart(instanceId, tenantId)), business(instanceId));
@@ -106,7 +135,7 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
         return references.isEmpty() ? null : references.getFirst();
     }
 
-    /** 流程图只保留展示数据，不把运行变量、监听器配置和业务扩展正文交给浏览器。 */
+    /** 流程图只返回展示摘要；运行变量、监听器类路径和业务扩展正文不会交给浏览器。 */
     String sanitizeChart(String json) {
         if (json == null || json.isBlank()) {
             return null;
@@ -126,6 +155,8 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
             if (flag instanceof String text && !text.isBlank()) {
                 Arrays.stream(text.split("@@")).map(String::trim).filter(item -> !item.isEmpty()).forEach(flags::add);
             }
+            WorkflowCcConfig ccConfig = chartCcConfig(map.get("ext"));
+            if (!ccConfig.recipients().isEmpty()) flags.addAll(ccConfig.recipients());
             map.values().forEach(item -> collectChartFlags(item, flags));
         } else if (value instanceof List<?> list) {
             list.forEach(item -> collectChartFlags(item, flags));
@@ -144,12 +175,50 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> node = (Map<String, Object>) map;
                 node.put("permissionLabel", label);
+                node.put("listenerDisplayRows", listenerDisplayRows(map.get("listenerType"), map.get("listenerPath")));
+                node.put("flowCcDisplay", ccDisplay(chartCcConfig(map.get("ext")), names));
             }
             map.keySet().removeIf(PRIVATE_CHART_FIELDS::contains);
             map.values().forEach(item -> stripPrivateFields(item, names));
         } else if (value instanceof List<?> list) {
             list.forEach(item -> stripPrivateFields(item, names));
         }
+    }
+
+    /** 为实例详情构造只读配置摘要，不返回监听器实现类路径或完整的节点扩展属性。 */
+    private WorkflowCcConfig chartCcConfig(Object ext) {
+        if (ext == null) return new WorkflowCcConfig(false, false, List.of());
+        try {
+            String json = ext instanceof String text ? text : FlowEngine.jsonConvert.objToStr(ext);
+            return WorkflowCcConfig.fromExt(json);
+        } catch (RuntimeException ignored) {
+            // 历史流程图可能包含旧版或损坏的扩展值；查看详情不应因此失败。
+            return new WorkflowCcConfig(false, false, List.of());
+        }
+    }
+
+    private List<Map<String, Object>> listenerDisplayRows(Object rawTypes, Object rawPaths) {
+        if (!(rawTypes instanceof String types) || types.isBlank()) return List.of();
+        String[] typeRows = types.split(",", -1);
+        String[] pathRows = rawPaths instanceof String paths ? paths.split("@@", -1) : new String[0];
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (int index = 0; index < typeRows.length; index++) {
+            String type = typeRows[index].trim();
+            if (type.isEmpty()) continue;
+            boolean configured = index < pathRows.length && !pathRows[index].isBlank();
+            rows.add(Map.of("type", type, "configured", configured));
+        }
+        return rows;
+    }
+
+    private Map<String, Object> ccDisplay(WorkflowCcConfig config, Map<String, String> names) {
+        List<Map<String, String>> recipients = config.recipients().stream().map(flag -> {
+            String kind = flag.startsWith("user:") ? "用户" : flag.startsWith("role:") ? "角色"
+                    : flag.startsWith("dept:") ? "部门" : "动态规则";
+            return Map.of("kind", kind, "name", names.getOrDefault(flag, "对象已失效"));
+        }).toList();
+        return Map.of("enabled", config.enabled(), "includeChildDepartments", config.includeChildDepartments(),
+                "recipients", recipients);
     }
 
     private List<String> flags() {
@@ -193,6 +262,19 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
                 item.setSubmission(references.computeIfAbsent(key, value -> Optional.ofNullable(
                         WorkflowBusinessTasks.submission(businessProviders, value.instanceId(), value.nodeCode()))).orElse(null));
             }
+        });
+        Set<String> userIds = new LinkedHashSet<>();
+        items.forEach(item -> {
+            if (item.getInitiatorId() != null && !item.getInitiatorId().isBlank()) userIds.add(item.getInitiatorId());
+            if (item.getApproverId() != null && !item.getApproverId().isBlank()) userIds.add(item.getApproverId());
+        });
+        if (userIds.isEmpty()) return;
+        Map<String, WorkflowUserInfo> users = identityProvider.resolveUsers(List.copyOf(userIds));
+        items.forEach(item -> {
+            WorkflowUserInfo initiator = users.get(item.getInitiatorId());
+            WorkflowUserInfo approver = users.get(item.getApproverId());
+            if (initiator != null) item.setInitiatorName(initiator.name());
+            if (approver != null) item.setApproverName(approver.name());
         });
     }
 

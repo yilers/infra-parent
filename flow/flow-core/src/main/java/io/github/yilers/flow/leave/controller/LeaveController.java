@@ -43,8 +43,8 @@ public class LeaveController {
     }
 
     @GetMapping("/detail/{id}")
-    @SaCheckPermission(value = {"flow:leave:list", "flow:task:todo", "flow:task:done", "flow:instance:mine"}, mode = SaMode.OR)
-    @Operation(summary = "查看请假单正文", description = "本人可查看；非本人仅在属于该实例候选人或历史办理人时可查看，不能浏览他人草稿")
+    @SaCheckPermission(value = {"flow:leave:list", "flow:task:todo", "flow:task:done", "flow:instance:mine", "flow:cc:list"}, mode = SaMode.OR)
+    @Operation(summary = "查看请假单正文", description = "本人、实例候选人、历史办理人或抄送接收人可查看，不能浏览他人草稿")
     public Result<LeaveInfo> detail(@PathVariable Long id) {
         return Result.ok(leaveService.detail(id));
     }

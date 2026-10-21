@@ -6,11 +6,16 @@ import com.baomidou.mybatisplus.spring.MybatisSqlSessionFactoryBean;
 import io.github.yilers.flow.config.FlowPermissionConfig;
 import io.github.yilers.flow.config.FlowQueryConfig;
 import io.github.yilers.flow.config.FlowTenantConfig;
+import io.github.yilers.flow.config.FlowCcListener;
+import io.github.yilers.flow.mapper.WorkflowCcMapper;
 import io.github.yilers.flow.service.impl.WorkflowDefinitionServiceImpl;
 import io.github.yilers.flow.service.impl.WorkflowInboxServiceImpl;
 import io.github.yilers.flow.service.impl.WorkflowServiceImpl;
 import io.github.yilers.web.context.RequestContextHolder;
 import io.github.yilers.web.exception.CommonException;
+import org.dromara.warm.flow.core.FlowEngine;
+import org.dromara.warm.flow.core.dto.DefJson;
+import org.dromara.warm.flow.core.enums.PublishStatus;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.dromara.warm.flow.spring.boot.config.FlowAutoConfig;
 import org.junit.jupiter.api.AfterEach;
@@ -32,6 +37,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import javax.sql.DataSource;
 import java.util.List;
 import java.util.Map;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -52,6 +59,8 @@ class WorkflowRuntimeIntegrationTest {
     private WorkflowDefinitionService definitionService;
     @Autowired
     private WorkflowInboxService inboxService;
+    @Autowired
+    private WorkflowCcMapper ccMapper;
 
     @BeforeEach
     void login() {
@@ -62,6 +71,33 @@ class WorkflowRuntimeIntegrationTest {
     void logout() {
         USER.remove();
         RequestContextHolder.clear();
+    }
+
+    @Test
+    void expiredDefinitionIsNotAnEditableDraftAndOldInstancesKeepRunning() {
+        String code = publish("definition_status_review", "user:20");
+        Long originalId = definitionService.findPublishedId(code);
+        Long instanceId = workflowService.start(code, "status-review", Map.of());
+        CommonException used = assertThrows(CommonException.class,
+                () -> definitionService.update(originalId, editableDesign(originalId)));
+        assertTrue(used.getMessage().contains("已有流程实例"));
+        definitionService.copy(originalId);
+        Long copiedId = definitionService.versions(code).stream()
+                .filter(version -> !originalId.equals(version.id())).findFirst().orElseThrow().id();
+        definitionService.publish(copiedId);
+        assertEquals(PublishStatus.EXPIRED.getKey(), definitionService.get(originalId).publishStatus());
+        CommonException expired = assertThrows(CommonException.class,
+                () -> definitionService.update(originalId, editableDesign(originalId)));
+        assertTrue(expired.getMessage().contains("已失效"));
+        assertThrows(CommonException.class, () -> definitionService.delete(originalId));
+        assertThrows(CommonException.class,
+                () -> definitionService.update(copiedId, editableDesign(copiedId)));
+        definitionService.unpublish(copiedId);
+        definitionService.update(copiedId, editableDesign(copiedId));
+
+        login("20");
+        workflowService.pass(inboxService.todo(code, 1, 20).records().getFirst().getTaskId(), "同意", Map.of());
+        assertEquals(instanceId, inboxService.done(code, 1, 20).records().getFirst().getInstanceId());
     }
 
     @Test
@@ -203,6 +239,91 @@ class WorkflowRuntimeIntegrationTest {
         assertEquals("8", inboxService.detail(instanceId).instance().getFlowStatus());
     }
 
+    @Test
+    void ccIsDeliveredOnlyWhenNodePassesAndOnlyRecipientCanReadIt() {
+        String code = "runtime_cc";
+        String encoded = URLEncoder.encode("""
+                {"enabled":true,"includeChildDepartments":false,"recipients":[
+                  {"storageId":"user:40","handlerName":"知会人"},
+                  {"storageId":"${wfApplicant}","handlerName":"申请人"}]}
+                """, StandardCharsets.UTF_8);
+        String ext = FlowEngine.jsonConvert.objToStr(List.of(Map.of("code", "flowCc", "value", encoded)));
+        String json = """
+                {"flowCode":"runtime_cc","flowName":"抄送测试","version":"1","modelValue":"CLASSICS",
+                 "nodeList":[
+                  {"nodeCode":"start","nodeName":"开始","nodeType":0,"nodeRatio":"0","coordinate":"100,100",
+                   "skipList":[{"nowNodeCode":"start","nextNodeCode":"review","skipType":"PASS"}]},
+                  {"nodeCode":"review","nodeName":"审批","nodeType":1,"permissionFlag":"user:20",
+                   "nodeRatio":"0","ext":%s,"coordinate":"300,100",
+                   "skipList":[{"nowNodeCode":"review","nextNodeCode":"end","skipType":"PASS"},
+                               {"nowNodeCode":"review","nextNodeCode":"start","skipType":"REJECT"}]},
+                  {"nodeCode":"end","nodeName":"结束","nodeType":2,"nodeRatio":"0","coordinate":"500,100","skipList":[]}]}
+                """.formatted(FlowEngine.jsonConvert.objToStr(ext));
+        definitionService.publish(definitionService.create(json));
+        Long instanceId = workflowService.start(code, "cc-test", Map.of());
+        assertEquals("申请人", inboxService.started(code, 1, 20).records().getFirst().getInitiatorName());
+        login("20");
+        Long taskId = inboxService.todo(code, 1, 20).records().getFirst().getTaskId();
+        assertEquals(0, inboxService.cc(code, 1, 20).total());
+        workflowService.pass(taskId, "通过", Map.of());
+        assertEquals("审批人甲", inboxService.done(code, 1, 20).records().getFirst().getApproverName());
+        assertEquals(0, inboxService.cc(code, 1, 20).total());
+        login("40");
+        var cc = inboxService.cc(code, 1, 20);
+        assertEquals(1, cc.total());
+        assertEquals(instanceId, cc.records().getFirst().getInstanceId());
+        assertEquals("知会人", ccMapper.selectList(null).stream()
+                .filter(record -> "40".equals(record.getRecipientId())).findFirst().orElseThrow().getRecipientName());
+        assertEquals(null, cc.records().getFirst().getReadTime());
+        RequestContextHolder.setTenantId(2L);
+        assertEquals(0, inboxService.cc(code, 1, 20).total());
+        assertThrows(CommonException.class, () -> inboxService.detail(instanceId));
+        RequestContextHolder.setTenantId(1L);
+        assertEquals(instanceId, inboxService.detail(instanceId).instance().getInstanceId());
+        inboxService.readCc(cc.records().getFirst().getId());
+        assertTrue(inboxService.cc(code, 1, 20).records().getFirst().getReadTime() != null);
+        inboxService.readCc(cc.records().getFirst().getId());
+        login("99");
+        assertEquals(0, inboxService.cc(code, 1, 20).total());
+        assertThrows(CommonException.class, () -> inboxService.detail(instanceId));
+        assertThrows(CommonException.class, () -> inboxService.readCc(cc.records().getFirst().getId()));
+        login("10");
+        assertEquals(1, inboxService.cc(code, 1, 20).total());
+    }
+
+    @Test
+    void ccWaitsForTheWholeCountersignAndDoesNotFireOnReject() {
+        String ext = ccExt("user:40");
+        String countersign = publish("cc_countersign", "user:20@@user:30", false, "100", ext);
+        workflowService.start(countersign, "cc-sign", Map.of());
+        login("20");
+        Long taskId = inboxService.todo(countersign, 1, 20).records().getFirst().getTaskId();
+        workflowService.pass(taskId, "同意", Map.of());
+        login("40");
+        assertEquals(0, inboxService.cc(countersign, 1, 20).total());
+        login("30");
+        workflowService.pass(taskId, "同意", Map.of());
+        login("40");
+        assertEquals(1, inboxService.cc(countersign, 1, 20).total());
+
+        login("10");
+        String rejected = publish("cc_rejected", "user:20", true, "0", ext);
+        workflowService.start(rejected, "cc-reject", Map.of());
+        workflowService.pass(inboxService.todo(rejected, 1, 20).records().getFirst().getTaskId(), "提交", Map.of());
+        login("20");
+        workflowService.reject(inboxService.todo(rejected, 1, 20).records().getFirst().getTaskId(), "退回", Map.of());
+        login("40");
+        assertEquals(0, inboxService.cc(rejected, 1, 20).total());
+    }
+
+    private String ccExt(String flag) {
+        String json = """
+                {"enabled":true,"includeChildDepartments":false,"recipients":[{"storageId":"%s","handlerName":"知会人"}]}
+                """.formatted(flag);
+        return FlowEngine.jsonConvert.objToStr(List.of(Map.of("code", "flowCc",
+                "value", URLEncoder.encode(json, StandardCharsets.UTF_8))));
+    }
+
     private void login(String userId) {
         USER.set(userId);
         RequestContextHolder.setTenantId(1L);
@@ -212,11 +333,22 @@ class WorkflowRuntimeIntegrationTest {
         return publish(code, assignees, false, "0");
     }
 
+    /** 与前端设计器一致：引擎导出JSON不含数据库主键，保存编辑时补上当前定义ID。 */
+    private String editableDesign(Long definitionId) {
+        DefJson design = FlowEngine.jsonConvert.strToBean(definitionService.exportJson(definitionId), DefJson.class);
+        design.setId(definitionId);
+        return FlowEngine.jsonConvert.objToStr(design);
+    }
+
     private String publish(String code, String assignees, boolean submissionNode) {
         return publish(code, assignees, submissionNode, "0");
     }
 
     private String publish(String code, String assignees, boolean submissionNode, String ratio) {
+        return publish(code, assignees, submissionNode, ratio, null);
+    }
+
+    private String publish(String code, String assignees, boolean submissionNode, String ratio, String ext) {
         String json = """
                 {"flowCode":"%s","flowName":"请假测试","version":"1","modelValue":"CLASSICS",
                  "nodeList":[
@@ -227,6 +359,11 @@ class WorkflowRuntimeIntegrationTest {
                                {"nowNodeCode":"review","nextNodeCode":"start","skipType":"REJECT"}]},
                   {"nodeCode":"end","nodeName":"结束","nodeType":2,"nodeRatio":"0","coordinate":"500,100","skipList":[]}]}
                 """.formatted(code, assignees, ratio);
+        if (ext != null) {
+            json = json.replace("\"nodeRatio\":\"%s\",\"coordinate\":\"300,100\"".formatted(ratio),
+                    "\"nodeRatio\":\"%s\",\"ext\":%s,\"coordinate\":\"300,100\""
+                            .formatted(ratio, FlowEngine.jsonConvert.objToStr(ext)));
+        }
         if (submissionNode) {
             // 引擎不允许退回开始节点；可重新提交的申请应建模为一个普通业务节点。
             json = json.replace("\"nextNodeCode\":\"review\"", "\"nextNodeCode\":\"apply\"")
@@ -245,6 +382,7 @@ class WorkflowRuntimeIntegrationTest {
     @Configuration
     @EnableTransactionManagement
     @Import({FlowAutoConfig.class, FlowQueryConfig.class, FlowTenantConfig.class, FlowPermissionConfig.class,
+            FlowCcListener.class,
             WorkflowServiceImpl.class, WorkflowInboxServiceImpl.class, WorkflowDefinitionServiceImpl.class,
             io.github.yilers.flow.service.impl.WorkflowAssigneeResolver.class,
             io.github.yilers.flow.leave.config.LeaveProperties.class,
@@ -258,7 +396,7 @@ class WorkflowRuntimeIntegrationTest {
             return new EmbeddedDatabaseBuilder().setType(EmbeddedDatabaseType.H2)
                     .setName("flow-runtime-" + java.util.UUID.randomUUID() + ";MODE=MySQL")
                     .setScriptEncoding("UTF-8").addScript(new ClassPathResource("flow-engine-schema.sql").getPath())
-                    .addScript("flow-leave-schema.sql").build();
+                    .addScript("flow-leave-schema.sql").addScript("flow-cc-schema.sql").build();
         }
 
         @Bean
@@ -295,7 +433,8 @@ class WorkflowRuntimeIntegrationTest {
                 public String currentUserId() { return USER.get(); }
                 public List<String> currentPermissionFlags() { return List.of(USER.get(), "user:" + USER.get()); }
                 public Map<String, String> resolvePermissionNames(List<String> flags) {
-                    return Map.of("user:10", "申请人", "user:20", "审批人甲", "user:30", "审批人乙");
+                    return Map.of("user:10", "申请人", "user:20", "审批人甲", "user:30", "审批人乙",
+                            "user:40", "知会人");
                 }
                 public List<String> resolveDynamicAssignees(String applicantId, io.github.yilers.flow.model.WorkflowAssigneeRule rule) {
                     if ("99".equals(applicantId)) return List.of();

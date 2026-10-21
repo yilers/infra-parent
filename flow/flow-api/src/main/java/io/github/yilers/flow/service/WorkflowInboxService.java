@@ -18,7 +18,13 @@ public interface WorkflowInboxService {
     /** 查询本人发起的流程实例。 */
     WorkflowPage started(String flowCode, int pageNum, int pageSize);
 
-    /** 仅发起人、历史办理人或当前待办候选人可查看实例详情。 */
+    /** 查询本人收到的节点抄送，按生成时固化的接收用户查询。 */
+    WorkflowPage cc(String flowCode, int pageNum, int pageSize);
+
+    /** 仅接收人可以标记自己收到的抄送为已读，重复调用保持幂等。 */
+    void readCc(Long ccId);
+
+    /** 仅发起人、历史办理人、当前待办候选人或抄送接收人可查看实例详情。 */
     WorkflowInstanceDetail detail(Long instanceId);
 
     /** 校验当前人能否访问实例，供业务详情入口复用；不读取正文或流程变量。 */

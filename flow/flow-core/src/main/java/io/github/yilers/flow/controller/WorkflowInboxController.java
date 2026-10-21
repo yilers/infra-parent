@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -51,9 +52,26 @@ public class WorkflowInboxController {
         return Result.ok(inboxService.started(flowCode, pageNum, pageSize));
     }
 
+    @GetMapping("/cc")
+    @SaCheckPermission("flow:cc:list")
+    @Operation(summary = "分页查询抄送我的", description = "只返回本租户实际接收到的节点抄送，不生成审批待办")
+    public Result<WorkflowPage> cc(@RequestParam(required = false) String flowCode,
+                                   @RequestParam(defaultValue = "1") int pageNum,
+                                   @RequestParam(defaultValue = "20") int pageSize) {
+        return Result.ok(inboxService.cc(flowCode, pageNum, pageSize));
+    }
+
+    @PostMapping("/cc/read/{id}")
+    @SaCheckPermission("flow:cc:list")
+    @Operation(summary = "标记抄送已读", description = "仅接收人本人可操作，重复调用保持幂等")
+    public Result<Void> readCc(@PathVariable Long id) {
+        inboxService.readCc(id);
+        return Result.ok();
+    }
+
     @GetMapping("/detail/{id}")
-    @SaCheckPermission(value = {"flow:task:todo", "flow:task:done", "flow:instance:mine"}, mode = SaMode.OR)
-    @Operation(summary = "查看与本人相关的流程详情", description = "仅发起人、历史办理人或当前任务候选人可查看；不返回业务正文及流程变量")
+    @SaCheckPermission(value = {"flow:task:todo", "flow:task:done", "flow:instance:mine", "flow:cc:list"}, mode = SaMode.OR)
+    @Operation(summary = "查看与本人相关的流程详情", description = "仅发起人、历史办理人、当前任务候选人或抄送接收人可查看；不返回业务正文及流程变量")
     public Result<WorkflowInstanceDetail> detail(@PathVariable Long id) {
         return Result.ok(inboxService.detail(id));
     }

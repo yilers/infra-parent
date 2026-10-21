@@ -76,9 +76,10 @@ public class WorkflowServiceImpl implements WorkflowService {
     @Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED)
     public Long submitBusinessTask(Long taskId, String businessType, String message, Map<String, Object> variables) {
         requireTaskId(taskId);
+        requireText(businessType, "业务类型");
         Task task = lockAndAuthorize(taskId);
         var reference = WorkflowBusinessTasks.submission(businessProviders, task.getInstanceId(), task.getNodeCode());
-        if (reference == null || !reference.type().equals(businessType)) {
+        if (reference == null || !businessType.equals(reference.type())) {
             throw new CommonException("该任务不是指定业务的申请提交任务");
         }
         Long instanceId = FlowEngine.taskService().pass(taskId, message, assigneeResolver.copyBusinessVariables(variables)).getId();

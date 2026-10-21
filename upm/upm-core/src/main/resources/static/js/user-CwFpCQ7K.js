@@ -1,0 +1,1 @@
+import{n as e}from"./pinia-ClX3eUsT.js";var t=e(`core-user`,{actions:{setUserInfo(e){var t,n;this.userInfo=e;let r=(t=e==null||(n=e.roleList)==null?void 0:n.map(e=>e.roleCode))==null?[]:t;console.info(`roles`,r),this.setUserRoles(r)},setUserRoles(e){this.userRoles=e}},state:()=>({userInfo:null,userRoles:[]})});export{t};

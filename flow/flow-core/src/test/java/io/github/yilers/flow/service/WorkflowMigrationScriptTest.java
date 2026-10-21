@@ -29,12 +29,18 @@ class WorkflowMigrationScriptTest {
         Path inbox = root.resolve("sql/migration/20261019_flow_inbox." + suffix + ".sql");
         Path actions = root.resolve("sql/migration/20261019_flow_task_actions." + suffix + ".sql");
         Path leave = root.resolve("sql/migration/20261019_flow_leave." + suffix + ".sql");
+        Path cc = root.resolve("sql/migration/20261020_flow_cc." + suffix + ".sql");
         String full = Files.readString(root.resolve("sql/full/" + suffix + ".sql"));
         for (Path script : new Path[]{inbox, actions, leave}) {
             String sql = Files.readString(script);
             assertTrue(full.contains(sql.trim()), "全量脚本必须包含同一份已验证的迁移内容");
             assertSingleTemporaryTableReference(sql);
         }
+        String ccSql = Files.readString(cc);
+        assertSingleTemporaryTableReference(ccSql);
+        assertTrue(full.contains("CREATE TABLE flow_cc ("));
+        assertTrue(full.contains("'flow/cc/index'"));
+        assertTrue(full.contains("'flow:cc:list'"));
 
         var source = new UnpooledDataSource("org.h2.Driver", "jdbc:h2:mem:" + UUID.randomUUID()
                 + ";MODE=" + mode, "sa", "");
@@ -72,12 +78,19 @@ class WorkflowMigrationScriptTest {
             assertEquals(2, scalar(connection, "SELECT sort_number FROM upm_permission WHERE component='flow/todo/index'"));
             assertEquals(3, scalar(connection, "SELECT sort_number FROM upm_permission WHERE component='flow/done/index'"));
             assertEquals(4, scalar(connection, "SELECT sort_number FROM upm_permission WHERE component='flow/started/index'"));
+            ScriptUtils.executeSqlScript(connection, new FileSystemResource(cc));
+            assertEquals(18, scalar(connection, "SELECT COUNT(*) FROM upm_permission"));
+            assertEquals(32, scalar(connection, "SELECT COUNT(*) FROM upm_role_permission"));
+            assertEquals(5, scalar(connection, "SELECT sort_number FROM upm_permission WHERE component='flow/cc/index'"));
+            assertEquals(6, scalar(connection, "SELECT sort_number FROM upm_permission WHERE component='flow/leave/index'"));
+            assertEquals(0, scalar(connection, "SELECT COUNT(*) FROM flow_cc"));
         }
     }
 
     private void assertSingleTemporaryTableReference(String sql) {
         for (String statement : sql.split(";")) {
-            for (String table : new String[]{"migration_flow_inbox_ids", "migration_flow_task_ids", "migration_flow_leave_ids"}) {
+            for (String table : new String[]{"migration_flow_inbox_ids", "migration_flow_task_ids",
+                    "migration_flow_leave_ids", "migration_flow_cc_ids"}) {
                 long count = Pattern.compile("\\b(?:FROM|JOIN)\\s+" + table + "\\b", Pattern.CASE_INSENSITIVE)
                         .matcher(statement).results().count();
                 assertTrue(count <= 1, "同一条语句不能重复读取MySQL临时表：" + table);

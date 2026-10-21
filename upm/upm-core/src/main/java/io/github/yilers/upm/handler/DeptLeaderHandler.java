@@ -6,6 +6,7 @@ import io.github.yilers.core.constant.CommonConst;
 import io.github.yilers.upm.entity.Dept;
 import io.github.yilers.upm.entity.DeptLeader;
 import io.github.yilers.upm.entity.User;
+import io.github.yilers.upm.enums.DeptLeaderTypeEnum;
 import io.github.yilers.upm.mapper.DeptMapper;
 import io.github.yilers.upm.request.DeptLeaderSaveRequest;
 import io.github.yilers.upm.response.DeptLeaderCandidateResponse;
@@ -36,8 +37,9 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class DeptLeaderHandler {
 
-    public static final int PRIMARY = 1;
-    public static final int DEPUTY = 2;
+    // 保留已有调用方的常量入口，实际编码统一由API模块的领域枚举定义。
+    public static final int PRIMARY = DeptLeaderTypeEnum.PRIMARY.getCode();
+    public static final int DEPUTY = DeptLeaderTypeEnum.DEPUTY.getCode();
 
     private final DeptLeaderService deptLeaderService;
     private final DeptService deptService;

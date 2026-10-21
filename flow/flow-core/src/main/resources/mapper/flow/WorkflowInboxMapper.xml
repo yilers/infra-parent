@@ -53,6 +53,16 @@
         <include refid="flowFilter"/>
         ORDER BY i.create_time DESC, i.id DESC
     </select>
+    <select id="cc" resultType="io.github.yilers.flow.model.WorkflowWorkItem">
+        SELECT c.id, <include refid="instanceColumns"/>,
+               c.node_name, c.node_code, c.create_time, c.read_time
+        FROM flow_cc c
+        JOIN flow_instance i ON i.id = c.instance_id AND i.tenant_id = #{tenantId} AND i.del_flag = '0'
+        <include refid="definitionJoin"/>
+        WHERE c.tenant_id = #{tenantId} AND c.recipient_id = #{userId}
+        <include refid="flowFilter"/>
+        ORDER BY c.create_time DESC, c.id DESC
+    </select>
     <select id="visibleInstance" resultType="io.github.yilers.flow.model.WorkflowWorkItem">
         SELECT i.id, <include refid="instanceColumns"/>, i.node_name, i.create_time, i.update_time
         FROM flow_instance i <include refid="definitionJoin"/>
@@ -61,7 +71,9 @@
             OR EXISTS (SELECT 1 FROM flow_his_task h WHERE h.instance_id = i.id
                        AND h.tenant_id = #{tenantId} AND h.del_flag = '0' AND h.approver = #{userId})
             OR EXISTS (SELECT 1 FROM flow_task t WHERE t.instance_id = i.id
-                       AND t.tenant_id = #{tenantId} AND t.del_flag = '0' AND <include refid="candidate"/>))
+                       AND t.tenant_id = #{tenantId} AND t.del_flag = '0' AND <include refid="candidate"/>)
+            OR EXISTS (SELECT 1 FROM flow_cc c WHERE c.instance_id = i.id
+                       AND c.tenant_id = #{tenantId} AND c.recipient_id = #{userId}))
     </select>
     <select id="tasks" resultType="io.github.yilers.flow.model.WorkflowWorkItem">
         SELECT t.id, t.id AS task_id, <include refid="instanceColumns"/>,

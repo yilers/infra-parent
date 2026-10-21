@@ -1,6 +1,7 @@
 package io.github.yilers.flow.service;
 
 import io.github.yilers.flow.model.WorkflowAssigneeRule;
+import io.github.yilers.flow.model.WorkflowUserInfo;
 
 import java.util.List;
 import java.util.Map;
@@ -62,5 +63,29 @@ public interface WorkflowIdentityProvider {
             }
             return flag;
         }).distinct().toList();
+    }
+
+    /** 节点通过时按申请人及当前组织关系展开抄送对象，返回同租户有效用户ID。 */
+    default List<String> resolveCcUserIds(String applicantId, List<String> recipients, boolean includeChildDepartments) {
+        if (includeChildDepartments && recipients.stream().anyMatch(flag -> flag.startsWith("dept:"))) {
+            throw new IllegalStateException("宿主尚未实现下级部门抄送解析");
+        }
+        List<String> result = new java.util.ArrayList<>();
+        for (String flag : recipients) {
+            WorkflowAssigneeRule rule = WorkflowAssigneeRule.fromExpression(flag);
+            result.addAll(rule == null ? resolveUserIds(List.of(flag)) : resolveDynamicAssignees(applicantId, rule));
+        }
+        return result.stream().distinct().toList();
+    }
+
+    /** 按用户ID批量读取当前租户的用户展示信息，历史记录与抄送共用。 */
+    default Map<String, WorkflowUserInfo> resolveUsers(List<String> userIds) {
+        Map<String, String> flags = resolvePermissionNames(userIds.stream().map(id -> "user:" + id).toList());
+        Map<String, WorkflowUserInfo> users = new java.util.HashMap<>();
+        userIds.forEach(id -> {
+            String name = flags.get("user:" + id);
+            if (name != null) users.put(id, new WorkflowUserInfo(id, name));
+        });
+        return users;
     }
 }

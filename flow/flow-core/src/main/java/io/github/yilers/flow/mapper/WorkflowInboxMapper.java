@@ -22,6 +22,9 @@ public interface WorkflowInboxMapper {
     Page<WorkflowWorkItem> started(Page<WorkflowWorkItem> page, @Param("tenantId") String tenantId,
                                    @Param("userId") String userId, @Param("flowCode") String flowCode);
 
+    Page<WorkflowWorkItem> cc(Page<WorkflowWorkItem> page, @Param("tenantId") String tenantId,
+                              @Param("userId") String userId, @Param("flowCode") String flowCode);
+
     WorkflowWorkItem visibleInstance(@Param("instanceId") Long instanceId, @Param("tenantId") String tenantId,
                                      @Param("userId") String userId, @Param("flags") List<String> flags);
 

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import io.github.yilers.flow.config.FlowTenantConfig;
 import io.github.yilers.flow.mapper.WorkflowInboxMapper;
+import io.github.yilers.flow.mapper.WorkflowCcMapper;
 import io.github.yilers.flow.service.impl.WorkflowInboxServiceImpl;
 import io.github.yilers.web.context.RequestContextHolder;
 import io.github.yilers.web.exception.CommonException;
@@ -87,7 +88,8 @@ class WorkflowInboxQueryTest {
             public String currentUserId() { return userId; }
             public List<String> currentPermissionFlags() { return flags; }
         };
-        return new WorkflowInboxServiceImpl(identity, session.getMapper(WorkflowInboxMapper.class), List.of());
+        return new WorkflowInboxServiceImpl(identity, session.getMapper(WorkflowInboxMapper.class),
+                session.getMapper(WorkflowCcMapper.class), List.of());
     }
 
     private SqlSession session(String mode) throws Exception {
@@ -108,6 +110,9 @@ class WorkflowInboxQueryTest {
                     CREATE TABLE flow_his_task(id BIGINT PRIMARY KEY, instance_id BIGINT, task_id BIGINT, tenant_id VARCHAR(40),
                       del_flag CHAR DEFAULT '0', node_name VARCHAR(100), node_code VARCHAR(100), node_type INT, approver VARCHAR(40), skip_type VARCHAR(10),
                       message VARCHAR(500), flow_status VARCHAR(20), create_time TIMESTAMP, update_time TIMESTAMP);
+                    CREATE TABLE flow_cc(id BIGINT PRIMARY KEY, tenant_id VARCHAR(40), instance_id BIGINT,
+                      source_task_id BIGINT, node_code VARCHAR(100), node_name VARCHAR(200), recipient_id VARCHAR(40),
+                      recipient_name VARCHAR(128), create_time TIMESTAMP, read_time TIMESTAMP);
                     INSERT INTO flow_definition(id,tenant_id,flow_code,flow_name,version) VALUES
                       (1,'1','leave','请假','1'),(2,'2','leave','请假','1');
                     INSERT INTO flow_instance(id,definition_id,tenant_id,business_id,flow_status,create_by) VALUES
@@ -127,6 +132,7 @@ class WorkflowInboxQueryTest {
         interceptor.addInnerInterceptor(new FlowTenantConfig().flowTenantLineInnerInterceptor());
         interceptor.addInnerInterceptor(new PaginationInnerInterceptor());
         configuration.addInterceptor(interceptor);
+        configuration.addMapper(WorkflowCcMapper.class);
         String resource = "mapper/flow/WorkflowInboxMapper.xml";
         try (var input = getClass().getClassLoader().getResourceAsStream(resource)) {
             assertNotNull(input);

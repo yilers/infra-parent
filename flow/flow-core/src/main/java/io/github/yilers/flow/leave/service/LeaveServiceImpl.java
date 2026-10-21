@@ -2,7 +2,9 @@ package io.github.yilers.flow.leave.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.github.yilers.flow.leave.config.LeaveProperties;
+import io.github.yilers.flow.leave.constant.LeaveConst;
 import io.github.yilers.flow.leave.entity.LeaveApplication;
+import io.github.yilers.flow.leave.enums.LeaveTypeEnum;
 import io.github.yilers.flow.leave.mapper.LeaveMapper;
 import io.github.yilers.flow.leave.model.LeaveInfo;
 import io.github.yilers.flow.leave.model.LeavePage;
@@ -24,7 +26,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * 请假业务示例：单据先保存草稿，再在同一事务内启动流程并绑定实例。
@@ -35,8 +36,9 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class LeaveServiceImpl implements LeaveService {
 
-    private static final Set<String> TYPES = Set.of("PERSONAL", "SICK", "ANNUAL", "COMP_TIME", "OTHER");
-    private static final BigDecimal STEP = new BigDecimal("0.5");
+    private static final BigDecimal DURATION_STEP_HOURS = new BigDecimal(LeaveConst.DURATION_STEP_HOURS);
+    private static final BigDecimal MAX_DURATION_HOURS = new BigDecimal(LeaveConst.MAX_DURATION_HOURS);
+    private static final BigDecimal MINUTES_PER_HOUR = BigDecimal.valueOf(Duration.ofHours(1).toMinutes());
 
     private final LeaveMapper mapper;
     private final WorkflowIdentityProvider identityProvider;
@@ -142,7 +144,7 @@ public class LeaveServiceImpl implements LeaveService {
         // 业务关联先落库，随后在同一事务内完成唯一申请节点；主管节点绝不自动通过。
         var applicationTask = applicationTasks.initialTask(instanceId);
         if (applicationTask != null) {
-            workflowService.submitBusinessTask(applicationTask.getId(), "leave", "提交申请", Map.of());
+            workflowService.submitBusinessTask(applicationTask.getId(), LeaveConst.BUSINESS_TYPE, "提交申请", Map.of());
         }
         return instanceId;
     }
@@ -156,7 +158,7 @@ public class LeaveServiceImpl implements LeaveService {
             throw staleDraft();
         }
         // 更新路由字段但不覆盖已固化的动态办理人快照，也不重新创建流程实例。
-        return workflowService.submitBusinessTask(taskId, "leave", "重新提交申请", variables(leave));
+        return workflowService.submitBusinessTask(taskId, LeaveConst.BUSINESS_TYPE, "重新提交申请", variables(leave));
     }
 
     @Override
@@ -222,28 +224,29 @@ public class LeaveServiceImpl implements LeaveService {
     }
 
     private Map<String, Object> variables(LeaveApplication leave) {
-        return Map.of("businessType", "leave", "applicantId", leave.getApplicantId(),
+        return Map.of("businessType", LeaveConst.BUSINESS_TYPE, "applicantId", leave.getApplicantId(),
                 "leaveType", leave.getLeaveType(), "durationHours", leave.getDurationHours());
     }
 
     /** 服务契约也校验业务规则，避免其他模块直接调用Service时绕过Controller校验。 */
     private void validate(LeaveSaveRequest request) {
-        if (request == null || !TYPES.contains(request.leaveType() == null ? "" : request.leaveType())) {
+        if (request == null || !LeaveTypeEnum.supports(request.leaveType())) {
             throw new CommonException("请选择有效的请假类型");
         }
         if (request.startTime() == null || request.endTime() == null || !request.endTime().isAfter(request.startTime())) {
             throw new CommonException("请假结束时间必须晚于开始时间");
         }
         BigDecimal hours = request.durationHours();
-        if (hours == null || hours.compareTo(STEP) < 0 || hours.compareTo(new BigDecimal("8760")) > 0
-                || hours.remainder(STEP).signum() != 0) {
+        if (hours == null || hours.compareTo(DURATION_STEP_HOURS) < 0 || hours.compareTo(MAX_DURATION_HOURS) > 0
+                || hours.remainder(DURATION_STEP_HOURS).signum() != 0) {
             throw new CommonException("请假时长须为0.5小时的整数倍，且不超过8760小时");
         }
         BigDecimal intervalMinutes = BigDecimal.valueOf(Duration.between(request.startTime(), request.endTime()).toMinutes());
-        if (hours.multiply(BigDecimal.valueOf(60)).compareTo(intervalMinutes) > 0) {
+        if (hours.multiply(MINUTES_PER_HOUR).compareTo(intervalMinutes) > 0) {
             throw new CommonException("请假时长不能超过起止时间的自然时长");
         }
-        if (request.reason() == null || request.reason().isBlank() || request.reason().trim().length() > 1000) {
+        if (request.reason() == null || request.reason().isBlank()
+                || request.reason().trim().length() > LeaveConst.MAX_REASON_LENGTH) {
             throw new CommonException("请填写请假原因，最多1000字");
         }
     }
@@ -264,7 +267,7 @@ public class LeaveServiceImpl implements LeaveService {
 
     private void requireVersion(Integer version) {
         if (version == null || version < 1) {
-            throw new CommonException("请携带有效的草稿版本号");
+            throw new CommonException("请携带有效的申请版本号");
         }
     }
 

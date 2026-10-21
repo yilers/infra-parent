@@ -2,6 +2,7 @@ package io.github.yilers.infra.flow;
 
 import cn.dev33.satoken.stp.StpUtil;
 import io.github.yilers.flow.model.WorkflowAssigneeRule;
+import io.github.yilers.flow.model.WorkflowUserInfo;
 import io.github.yilers.upm.entity.Dept;
 import io.github.yilers.upm.entity.DeptLeader;
 import io.github.yilers.upm.entity.Role;
@@ -107,6 +108,42 @@ class UpmWorkflowIdentityProviderTest {
             assertEquals(Map.of("role:20", "租户管理员", "dept:30", "开发部", "user:11", "张三"),
                     provider.resolvePermissionNames(List.of("role:20", "role:20", "dept:30", "user:11",
                             "role:21", "role:404", "user:abc", "role:9999999999999999999", "unknown:10")));
+        }
+    }
+
+    @Test
+    void resolvesUsersInBatchForApprovalHistoryAndCc() {
+        try (var ignored = mockStatic(StpUtil.class)) {
+            login();
+            User employee = user(11L, 1L, 1);
+            employee.setName("张三");
+            User foreign = user(12L, 2L, 1);
+            foreign.setName("其他租户用户");
+            User disabled = user(13L, 1L, 0);
+            disabled.setName("离职员工");
+            when(users.listByIds(anyCollection())).thenReturn(List.of(employee, foreign, disabled));
+
+            assertEquals(Map.of("11", new WorkflowUserInfo("11", "张三"),
+                            "13", new WorkflowUserInfo("13", "离职员工")),
+                    provider.resolveUsers(List.of("11", "11", "12", "13", "invalid")));
+        }
+    }
+
+    @Test
+    void resolvesCcDynamicRecipientUsingApplicantWhenApproverIsDifferent() {
+        try (var ignored = mockStatic(StpUtil.class)) {
+            login();
+            when(StpUtil.getLoginIdAsLong()).thenReturn(20L);
+            when(users.getById(20L)).thenReturn(user(20L, 1L, 1));
+            User applicant = user(10L, 1L, 1);
+            applicant.setDeptId(100L);
+            when(users.getById(10L)).thenReturn(applicant);
+            when(depts.getById(100L)).thenReturn(department(100L, null, 1L));
+            when(leaders.findCurrentByDeptId(100L)).thenReturn(List.of(leader(100L, 30L, 2)));
+            when(users.listByIds(anyCollection())).thenReturn(List.of(user(30L, 1L, 1)));
+
+            assertEquals(List.of("30"), provider.resolveCcUserIds("10",
+                    List.of(WorkflowAssigneeRule.DEPARTMENT_APPROVERS.expression()), false));
         }
     }
 
