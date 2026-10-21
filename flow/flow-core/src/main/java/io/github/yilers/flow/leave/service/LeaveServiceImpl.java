@@ -202,7 +202,8 @@ public class LeaveServiceImpl implements LeaveService {
         if (info.getInstanceId() == null) {
             info.setEditable(true);
         } else if (FlowStatus.APPROVAL.getKey().equals(info.getFlowStatus())
-                || FlowStatus.REJECT.getKey().equals(info.getFlowStatus())) {
+                || FlowStatus.REJECT.getKey().equals(info.getFlowStatus())
+                || FlowStatus.TASK_BACK.getKey().equals(info.getFlowStatus())) {
             var task = applicationTasks.currentTask(info.getInstanceId());
             if (task != null && applicationTasks.canHandle(task.getId(), userId)) {
                 info.setEditable(true);

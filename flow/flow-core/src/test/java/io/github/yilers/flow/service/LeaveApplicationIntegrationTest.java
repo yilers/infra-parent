@@ -112,6 +112,41 @@ class LeaveApplicationIntegrationTest {
     }
 
     @Test
+    void applicantCanTakeBackPendingLeaveAndThenEditAndResubmit() {
+        publishWithApplication("user:20");
+        LeaveInfo draft = leaveService.create(request(null));
+        Long instanceId = leaveService.submit(draft.getId(), 1);
+        assertFalse(leaveService.detail(draft.getId()).isEditable());
+
+        assertEquals(instanceId, workflowService.takeBack(instanceId));
+        LeaveInfo takenBack = leaveService.detail(draft.getId());
+        assertEquals(FlowStatus.TASK_BACK.getKey(), takenBack.getFlowStatus());
+        assertTrue(takenBack.isEditable());
+        assertNotNull(takenBack.getSubmissionTaskId());
+
+        LeaveInfo edited = leaveService.edit(draft.getId(), new LeaveSaveRequest("PERSONAL",
+                request(null).startTime(), request(null).endTime(), new BigDecimal("4"),
+                "拿回后修改并重新提交", takenBack.getVersion(), takenBack.getSubmissionTaskId()));
+        assertEquals(instanceId, leaveService.submit(draft.getId(), edited.getVersion(), edited.getSubmissionTaskId()));
+        assertFalse(leaveService.detail(draft.getId()).isEditable());
+        assertEquals(FlowStatus.APPROVAL.getKey(), leaveService.detail(draft.getId()).getFlowStatus());
+    }
+
+    @Test
+    void applicantCanRevokeAnInFlightLeaveAndItCannotBeEditedAfterward() {
+        publishWithApplication("user:20");
+        LeaveInfo draft = leaveService.create(request(null));
+        Long instanceId = leaveService.submit(draft.getId(), 1);
+
+        assertEquals(instanceId, workflowService.revoke(instanceId));
+        LeaveInfo cancelled = leaveService.detail(draft.getId());
+        assertEquals(FlowStatus.CANCEL.getKey(), cancelled.getFlowStatus());
+        assertFalse(cancelled.isEditable());
+        assertEquals(0, inboxService.todo(flowCode, 1, 20).total());
+        assertThrows(CommonException.class, () -> leaveService.edit(draft.getId(), request(cancelled.getVersion())));
+    }
+
+    @Test
     void automaticApplicationSubmissionRollsBackTheWholeStartIfReviewerIsMissing() {
         publishWithApplication("");
         LeaveInfo draft = leaveService.create(request(null));

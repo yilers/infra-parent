@@ -39,4 +39,10 @@ public interface WorkflowService {
      * @return 流程实例ID
      */
     Long reject(Long taskId, String message, Map<String, Object> variables);
+
+    /** 申请人拿回仍在审批中的实例，退回到自己最近办理过的任务。 */
+    Long takeBack(Long instanceId);
+
+    /** 申请人撤销尚未办结的实例，流程不再继续流转。 */
+    Long revoke(Long instanceId);
 }

@@ -58,4 +58,8 @@ public class WorkflowWorkItem {
     private Date readTime;
     @Schema(description = "是否为本人当前可办理任务，不替代提交时的再次校验")
     private boolean actionable;
+    @Schema(description = "当前用户是否可以拿回该审批中的申请")
+    private boolean canTakeBack;
+    @Schema(description = "当前用户是否可以撤销该未办结申请")
+    private boolean canRevoke;
 }

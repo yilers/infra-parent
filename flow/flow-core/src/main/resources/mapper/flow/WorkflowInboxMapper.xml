@@ -10,7 +10,7 @@
                   <foreach collection="flags" item="flag" open="(" separator="," close=")">#{flag}</foreach>)
     </sql>
     <sql id="actionable">
-        t.node_type = 1 AND i.activity_status = 1 AND d.activity_status = 1
+        t.node_type = 1 AND i.activity_status = 1 AND i.flow_status IN ('1', '9', '11') AND d.activity_status = 1
         AND <include refid="candidate"/>
     </sql>
     <sql id="instanceColumns">
@@ -47,7 +47,16 @@
         ORDER BY h.update_time DESC, h.id DESC
     </select>
     <select id="started" resultType="io.github.yilers.flow.model.WorkflowWorkItem">
-        SELECT i.id, <include refid="instanceColumns"/>, i.node_name, i.create_time, i.update_time
+        SELECT i.id, <include refid="instanceColumns"/>, i.node_name, i.create_time, i.update_time,
+               CASE WHEN i.flow_status = '1' AND i.activity_status = 1
+                    AND EXISTS (SELECT 1 FROM flow_his_task h WHERE h.instance_id = i.id
+                                AND h.tenant_id = #{tenantId} AND h.del_flag = '0'
+                                AND h.approver = #{userId} AND h.node_type = 1 AND h.skip_type = 'PASS')
+                    THEN 1 ELSE 0 END AS can_take_back,
+               CASE WHEN i.flow_status IN ('1', '9', '11') AND i.activity_status = 1
+                    AND EXISTS (SELECT 1 FROM flow_task t WHERE t.instance_id = i.id
+                                AND t.tenant_id = #{tenantId} AND t.del_flag = '0' AND t.node_type = 1)
+                    THEN 1 ELSE 0 END AS can_revoke
         FROM flow_instance i <include refid="definitionJoin"/>
         WHERE i.tenant_id = #{tenantId} AND i.del_flag = '0' AND i.create_by = #{userId}
         <include refid="flowFilter"/>
@@ -101,6 +110,12 @@
         WHERE i.id = (SELECT t.instance_id FROM flow_task t
                       WHERE t.id = #{taskId} AND t.tenant_id = #{tenantId} AND t.del_flag = '0')
           AND i.tenant_id = #{tenantId} AND i.del_flag = '0'
+        FOR UPDATE
+    </select>
+    <select id="lockOwnedInstance" resultType="long">
+        SELECT i.id FROM flow_instance i
+        WHERE i.id = #{instanceId} AND i.tenant_id = #{tenantId} AND i.create_by = #{userId}
+          AND i.del_flag = '0'
         FOR UPDATE
     </select>
     <select id="actionableTaskCount" resultType="int">

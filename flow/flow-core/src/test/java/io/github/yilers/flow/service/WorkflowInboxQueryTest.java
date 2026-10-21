@@ -50,6 +50,10 @@ class WorkflowInboxQueryTest {
             assertEquals(0, service.todo("other", 1, 20).total());
             assertEquals(1, service.done(null, 1, 20).total());
             assertEquals(2, service.started(null, 1, 20).total());
+            var started = service.started(null, 1, 20).records().stream()
+                    .filter(item -> item.getInstanceId().equals(100L)).findFirst().orElseThrow();
+            assertTrue(started.isCanTakeBack());
+            assertTrue(started.isCanRevoke());
             assertThrows(CommonException.class, () -> service.detail(200L));
             assertThrows(CommonException.class, () -> service.detail(300L));
             assertThrows(CommonException.class, () -> service.todo(null, 0, 20));

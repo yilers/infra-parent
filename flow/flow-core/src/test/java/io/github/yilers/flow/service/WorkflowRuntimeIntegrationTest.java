@@ -16,6 +16,7 @@ import io.github.yilers.web.exception.CommonException;
 import org.dromara.warm.flow.core.FlowEngine;
 import org.dromara.warm.flow.core.dto.DefJson;
 import org.dromara.warm.flow.core.enums.PublishStatus;
+import org.dromara.warm.flow.core.enums.FlowStatus;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.dromara.warm.flow.spring.boot.config.FlowAutoConfig;
 import org.junit.jupiter.api.AfterEach;
@@ -148,6 +149,45 @@ class WorkflowRuntimeIntegrationTest {
         assertEquals(instanceId, parent.getInstanceId());
         workflowService.pass(parent.getTaskId(), "同意", Map.of());
         assertEquals("8", inboxService.detail(instanceId).instance().getFlowStatus());
+    }
+
+    @Test
+    void applicantCanTakeBackToTheirLatestCompletedTaskAndOnlyTheyCanRevoke() {
+        String code = "applicant_take_back";
+        Long definitionId = definitionService.create("""
+                {"flowCode":"applicant_take_back","flowName":"申请人拿回测试","version":"1","modelValue":"CLASSICS",
+                 "nodeList":[
+                  {"nodeCode":"start","nodeName":"开始","nodeType":0,"nodeRatio":"0","coordinate":"100,100",
+                   "skipList":[{"nowNodeCode":"start","nextNodeCode":"apply","skipType":"PASS"}]},
+                  {"nodeCode":"apply","nodeName":"申请提交","nodeType":1,"permissionFlag":"${wfApplicant}",
+                   "nodeRatio":"0","coordinate":"300,100",
+                   "skipList":[{"nowNodeCode":"apply","nextNodeCode":"review","skipType":"PASS"}]},
+                  {"nodeCode":"review","nodeName":"审批","nodeType":1,"permissionFlag":"user:20",
+                   "nodeRatio":"0","coordinate":"500,100",
+                   "skipList":[{"nowNodeCode":"review","nextNodeCode":"end","skipType":"PASS"}]},
+                  {"nodeCode":"end","nodeName":"结束","nodeType":2,"nodeRatio":"0","coordinate":"700,100","skipList":[]}]}""");
+        definitionService.publish(definitionId);
+
+        Long instanceId = workflowService.start(code, "take-back-1", Map.of());
+        var submitTask = inboxService.todo(code, 1, 20).records().getFirst();
+        workflowService.pass(submitTask.getTaskId(), "提交申请", Map.of());
+        assertEquals(1, inboxService.started(code, 1, 20).records().getFirst().isCanTakeBack() ? 1 : 0);
+
+        login("99");
+        assertThrows(CommonException.class, () -> workflowService.takeBack(instanceId));
+        assertThrows(CommonException.class, () -> workflowService.revoke(instanceId));
+
+        login("10");
+        assertEquals(instanceId, workflowService.takeBack(instanceId));
+        var returned = inboxService.detail(instanceId);
+        assertEquals(FlowStatus.TASK_BACK.getKey(), returned.instance().getFlowStatus());
+        assertEquals("apply", returned.tasks().getFirst().getNodeCode());
+        assertTrue(returned.tasks().getFirst().isActionable());
+        assertFalse(inboxService.started(code, 1, 20).records().getFirst().isCanTakeBack());
+
+        assertEquals(instanceId, workflowService.revoke(instanceId));
+        assertEquals(FlowStatus.CANCEL.getKey(), inboxService.detail(instanceId).instance().getFlowStatus());
+        assertFalse(inboxService.detail(instanceId).tasks().getFirst().isActionable());
     }
 
     @Test

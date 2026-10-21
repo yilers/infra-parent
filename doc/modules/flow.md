@@ -109,6 +109,8 @@ WorkflowIdentityProvider
 
 审批操作已开放 `POST /flow/task/pass/{id}` 和 `POST /flow/task/reject/{id}`，对应 `flow:task:pass`、`flow:task:reject`。请求只接收 `{ "message": "审批意见" }`，最多500个字符，退回原因必填；客户端不能指定办理人、租户、跳转目标或覆盖流程变量。退回遵循流程设计的 REJECT 路线，不代表终止；未配置合法退回路线时由引擎拒绝并回滚。
 
+“我发起的”支持申请人 `POST /flow/instance/take-back/{id}` 和 `POST /flow/instance/revoke/{id}`，分别要求 `flow:instance:take-back`、`flow:instance:revoke`。拿回仅适用于审批中的活动实例，且申请人曾完成过一个审批任务；引擎将实例退回申请人最近完成的任务，保留同一实例和审批历史。请假流程拿回到“提交申请”节点后，申请人可修改并重新提交。撤销适用于审批中、已驳回或已拿回的活动实例，撤销后实例终止，不可继续办理或修改业务单据。两项操作都由服务端校验当前租户、实例所有者、状态和待办任务，并锁定实例避免与审批并发推进；页面按钮只是按资格提示，不能替代服务端鉴权。已有库执行 `20261021_flow_instance_actions` 对应数据库脚本一次；新库全量已包含按钮。
+
 引擎不允许退回开始节点。需要申请人修改后重新提交时，应设计“开始 → 申请提交（普通节点，申请人办理）→ 审批 → 结束”，审批的退回路线指向“申请提交”，而不是开始节点。请假示例已实现首次提交自动完成唯一申请节点、退回后修改及原实例重提，配置见[请假业务说明](flow-leave.md)。
 
 `WorkflowBusinessProvider.findSubmissionTask` 由业务识别当前申请任务，向审批中心提供业务入口。通用通过、退回接口拒绝办理这类任务，避免绕过表单校验；业务Service完成授权、校验和保存后，在同一READ_COMMITTED事务中调用 `WorkflowService.submitBusinessTask`。该方法校验业务类型及候选身份，仅作为Service契约，不提供通用HTTP接口。通用引擎不会仅因节点办理人是申请人就自动完成任务。

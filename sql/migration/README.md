@@ -43,6 +43,10 @@
 
 已完成请假及审批中心增量的库，停写、备份后执行对应的 `20261020_flow_cc` 一次。先确认没有 `flow_cc` 表、`flow/cc/index` 菜单和 `flow:cc:list` 按钮，模板租户1的infra应用下恰有一个OA目录。脚本新增接收记录表、“抄送我的”菜单和查询按钮；菜单ID使用现有最大值后的连续2个ID，每条插入只读取一次临时表，兼容MySQL 5.7。请假菜单排序后移至6，保留原ID和授权。其他租户同步应用菜单并授权，重新登录后可见。新库只执行全量脚本。
 
+### 申请人拿回与撤销迁移（20261021_flow_instance_actions）
+
+已完成审批中心、请假及抄送迁移的库，停写、备份后执行对应的 `20261021_flow_instance_actions` 一次。执行前确认模板租户1尚无 `flow:instance:take-back`、`flow:instance:revoke` 权限，且infra应用下恰有一个“我发起的”菜单。脚本为该菜单新增两个按钮并授权默认管理员角色；ID从现有最大值后连续分配，兼容MySQL 5.7。其他租户同步应用菜单后按需授权。新库全量脚本已包含，不执行增量。
+
 ### 审批中心旧脚本出现1137错误时
 
 旧版 `20261019_flow_inbox`、`20261019_flow_task_actions` 曾在同一条 `UNION ALL` 语句中重复读取临时表，MySQL会报 `Can't reopen table`。修正版拆成逐条 `INSERT ... SELECT`，保留同一临时表中的起始ID和父子关系；MySQL/PostgreSQL增量与全量脚本均已同步。

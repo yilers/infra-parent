@@ -43,6 +43,8 @@ sql/
 
 节点自动抄送新增 `migration/20261020_flow_cc.mysql.sql`、`migration/20261020_flow_cc.postgres.sql`。已有库在请假迁移后执行一次，创建 `flow_cc` 接收快照表和“抄送我的”菜单及查询按钮；新库全量已包含，不额外执行增量。
 
+申请人拿回与撤销新增 `migration/20261021_flow_instance_actions.mysql.sql`、`migration/20261021_flow_instance_actions.postgres.sql`。已有库在审批中心及请假迁移后执行一次，新增“拿回”和“撤销”按钮；新库全量已包含，不额外执行增量。
+
 先创建一个空数据库，将下列命令中的 `infra` 替换为实际数据库名。选择对应数据库的一个脚本，执行一次即可，包含原有基础数据、内置应用、应用管理和第三方认证管理菜单及按钮，不需要再执行本次增量迁移。
 
 ```bash

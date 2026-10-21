@@ -10,6 +10,7 @@ import org.dromara.warm.flow.core.FlowEngine;
 import org.dromara.warm.flow.core.dto.FlowParams;
 import org.dromara.warm.flow.core.entity.Instance;
 import org.dromara.warm.flow.core.entity.Task;
+import org.dromara.warm.flow.core.enums.ActivityStatus;
 import org.dromara.warm.flow.core.enums.FlowStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -70,6 +71,66 @@ public class WorkflowServiceImpl implements WorkflowService {
         Long instanceId = FlowEngine.taskService().reject(taskId, message, assigneeResolver.copyBusinessVariables(variables)).getId();
         validateAssignees(instanceId);
         return instanceId;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED)
+    public Long takeBack(Long instanceId) {
+        Instance instance = lockOwnedInstance(instanceId);
+        requireActiveInstance(instance, List.of(FlowStatus.APPROVAL));
+        if (FlowEngine.taskService().getByInsId(instanceId).isEmpty()) {
+            throw new CommonException("流程已没有待办任务，不能拿回");
+        }
+        FlowParams params = applicantActionParams("申请人拿回申请");
+        Instance result = FlowEngine.taskService().taskBackByInsId(instanceId, params);
+        validateAssignees(result.getId());
+        return result.getId();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED)
+    public Long revoke(Long instanceId) {
+        Instance instance = lockOwnedInstance(instanceId);
+        requireActiveInstance(instance, List.of(FlowStatus.APPROVAL, FlowStatus.REJECT, FlowStatus.TASK_BACK));
+        if (FlowEngine.taskService().getByInsId(instanceId).isEmpty()) {
+            throw new CommonException("流程已没有待办任务，不能撤销");
+        }
+        Instance result = FlowEngine.taskService().revoke(instanceId, applicantActionParams("申请人撤销申请"));
+        return result.getId();
+    }
+
+    private Instance lockOwnedInstance(Long instanceId) {
+        if (instanceId == null || instanceId <= 0) {
+            throw new CommonException("流程实例ID必须为正数");
+        }
+        if (!Integer.valueOf(java.sql.Connection.TRANSACTION_READ_COMMITTED)
+                .equals(TransactionSynchronizationManager.getCurrentTransactionIsolationLevel())) {
+            throw new CommonException("流程操作必须在READ_COMMITTED事务中执行，请检查外层事务配置");
+        }
+        String userId = identityProvider.currentUserId();
+        Long tenantId = RequestContextHolder.getTenantId();
+        if (tenantId == null || inboxMapper.lockOwnedInstance(instanceId, tenantId.toString(), userId) == null) {
+            throw new CommonException("流程实例不存在、已变化或无权操作");
+        }
+        Instance instance = FlowEngine.insService().getById(instanceId);
+        if (instance == null || !tenantId.toString().equals(instance.getTenantId())
+                || !userId.equals(instance.getCreateBy())) {
+            throw new CommonException("流程实例不存在、已变化或无权操作");
+        }
+        return instance;
+    }
+
+    private void requireActiveInstance(Instance instance, List<FlowStatus> allowedStatuses) {
+        if (!ActivityStatus.ACTIVITY.getKey().equals(instance.getActivityStatus())
+                || allowedStatuses.stream().noneMatch(status -> status.getKey().equals(instance.getFlowStatus()))) {
+            throw new CommonException("流程当前状态不支持此操作");
+        }
+    }
+
+    private FlowParams applicantActionParams(String message) {
+        List<String> flags = identityProvider.currentPermissionFlags();
+        return FlowParams.build().handler(identityProvider.currentUserId())
+                .permissionFlag(flags == null ? List.of() : flags).message(message);
     }
 
     @Override
