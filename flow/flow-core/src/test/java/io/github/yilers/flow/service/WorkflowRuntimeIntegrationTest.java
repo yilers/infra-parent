@@ -201,6 +201,10 @@ class WorkflowRuntimeIntegrationTest {
         WorkflowWorkItem transferItem = inboxService.detail(transferInstance).tasks().getFirst();
         assertTrue(transferItem.isCanTransfer());
         assertFalse(transferItem.isCanDelegate());
+        String transferChart = inboxService.detail(transferInstance).chartJson();
+        assertTrue(transferChart.contains("flowTaskActionsDisplay"));
+        assertTrue(transferChart.contains("\"transferEnabled\":true"));
+        assertTrue(transferChart.contains("\"delegationEnabled\":false"));
         assertEquals(transferInstance, workflowService.transfer(transferTaskId, 30L, "请代为办理"));
         assertEquals(0, inboxService.todo(transferCode, 1, 20).total());
         login("30");
@@ -215,6 +219,9 @@ class WorkflowRuntimeIntegrationTest {
         WorkflowWorkItem delegateItem = inboxService.detail(delegateInstance).tasks().getFirst();
         assertFalse(delegateItem.isCanTransfer());
         assertTrue(delegateItem.isCanDelegate());
+        String delegateChart = inboxService.detail(delegateInstance).chartJson();
+        assertTrue(delegateChart.contains("\"transferEnabled\":false"));
+        assertTrue(delegateChart.contains("\"delegationEnabled\":true"));
         assertEquals(delegateInstance, workflowService.delegate(delegateTaskId, 30L, "请先审核"));
         assertEquals(0, inboxService.todo(delegateCode, 1, 20).total());
         login("30");

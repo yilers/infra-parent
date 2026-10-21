@@ -178,6 +178,7 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
                 node.put("permissionLabel", label);
                 node.put("listenerDisplayRows", listenerDisplayRows(map.get("listenerType"), map.get("listenerPath")));
                 node.put("flowCcDisplay", ccDisplay(chartCcConfig(map.get("ext")), names));
+                node.put("flowTaskActionsDisplay", taskActionsDisplay(map.get("ext")));
             }
             map.keySet().removeIf(PRIVATE_CHART_FIELDS::contains);
             map.values().forEach(item -> stripPrivateFields(item, names));
@@ -220,6 +221,14 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
         }).toList();
         return Map.of("enabled", config.enabled(), "includeChildDepartments", config.includeChildDepartments(),
                 "recipients", recipients);
+    }
+
+    /** 仅向流程参与人展示节点允许的操作，不暴露原始扩展配置。 */
+    private Map<String, Boolean> taskActionsDisplay(Object rawExt) {
+        String ext = rawExt instanceof String text ? text : FlowEngine.jsonConvert.objToStr(rawExt);
+        WorkflowTaskActionConfig config = WorkflowTaskActionConfig.fromExt(ext);
+        return Map.of("transferEnabled", config.transferEnabled(),
+                "delegationEnabled", config.delegationEnabled());
     }
 
     private List<String> flags() {
