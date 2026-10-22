@@ -1,265 +1,33 @@
-# infra-parent 项目上下文
+# infra-parent 编码指引
 
-## 项目概述
+本文件只记录修改本仓库时容易遗漏的约定。功能介绍、环境要求和运行命令见 [README.md](README.md)；依赖版本与 Java 编译目标以根目录 [pom.xml](pom.xml) 为准，不在这里重复维护版本号。
 
-infra-parent 是一个基于 Spring Boot 4.x 和 JDK 25 的基础服务项目，主要提供完整的 RBAC（基于角色的访问控制）权限管理和其他基础系统。该项目设计为独立部署的基础服务，可与业务服务分离，也可作为模块集成到业务服务中。
+## 模块边界
 
-### 核心功能
-#### 系统管理
-- 租户管理（多租户支持）
-- 菜单管理（支持菜单按钮配置）
-- 应用管理
-- 第三方登录管理
-- 角色管理
-- 职位管理
-- 部门管理
-- 用户管理
-- 日志管理
-#### OA审批
-- 流程定义
-- 我的待办
-- 我的已办
-- 我发起的
-- 抄送我的
-- 请假申请(目前供使用的审批申请)
+- `common/` 提供公共 API、认证、Web、Redis 和基础工具能力。
+- `upm/upm-api` 放 UPM 契约和模型；`upm/upm-core` 放业务实现、HTTP 接口、SSO Server 及内嵌前端；`upm/upm-start` 是 UPM 独立启动入口。
+- `flow/flow-api` 放工作流契约；`flow/flow-core` 放流程引擎和业务无关的流程逻辑。工作流所需的用户、部门、角色数据通过 Provider 接口获取。单体适配实现位于 `infra-start`，不要让 `flow-core` 直接依赖 `upm-core`。
+- `file/`、`notice/` 是预留模块，新增功能前先看 `doc/modules/` 中的规划。`ai/` 是独立的 AI 相关模块。
+- `infra-start` 组合基础模块统一启动；需要只部署 UPM 时使用 `upm-start`。新增模块时检查 API、core、启动器之间的依赖方向。
 
-### 技术栈
-- **Java 版本**: JDK 25
-- **Spring Boot**: 4.x
-- **数据库**: MySQL（使用 MyBatis Plus）
-- **缓存**: Redis（使用Redisson）
-- **认证授权**: Sa-Token
-- **工具库**: Hutool
-- **API 文档**: Knife4j-next
-- **动态线程池**: Dynamic-TP
-- **任务调度**: PowerJob
-- **缓存框架**: JetCache
-- **IP 地域查询**: ip2region
+前端源码在独立仓库 `infra-parent-web`，不在本仓库修改前端源码。需要更新后端内嵌页面时，先在前端仓库执行 `pnpm --filter @vben/infra-web build`，再用 `apps/infra-web/dist/` 更新 `upm/upm-core/src/main/resources/static/`，清理旧的带哈希文件。前端开发服务与后端内嵌页面使用不同的构建方式，涉及样式时检查生产构建结果。
 
-## 项目结构
+## 数据与权限约定
 
-```
-infra-parent/
-├── common/                    # 公共模块
-│   ├── common-auth/          # 认证授权模块（基于 Sa-Token）
-│   ├── common-core/          # 核心工具模块（Hutool、Lombok）
-│   ├── common-redisson/      # Redisson 配置模块
-│   └── common-web/           # Web 相关模块（MyBatis Plus、Knife4j 等）
-├── upm/                       # 用户权限管理模块
-│   ├── upm-api/              # API 接口定义
-│   ├── upm-core/             # 核心业务逻辑实现
-│   └── upm-start/            # 启动器模块
-├── bin/                       # 部署脚本
-│   ├── install.sh           # 本地安装脚本
-│   ├── deploy-central.sh    # 部署到中央仓库脚本
-│   └── deploy-company.sh    # 部署到公司私服脚本
-├── sql/                       # 数据库脚本
-│   ├── full/                 # 空数据库全量初始化（已含最新结构和初始数据）
-│   └── migration/            # 已有数据库按版本增量升级
-└── pom.xml                   # 父 POM 文件
-```
+- 业务表按模块使用 `upm_`、`flow_`、`file_`、`notice_` 等前缀。实体的 `deleted` 表示逻辑删除；`usable` 表示启用状态，`operable` 表示是否允许操作，不要混用。
+- 多租户数据隔离由 MyBatis Plus 租户插件处理。租户上下文从服务端验证过的登录态恢复，不信任客户端提交的租户 ID。确需跨租户访问时，显式审查租户插件忽略范围和授权条件。
+- 菜单按钮属于租户下的应用及终端，角色属于租户。修改平台模板菜单、应用或权限时，检查新租户复制和现有租户增量同步逻辑。
+- 行数据权限涉及接口资源和 SQL 过滤：参考现有 `@DataPermissionResource`、`@DataPermission` 用法，检查角色范围、用户覆盖范围及空值语义。不要仅靠前端隐藏按钮实现授权。
+- 工作流接入 UPM 数据时，优先扩展 `flow-api` 的 Provider 契约及其适配实现；流程数据组装逻辑留在 `flow-core`。
 
-## 模块依赖关系
+## SQL 与文档
 
-```
-upm-start
-  └── upm-core
-        ├── common-auth
-        │     └── common-core
-        └── upm-api
-              └── common-web
-                    ├── common-core
-                    ├── common-redisson
-                    └── (Spring Boot Web 相关依赖)
-```
+- 空库执行 `sql/full/` 中对应数据库的全量脚本；已有库按 `sql/migration/README.md` 执行尚未应用的增量脚本。两者不要叠加执行。
+- 修改表结构或初始菜单、按钮时，同时更新 MySQL、PostgreSQL 全量脚本，并提供对应的增量脚本；已有库的迁移要考虑重复执行和部分失败后的核验方式。SQL 由人工执行，服务启动不会自动迁移。
+- 业务设计和接入说明放在 `doc/`；面向使用者的安装、功能和版本信息放在 `README.md`、`CHANGELOG.md`。不要在本文件写固定账号、密钥或容易过期的依赖版本。
 
-## 构建和运行
+## 修改与验证
 
-### 环境要求
-- JDK 25
-- Maven 3.x
-- MySQL 8.0+
-- Redis 6.0+
-
-### 本地运行
-
-1. **初始化数据库**
-   ```bash
-   # 执行数据库初始化脚本
-   mysql -u root -p infra < sql/full/mysql.sql
-   ```
-
-   新库只执行对应全量脚本；已有数据库使用 `sql/migration/`，不要重复执行全量或已应用的增量。执行说明见 `sql/README.md`。
-
-2. **修改配置文件**
-   - 编辑 `upm/upm-start/src/main/resources/application-dev.properties`
-   - 配置数据库连接、Redis 连接等
-
-3. **编译安装**
-   ```bash
-   # 方式1：使用提供的脚本（推荐）
-   cd bin
-   ./install.sh
-   # 按提示输入版本号，如 1.0.0
-
-   # 方式2：直接使用 Maven 命令
-   mvn clean install -Drevision=1.0.0
-   ```
-
-4. **启动服务**
-   ```bash
-   # 进入启动模块目录
-   cd upm/upm-start
-
-   # 使用 Maven 启动（开发环境）
-   mvn spring-boot:run -Dspring-boot.run.profiles=dev
-
-   # 或使用 Java 启动打包后的 jar
-   java -jar target/upm-start-1.0.0.jar --spring.profiles.active=dev
-   ```
-
-5. **访问应用**
-   - 前端地址：http://localhost:9000/index.html
-   - API 文档：http://localhost:9000/doc.html（Knife4j）
-   - 平台管理员账号：`platform@yilers.com` / `yilers@123`
-   - 租户管理员账号：`admin@yilers.com`
-
-### 打包部署
-
-```bash
-# 打包（跳过测试）
-mvn clean package -DskipTests -Drevision=1.0.0
-
-# 部署到本地仓库
-mvn clean install -DskipTests -Drevision=1.0.0
-
-# 部署到公司私服
-mvn clean deploy -Pcompany -Drevision=1.0.0
-
-# 部署到中央仓库（需要 GPG 签名）
-mvn clean deploy -Pcentral -Drevision=1.0.0
-```
-
-### 环境配置
-
-项目支持多环境配置，通过 `spring.profiles.active` 切换：
-
-- `dev` - 开发环境
-- `test` - 测试环境
-- `gray` - 灰度环境
-
-配置文件位置：`upm/upm-start/src/main/resources/application-{profile}.properties`
-
-## 开发约定
-
-### 架构模式
-- **SOA 架构**：推荐业务服务创建 `api` 和 `core` 模块
-- **模块化开发**：业务服务可直接引入 `upm-api` 和 `upm-core` 模块使用 RBAC 功能
-- **启动器分离**：`upm-start` 仅作为启动入口，业务服务可创建自己的启动器
-
-### 数据库规范
-- 表命名规范：`项目_表名`，例如 `upm_user`
-- 默认数据权限通过 `dept_id` 字段过滤
-- 逻辑删除字段：`usable`（1-已删除，0-未删除）
-- ID 生成策略：MyBatis Plus 的 `assign_id`（雪花算法）
-
-### 权限控制
-- **数据权限类型**：
-  - 看全部
-  - 本部门及以下
-  - 本部门
-  - 自定义部门
-  - 仅看自己（通过 `@DataPermission` 注解配置）
-
-- **接口权限注解示例**：
-  ```java
-  @InterceptorIgnore(tenantLine = "true", dataPermission = "false")
-  @DataPermission(tableName = "upm_log", deptField = "dept_id", userField = "operator")
-  Page<LogInfoResponse> findByPage(@Param("page") Page<?> p,
-                                   @Param("request") BasePageRequest<Log> request);
-  ```
-
-### 代码规范
-- 编译参数：`-parameters`（保留方法参数名）
-- 编码：UTF-8
-- 时区：Asia/Shanghai
-- 日志级别：com.github.yilers=debug，root=info
-
-### 租户管理
-- 平台管理员可管理租户及菜单按钮等配置
-- 租户管理员管理用户、角色配置等业务型配置
-- 创建新租户时（如租户 code 为 `baidu.com`），会自动创建：
-  - 租户管理员角色
-  - 租户管理员账号（如 `admin@baidu.com`）
-  - 同步默认租户的菜单和角色权限
-
-### 数据权限配置
-需要在 `application.properties` 中配置需要数据权限的表：
-```properties
-permission.column.table=upm_log,upm_user
-```
-
-## 关键特性
-
-### 1. 多租户支持
-- 基于 Sa-Token 的租户隔离
-- 租户管理员自动创建
-- 菜单和权限自动同步
-
-### 2. 数据权限
-- 支持部门级数据权限控制
-- 支持用户级数据权限（仅看自己）
-- 可自定义业务表的部门字段和用户字段
-
-### 3. 缓存策略
-- 使用 JetCache + Redisson 实现二级缓存
-- 支持方法缓存注解
-- 权限缓存与业务缓存分离
-
-### 4. 监控和文档
-- Knife4j API 文档
-- Spring Boot Actuator 健康检查
-- 动态线程池监控（Dynamic-TP）
-
-## 常用命令
-
-### Maven 构建
-```bash
-# 完整构建（包含 Source 和 Javadoc）
-mvn clean install -Drevision=1.0.0
-
-# 跳过测试构建
-mvn clean install -DskipTests -Drevision=1.0.0
-
-# 仅打包
-mvn clean package -DskipTests -Drevision=1.0.0
-```
-
-### 开发调试
-```bash
-# 开发环境启动
-mvn spring-boot:run -Dspring-boot.run.profiles=dev
-
-# 查看依赖树
-mvn dependency:tree
-
-# 查看有效 POM
-mvn help:effective-pom
-```
-
-## 注意事项
-
-1. **版本管理**：使用 `${revision}` 属性统一管理版本号，构建时通过 `-Drevision` 参数指定
-2. **测试跳过**：默认配置跳过测试（`<skipTests>true</skipTests>`），如需运行测试需修改配置
-3. **JDK 兼容性**：项目使用 JDK 25，确保开发环境 JDK 版本正确
-4. **租户同步**：新增菜单后需要在租户同步逻辑中处理，否则新租户看不到新菜单
-5. **Spring Boot 升级**：当前使用 Spring Boot 4.0.6（最新版本），等待常用依赖服务支持后再发布到中央仓库
-
-## 许可证
-
-Apache License 2.0
-
-## 开发者
-
-- zhanghui <yilers95@gmail.com>
-- GitHub: https://github.com/yilers/infra-parent
+- 沿用所在模块的包名、DTO、Service 和异常处理风格；保持代码整洁，非显而易见的业务规则写清楚中文注释，避免新增魔法值。
+- 保留工作区里与任务无关的修改。提交时只暂存本次相关文件，尤其不要顺手提交本地 `application-dev.properties` 配置。
+- 先做与改动范围相称的检查。测试默认跳过，需要执行时显式传入 `-DskipTests=false`；例如 `mvn -pl upm/upm-core -am test -DskipTests=false`。文档变更检查链接和命令，前端资源变更检查生产构建及内嵌资源是否一致。
