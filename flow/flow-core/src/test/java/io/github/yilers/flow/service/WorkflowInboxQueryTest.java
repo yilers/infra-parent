@@ -21,6 +21,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.sql.Connection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -90,7 +91,13 @@ class WorkflowInboxQueryTest {
     private WorkflowInboxService service(SqlSession session, String userId, List<String> flags) {
         WorkflowIdentityProvider identity = new WorkflowIdentityProvider() {
             public String currentUserId() { return userId; }
+            public String currentUserName() { return userId; }
             public List<String> currentPermissionFlags() { return flags; }
+            public Map<String, String> resolvePermissionNames(List<String> permissionFlags) { return Map.of(); }
+            public List<String> resolveDynamicAssignees(String applicantId, io.github.yilers.flow.model.WorkflowAssigneeRule rule) { return List.of(applicantId); }
+            public List<String> resolveUserIds(List<String> permissionFlags) { return permissionFlags; }
+            public List<String> resolveCcUserIds(String applicantId, List<String> recipients, boolean includeChildDepartments) { return List.of(); }
+            public Map<String, io.github.yilers.flow.model.WorkflowUserInfo> resolveUsers(List<String> userIds) { return Map.of(); }
         };
         return new WorkflowInboxServiceImpl(identity, session.getMapper(WorkflowInboxMapper.class),
                 session.getMapper(WorkflowCcMapper.class), List.of());

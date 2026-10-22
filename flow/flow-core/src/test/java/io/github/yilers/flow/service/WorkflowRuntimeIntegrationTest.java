@@ -535,10 +535,30 @@ class WorkflowRuntimeIntegrationTest {
         WorkflowIdentityProvider identityProvider() {
             return new WorkflowIdentityProvider() {
                 public String currentUserId() { return USER.get(); }
+                public String currentUserName() { return USER.get(); }
                 public List<String> currentPermissionFlags() { return List.of(USER.get(), "user:" + USER.get()); }
                 public Map<String, String> resolvePermissionNames(List<String> flags) {
                     return Map.of("user:10", "申请人", "user:20", "审批人甲", "user:30", "审批人乙",
                             "user:40", "知会人");
+                }
+                public List<String> resolveUserIds(List<String> flags) {
+                    return flags.stream().map(flag -> flag.startsWith("user:") ? flag.substring(5) : flag).toList();
+                }
+                public List<String> resolveCcUserIds(String applicantId, List<String> recipients, boolean includeChildDepartments) {
+                    return recipients.stream().flatMap(recipient -> {
+                        var rule = io.github.yilers.flow.model.WorkflowAssigneeRule.fromExpression(recipient);
+                        return rule == null ? resolveUserIds(List.of(recipient)).stream()
+                                : resolveDynamicAssignees(applicantId, rule).stream();
+                    }).distinct().toList();
+                }
+                public Map<String, io.github.yilers.flow.model.WorkflowUserInfo> resolveUsers(List<String> userIds) {
+                    Map<String, io.github.yilers.flow.model.WorkflowUserInfo> users = Map.of(
+                            "10", new io.github.yilers.flow.model.WorkflowUserInfo("10", "申请人"),
+                            "20", new io.github.yilers.flow.model.WorkflowUserInfo("20", "审批人甲"),
+                            "30", new io.github.yilers.flow.model.WorkflowUserInfo("30", "审批人乙"),
+                            "40", new io.github.yilers.flow.model.WorkflowUserInfo("40", "知会人"));
+                    return userIds.stream().filter(users::containsKey)
+                            .collect(java.util.stream.Collectors.toMap(id -> id, users::get));
                 }
                 public List<String> resolveDynamicAssignees(String applicantId, io.github.yilers.flow.model.WorkflowAssigneeRule rule) {
                     if ("99".equals(applicantId)) return List.of();

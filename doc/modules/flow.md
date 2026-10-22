@@ -67,15 +67,16 @@ flow_ext_xxx
 
 ## UPM适配
 
-`flow-core` 不直接依赖 `upm-core`。工作流定义自己的当前身份接口：
+`flow-core` 不直接依赖 `upm-core`。身份数据通过 `flow-api` 定义的 `WorkflowDataProvider` 端口读取；用户、角色、部门和主管候选查询均要求实现方按当前可信租户过滤有效数据，批量/分页接口避免远程场景下逐条查询。Flow 在 `flow-core` 中实现 `WorkflowIdentityProvider`，负责将这些基础数据组装为办理人、动态主管、抄送人和展示名称：
 
 ```text
+WorkflowDataProvider       // 宿主实现的基础数据查询端口
 WorkflowIdentityProvider
 ```
 
-`infra-start` 中的 `UpmWorkflowIdentityProvider` 通过 UPM Service 提供当前用户ID、角色ID和部门ID；Warm-Flow 的办理人标识采用用户ID（兼容 `user:用户ID`）、`role:角色ID`、`dept:部门ID`。未登录、租户不一致或用户停用时拒绝办理。独立部署时由宿主实现同一接口，通过可信 RPC 或 HTTP 获取身份数据，不能直接复用本地 UPM 实现。
+`infra-start` 中的 `UpmWorkflowDataProvider` 只通过 UPM Service 查询基础用户、角色、部门和主管数据，并校验租户及有效状态；Flow 的规则解析和结果组装不放在该类中。Warm-Flow 的办理人标识采用用户ID（兼容 `user:用户ID`）、`role:角色ID`、`dept:部门ID`。未登录、租户不一致或用户停用时拒绝办理。独立部署时由宿主实现 `WorkflowDataProvider`，通过可信 RPC 或 HTTP 查询；Flow 的办理人解析和业务规则保持不变。
 
-`WorkflowIdentityProvider.resolveUsers` 按用户ID批量返回最小展示信息。待办、已办、详情中的发起人和历史办理人姓名使用该接口填充，查不到时保留原始ID；抄送创建时复用它固化接收人姓名。历史办理人姓名展示的是当前用户资料，不回写流程历史表；抄送接收人姓名是触发时的快照。
+`WorkflowIdentityProvider.resolveUsers` 按用户ID批量返回最小展示信息。待办、已办、详情中的发起人和历史办理人姓名使用该能力填充，查不到时保留原始ID；抄送创建时复用它固化接收人姓名。历史办理人姓名展示的是当前用户资料，不回写流程历史表；抄送接收人姓名是触发时的快照。
 
 `WorkflowService` 封装发起、通过和驳回三个原子操作。`WorkflowDefinitionService` 封装定义分页、版本查询、设计 JSON 保存、复制、发布、取消发布和删除。前者仍只提供后端服务契约；后者通过 `WorkflowDefinitionController` 开放管理接口，并使用 `flow:definition:*` 按钮权限保护。其他业务模块直接注入服务时，仍必须自行校验管理权限；流程引擎的任务办理人校验不能替代这些授权。
 
@@ -98,7 +99,7 @@ WorkflowIdentityProvider
 
 模板租户的“OA审批 / 流程定义”菜单已启用，页面组件为 `flow/definition/index`。新库全量脚本直接包含该配置；已执行早期权限增量脚本的库还需执行 `20261016_flow_definition_menu`。其他租户通过现有“同步应用菜单”获得模板权限；已同步的菜单也会在本次增量中启用。执行后重新登录，以刷新菜单和按钮缓存。
 
-流程设计器源码固定在前端 pnpm workspace 的 `packages/warm-flow-designer`，来源与本地补丁见该目录 `UPSTREAM.md`。`infra-web` 使用官方 Ant Design Vue 适配器，通过项目 `requestClient` 实现设计器数据接口，不会访问默认的 `/warm-flow/**`。`infra-start` 的 `/flow/designer/handler-*` 接口提供当前租户的角色、部门和用户候选项，办理人标识与 `WorkflowIdentityProvider` 一致；独立部署 Flow 时需要提供等价的目录适配。
+流程设计器源码固定在前端 pnpm workspace 的 `packages/warm-flow-designer`，来源与本地补丁见该目录 `UPSTREAM.md`。`infra-web` 使用官方 Ant Design Vue 适配器，通过项目 `requestClient` 实现设计器数据接口，不会访问默认的 `/warm-flow/**`。`flow-core` 提供 `/flow/designer/handler-*` 目录接口，返回当前租户的角色、部门和用户候选项；目录查询委托给 `WorkflowDataProvider`，动态规则、回显名称和部门树由 Flow 组装。`/flow/task/target-users` 同样由 Flow 提供，UPM 适配器只负责当前租户的有效用户分页搜索。独立部署时由宿主实现等价的目录数据查询即可。
 
 审批中心已接入“我的待办 / 我的已办 / 我发起的 / 抄送我的”及实例详情、审批记录和只读运行图。发起人、历史办理人、当前候选人或实际抄送接收人可查看实例详情；管理员没有默认旁路。待办使用 `flow_user` 权限交集及 EXISTS 查询，避免同时命中用户、角色、部门时重复显示。未配置办理人的任务不会向全租户开放。挂起实例和流程不列入可办理任务。
 
@@ -118,7 +119,7 @@ WorkflowIdentityProvider
 
 `WorkflowService.start` 表示发起审批，初始实例状态设置为审批中，而不是引擎默认的待提交。服务通过实例行锁串行化同一实例的办理，再检查当前任务及实际候选身份；审批方法使用 READ_COMMITTED 隔离，避免等待行锁后继续读取旧快照。直接注入Service的业务模块若在外层开启事务，必须同样采用 READ_COMMITTED；不要在已有 REPEATABLE_READ 事务中调用审批方法。所有流程写入和业务状态更新必须共用同一数据源及事务管理器。重复提交已完成任务会被拒绝，不再推进第二次。
 
-UPM 适配器在任务创建时把用户、角色、部门转换为本租户的有效用户ID，候选人随任务固化；角色/部门人员变化不自动改写已生成任务，后续可通过转办等功能调整。部门表示本部门员工，不含下级部门，也不表示部门主管。只依赖Flow的其他宿主可实现 `WorkflowIdentityProvider.resolveUserIds`，默认只支持用户标识。没有有效办理人或保留未解析的类型标识时整笔事务回滚，避免生成无人可办任务。
+Flow 在任务创建时将用户、角色、部门标识解析为本租户的有效用户ID，候选人随任务固化；角色/部门人员变化不自动改写已生成任务，后续可通过转办等功能调整。部门表示本部门员工，不含下级部门，也不表示部门主管。只依赖 Flow 的其他宿主实现 `WorkflowDataProvider` 即可提供身份和组织数据，不需要重复实现办理人解析及名称组装。没有有效办理人或保留未解析的类型标识时整笔事务回滚，避免生成无人可办任务。
 
 已有库继续执行 `20261019_flow_task_actions` 对应脚本一次，为待办菜单新增两个按钮；其他租户同步菜单并授权后重新登录。请假示例现已接入，见[请假业务说明](flow-leave.md)，新增 `flow_ext_leave` 业务表及独立的业务包，通过 `WorkflowBusinessProvider` 提供关联。动态部门主管规则和站内抄送已接入；钉钉、邮件等外部通知渠道尚未接入。
 
@@ -134,7 +135,7 @@ UPM 适配器在任务创建时把用户、角色、部门转换为本租户的�
 
 `GET /flow/inbox/cc` 和 `POST /flow/inbox/cc/read/{id}` 使用 `flow:cc:list` 按钮权限，列表与已读操作均校验接收人和租户。抄送接收人可通过受保护详情接口查看实例和请假正文，不能因抄送而审批任务或查看其他草稿。已有库执行 `20261020_flow_cc` 对应数据库脚本一次；它新建 `flow_cc` 表、“抄送我的”菜单和查询按钮。其他租户同步应用菜单后按需授权。新库的全量脚本已包含这些结构。
 
-只依赖 `flow-core` 的其他启动器必须实现 `WorkflowIdentityProvider`，并将 `flowTenantLineInnerInterceptor` 加入自己的 MyBatis-Plus 插件链；否则启动检查会拒绝运行。`upm-start` 不依赖 Flow，不受此配置影响。
+只依赖 `flow-core` 的其他启动器必须提供 `WorkflowDataProvider` 实现，并将 `flowTenantLineInnerInterceptor` 加入自己的 MyBatis-Plus 插件链；缺少身份数据实现时 Flow 服务无法装配，租户拦截器未加入插件链时启动校验会失败。`upm-start` 不依赖 Flow，不受此配置影响。
 
 “部门主管审批”通过 UPM 的 `upm_dept_leader` 关系解析，不能将菜单按钮权限当作某条任务的办理权限。内置规则在发起时保存审批人快照，任务到达时由引擎生成实际候选人；缺失审批人时明确报错，除已明确的副主管到本部门主管兜底之外，不自动跨部门寻找替代。请假示例可沿用固定办理人，也可配置[动态规则](flow-assignees.md)。独立部署时还需补齐可信的远程身份校验与权限查询适配，不能仅引入 `common-auth` 的默认空权限实现。
 

@@ -24,7 +24,7 @@
 
 ## 实现与安全
 
-`flow-api` 定义 `WorkflowAssigneeRule` 和 `WorkflowIdentityProvider.resolveDynamicAssignees` 契约；`flow-core` 不依赖 `upm-core`。`infra-start` 的UPM身份适配器使用用户、部门、主管任职服务实现规则。独立宿主可实现同一接口，通过本地Service或远程服务获取组织数据。
+`flow-api` 定义动态规则模型和 `WorkflowDataProvider` 基础数据查询端口；`flow-core` 实现 `WorkflowIdentityProvider`，负责规则解析、候选人展开及展示名称组装，不依赖 `upm-core`。`infra-start` 的 `UpmWorkflowDataProvider` 只使用 UPM Service 查询用户、部门和主管任职等基础数据。独立宿主只需用本地 Service、Feign 或 Dubbo 实现 `WorkflowDataProvider`，不必复制动态规则和目录组装逻辑。
 
 `WorkflowAssigneeResolver` 在启动前读取当前租户已发布定义，按需要解析规则，将用户ID列表写入实例变量；Warm-Flow原生 `${变量名}` 机制解析为任务办理人。沿用现有权限适配和候选人校验，不另建审批引擎，也不要求用户填写监听器。
 

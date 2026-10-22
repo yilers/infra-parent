@@ -281,8 +281,8 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
         if (userIds.isEmpty()) return;
         Map<String, WorkflowUserInfo> users = identityProvider.resolveUsers(List.copyOf(userIds));
         items.forEach(item -> {
-            WorkflowUserInfo initiator = users.get(item.getInitiatorId());
-            WorkflowUserInfo approver = users.get(item.getApproverId());
+            WorkflowUserInfo initiator = item.getInitiatorId() == null ? null : users.get(item.getInitiatorId());
+            WorkflowUserInfo approver = item.getApproverId() == null ? null : users.get(item.getApproverId());
             if (initiator != null) item.setInitiatorName(initiator.name());
             if (approver != null) item.setApproverName(approver.name());
         });
