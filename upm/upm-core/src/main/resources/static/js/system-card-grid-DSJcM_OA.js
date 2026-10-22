@@ -1,0 +1,1 @@
+import{J as e,N as t,S as n,Z as r}from"./vue.runtime.esm-bundler-D9lAnbr7.js";import{t as i}from"./_plugin-vue_export-helper-BDNMzG2s.js";t();var a={},o={class:`system-card-grid grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3`};function s(t,i){return e(),n(`div`,o,[r(t.$slots,`default`,{},void 0,!0)])}var c=i(a,[[`render`,s],[`__scopeId`,`data-v-ce3191d4`]]);export{c as t};

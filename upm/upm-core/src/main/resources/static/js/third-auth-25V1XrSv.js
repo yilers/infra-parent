@@ -1,0 +1,1 @@
+import{n as e}from"./request-Cs38nDBt.js";function t(){return e.get(`/thirdAuthConfig/findAll`)}function n(){return e.get(`/thirdAuthConfig/platforms`)}function r(t){return e.post(`/thirdAuthConfig/save`,t)}function i(t){return e.post(`/thirdAuthConfig/update`,t)}function a(t){return e.post(`/thirdAuthConfig/usable`,{id:t})}export{n as a,a as i,r as n,i as r,t};

@@ -7,10 +7,12 @@ import io.github.yilers.upm.entity.Tenant;
 import io.github.yilers.upm.entity.ThirdAuthConfig;
 import io.github.yilers.upm.entity.User;
 import io.github.yilers.upm.entity.UserThird;
+import io.github.yilers.upm.enums.ThirdAuthPlatformEnum;
 import io.github.yilers.upm.request.ThirdAuthLoginAuthorizeRequest;
 import io.github.yilers.upm.request.ThirdAuthLoginRequest;
 import io.github.yilers.upm.response.LoginResponse;
 import io.github.yilers.upm.response.ThirdAuthAuthorizeResponse;
+import io.github.yilers.upm.response.ThirdAuthPlatformResponse;
 import io.github.yilers.upm.service.TenantService;
 import io.github.yilers.upm.service.ThirdAuthConfigService;
 import io.github.yilers.upm.service.UserService;
@@ -28,6 +30,8 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -51,6 +55,41 @@ public class ThirdAuthLoginHandler {
     private final AuthHandler authHandler;
     private final RedissonClient redissonClient;
     private final ObjectMapper objectMapper;
+
+    /**
+     * 查询指定租户实际启用的第三方登录平台，供未登录的登录页动态展示入口。
+     * 目录中的平台只有在本服务有Provider实现且租户配置启用时才会返回。
+     *
+     * @param tenantCode 租户编码
+     * @return 当前租户已启用的平台列表
+     */
+    public List<ThirdAuthPlatformResponse> findEnabledPlatforms(String tenantCode) {
+        Tenant tenant = tenantService.findByCode(tenantCode);
+        if (tenant == null || !CommonConst.YES.equals(tenant.getUsable())) {
+            throw new CommonException("租户不存在或已停用");
+        }
+        Long previousTenantId = RequestContextHolder.getTenantId();
+        try {
+            RequestContextHolder.setTenantId(tenant.getId());
+            return Arrays.stream(ThirdAuthPlatformEnum.values())
+                    .filter(platform -> providerRegistry.supports(platform.getCode()))
+                    .map(platform -> {
+                        ThirdAuthConfig config = thirdAuthConfigService.findByPlatform(platform.getCode());
+                        if (config == null || !CommonConst.YES.equals(config.getUsable())
+                                || StrUtil.isBlank(config.getClientId())
+                                || StrUtil.isBlank(config.getClientSecret())
+                                || StrUtil.isBlank(config.getRedirectUri())) {
+                            return null;
+                        }
+                        return new ThirdAuthPlatformResponse(platform.getCode(), platform.getName(),
+                                platform.getIcon(), true, true, true, null);
+                    })
+                    .filter(java.util.Objects::nonNull)
+                    .toList();
+        } finally {
+            RequestContextHolder.setTenantId(previousTenantId);
+        }
+    }
 
     /**
      * 生成第三方平台登录授权地址。

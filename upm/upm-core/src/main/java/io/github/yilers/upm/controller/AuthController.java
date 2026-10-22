@@ -13,16 +13,21 @@ import io.github.yilers.upm.request.ThirdAuthLoginAuthorizeRequest;
 import io.github.yilers.upm.request.ThirdAuthLoginRequest;
 import io.github.yilers.upm.response.LoginResponse;
 import io.github.yilers.upm.response.ThirdAuthAuthorizeResponse;
+import io.github.yilers.upm.response.ThirdAuthPlatformResponse;
 import io.github.yilers.web.log.SysLog;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -49,6 +54,14 @@ public class AuthController {
     public Result<ThirdAuthAuthorizeResponse> thirdAuthorize(
             @Validated @RequestBody ThirdAuthLoginAuthorizeRequest request) {
         return Result.ok(thirdAuthLoginHandler.authorize(request));
+    }
+
+    @SaIgnore
+    @GetMapping("/third/platforms")
+    @Operation(summary = "查询租户已启用的第三方登录平台",
+            description = "登录页可据此动态展示入口；只返回服务端已接入且租户已启用的平台。")
+    public Result<List<ThirdAuthPlatformResponse>> thirdPlatforms(@RequestParam String tenantCode) {
+        return Result.ok(thirdAuthLoginHandler.findEnabledPlatforms(tenantCode));
     }
 
     @SaIgnore

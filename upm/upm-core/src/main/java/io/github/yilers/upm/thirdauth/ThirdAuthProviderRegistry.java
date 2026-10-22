@@ -28,4 +28,14 @@ public class ThirdAuthProviderRegistry {
         }
         return provider;
     }
+
+    /**
+     * 判断当前服务是否已实现指定平台的认证流程。
+     *
+     * @param platform 平台编码
+     * @return 已注册对应认证实现时返回 true
+     */
+    public boolean supports(String platform) {
+        return providerMap.containsKey(platform);
+    }
 }

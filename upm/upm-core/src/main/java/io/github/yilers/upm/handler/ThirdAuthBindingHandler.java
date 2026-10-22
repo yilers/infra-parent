@@ -57,6 +57,7 @@ public class ThirdAuthBindingHandler {
     public List<ThirdAuthBindingResponse> findAll() {
         long userId = StpUtil.getLoginIdAsLong();
         return Arrays.stream(ThirdAuthPlatformEnum.values())
+                .filter(platform -> providerRegistry.supports(platform.getCode()))
                 .map(platform -> toResponse(platform, userThirdService.findByUserIdAndPlatform(userId, platform.getCode())))
                 .toList();
     }

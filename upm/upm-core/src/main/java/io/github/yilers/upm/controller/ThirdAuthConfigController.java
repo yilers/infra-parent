@@ -8,6 +8,7 @@ import io.github.yilers.core.util.Result;
 import io.github.yilers.upm.handler.ThirdAuthConfigHandler;
 import io.github.yilers.upm.request.ThirdAuthConfigRequest;
 import io.github.yilers.upm.response.ThirdAuthConfigResponse;
+import io.github.yilers.upm.response.ThirdAuthPlatformResponse;
 import io.github.yilers.web.log.SysLog;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,6 +39,14 @@ public class ThirdAuthConfigController {
     @SaCheckPermission("system:thirdAuth:list")
     public Result<List<ThirdAuthConfigResponse>> findAll() {
         return Result.ok(thirdAuthConfigHandler.findAll());
+    }
+
+    @GetMapping("/platforms")
+    @Operation(summary = "查询第三方认证平台目录",
+            description = "返回常见平台、服务端接入状态及当前租户配置状态，不包含任何凭据。")
+    @SaCheckPermission("system:thirdAuth:list")
+    public Result<List<ThirdAuthPlatformResponse>> findPlatforms() {
+        return Result.ok(thirdAuthConfigHandler.findPlatformCatalog());
     }
 
     @PostMapping("/save")

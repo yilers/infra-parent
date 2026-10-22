@@ -8,7 +8,9 @@ import io.github.yilers.upm.entity.ThirdAuthConfig;
 import io.github.yilers.upm.enums.ThirdAuthPlatformEnum;
 import io.github.yilers.upm.request.ThirdAuthConfigRequest;
 import io.github.yilers.upm.response.ThirdAuthConfigResponse;
+import io.github.yilers.upm.response.ThirdAuthPlatformResponse;
 import io.github.yilers.upm.service.ThirdAuthConfigService;
+import io.github.yilers.upm.thirdauth.ThirdAuthProviderRegistry;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -17,18 +19,41 @@ import org.springframework.transaction.annotation.Transactional;
 import java.net.URI;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 第三方认证平台配置业务处理器。
  *
- * <p>配置管理和具体平台授权逻辑分离。当前处理器只负责租户配置的校验、保存和启停，
- * 后续钉钉登录通过Provider读取已经启用的配置。</p>
+ * <p>配置管理和具体平台授权逻辑分离。当前处理器负责租户配置的校验、保存和启停，
+ * 具体授权流程由已注册的平台Provider负责。</p>
  */
 @Component
 @RequiredArgsConstructor
 public class ThirdAuthConfigHandler {
 
     private final ThirdAuthConfigService thirdAuthConfigService;
+    private final ThirdAuthProviderRegistry providerRegistry;
+
+    /**
+     * 查询第三方认证平台目录及当前租户的配置状态。
+     * 尚未接入的常见平台会展示为暂不支持，不允许被误配置为可登录平台。
+     */
+    public List<ThirdAuthPlatformResponse> findPlatformCatalog() {
+        Map<String, ThirdAuthConfig> configMap = thirdAuthConfigService.list().stream()
+                .collect(Collectors.toMap(ThirdAuthConfig::getPlatform, Function.identity(), (left, right) -> left));
+        return java.util.Arrays.stream(ThirdAuthPlatformEnum.values())
+                .map(platform -> {
+                    ThirdAuthConfig config = configMap.get(platform.getCode());
+                    boolean implemented = providerRegistry.supports(platform.getCode());
+                    boolean configured = config != null;
+                    boolean usable = implemented && configured && CommonConst.YES.equals(config.getUsable());
+                    return new ThirdAuthPlatformResponse(platform.getCode(), platform.getName(), platform.getIcon(),
+                            implemented, configured, usable, config == null ? null : config.getId());
+                })
+                .toList();
+    }
 
     /**
      * 查询当前租户的全部第三方认证配置。
@@ -114,7 +139,7 @@ public class ThirdAuthConfigHandler {
     }
 
     private void validatePlatform(String platform) {
-        if (!ThirdAuthPlatformEnum.supports(platform)) {
+        if (!providerRegistry.supports(platform)) {
             throw new CommonException("暂不支持该第三方认证平台");
         }
     }
