@@ -10,9 +10,8 @@ import java.util.Date;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
-/** 公共填充器只处理约定类型，不能把第三方同名时间字段写成错误类型。 */
+/** 公共填充器按字段类型填充时间，且不覆盖实体显式指定的值。 */
 class MyMetaObjectHandlerTest {
 
     private final MyMetaObjectHandler handler = new MyMetaObjectHandler();
@@ -29,10 +28,10 @@ class MyMetaObjectHandlerTest {
     }
 
     @Test
-    void skipsDateFieldAndEntityWithoutUpdateTime() {
+    void fillsDateFieldAndSkipsEntityWithoutUpdateTime() {
         DateEntity entity = new DateEntity();
         assertDoesNotThrow(() -> handler.updateFill(SystemMetaObject.forObject(entity)));
-        assertNull(entity.getUpdateTime());
+        assertNotNull(entity.getUpdateTime());
         Date explicit = new Date();
         entity.setUpdateTime(explicit);
         handler.updateFill(SystemMetaObject.forObject(entity));

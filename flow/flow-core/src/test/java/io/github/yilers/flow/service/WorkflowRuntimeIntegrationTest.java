@@ -46,6 +46,7 @@ import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -80,6 +81,7 @@ class WorkflowRuntimeIntegrationTest {
     void expiredDefinitionIsNotAnEditableDraftAndOldInstancesKeepRunning() {
         String code = publish("definition_status_review", "user:20");
         Long originalId = definitionService.findPublishedId(code);
+        assertNotNull(definitionService.get(originalId).updateTime());
         Long instanceId = workflowService.start(code, "status-review", Map.of());
         CommonException used = assertThrows(CommonException.class,
                 () -> definitionService.update(originalId, editableDesign(originalId)));
@@ -89,6 +91,7 @@ class WorkflowRuntimeIntegrationTest {
                 .filter(version -> !originalId.equals(version.id())).findFirst().orElseThrow().id();
         definitionService.publish(copiedId);
         assertEquals(PublishStatus.EXPIRED.getKey(), definitionService.get(originalId).publishStatus());
+        assertNotNull(definitionService.get(originalId).updateTime());
         CommonException expired = assertThrows(CommonException.class,
                 () -> definitionService.update(originalId, editableDesign(originalId)));
         assertTrue(expired.getMessage().contains("已失效"));

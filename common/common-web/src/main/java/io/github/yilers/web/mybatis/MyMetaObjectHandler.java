@@ -9,6 +9,7 @@ import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Slf4j
 @Component
@@ -38,11 +39,15 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
 
     @Override
     public void updateFill(MetaObject metaObject) {
-        // 公共填充器会作用于第三方Mapper。仅填充本项目的LocalDateTime字段，
-        // Warm-Flow等使用Date的实体由其自身维护，不能按同名字段直接赋值。
-        if (metaObject.hasGetter("updateTime") && metaObject.hasSetter("updateTime")
-                && LocalDateTime.class.equals(metaObject.getSetterType("updateTime"))) {
+        // 公共填充器也会作用于第三方实体，必须按字段声明类型填充，避免 Date 与 LocalDateTime 类型不匹配。
+        if (!metaObject.hasGetter("updateTime") || !metaObject.hasSetter("updateTime")) {
+            return;
+        }
+        Class<?> fieldType = metaObject.getSetterType("updateTime");
+        if (LocalDateTime.class.equals(fieldType)) {
             this.fillStrategy(metaObject, "updateTime", LocalDateTime.now());
+        } else if (Date.class.equals(fieldType)) {
+            this.fillStrategy(metaObject, "updateTime", new Date());
         }
     }
 }
