@@ -20,9 +20,11 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!-- https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-starter-model-openai -->
-        <spring-ai.version>2.0.1</spring-ai.version>
+        <!-- https://central.sonatype.com/artifact/org.springframework.ai/spring-ai-starter-model-openai/versions -->
+        <spring-ai.version>2.0.2</spring-ai.version>
+        <!-- https://central.sonatype.com/artifact/com.alibaba.cloud.ai/spring-ai-alibaba/versions -->
         <spring-ai-alibaba.version>2.0.0-M1.1</spring-ai-alibaba.version>
+        <!-- https://central.sonatype.com/artifact/org.springaicommunity/spring-ai-agent-utils/versions -->
         <spring-ai-agent-utils.version>0.13.0</spring-ai-agent-utils.version>
     </properties>
 

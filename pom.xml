@@ -54,9 +54,9 @@
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>
         <!-- https://central.sonatype.com/artifact/org.springframework.boot/spring-boot-starter/versions -->
-        <spring-boot.version>4.1.1</spring-boot.version>
+        <spring-boot.version>4.1.2</spring-boot.version>
         <!-- https://central.sonatype.com/artifact/cn.hutool.v7/hutool-all/versions -->
-        <hutool-v7.version>7.0.0-M7</hutool-v7.version>
+        <hutool-v7.version>7.0.0-M8</hutool-v7.version>
         <!-- https://central.sonatype.com/artifact/com.dtflys.forest/forest-spring-boot-starter -->
         <forest.version>1.8.1</forest.version>
         <!-- https://central.sonatype.com/artifact/org.redisson/redisson-spring-boot-starter/versions -->
@@ -70,11 +70,11 @@
         <!-- https://central.sonatype.com/artifact/org.dromara.warm/warm-flow-mybatis-plus-sb4-starter/versions -->
         <warm-flow.version>1.8.9</warm-flow.version>
         <!-- https://central.sonatype.com/artifact/com.baizhukui/knife4j-openapi3-boot4-spring-boot-starter/versions -->
-        <knife4j-next.version>5.7.8</knife4j-next.version>
+        <knife4j-next.version>5.7.9</knife4j-next.version>
         <!-- 与knife4j-next使用的 Swagger 注解版本保持一致 https://central.sonatype.com/artifact/com.baizhukui/knife4j-openapi3-boot4-spring-boot-starter/dependencies -->
         <swagger-annotations.version>2.2.55</swagger-annotations.version>
         <!-- https://central.sonatype.com/artifact/com.baomidou/dynamic-datasource-spring-boot-starter/versions -->
-        <dynamic-datasource.version>4.5.0</dynamic-datasource.version>
+        <dynamic-datasource.version>4.6.0</dynamic-datasource.version>
         <!-- https://central.sonatype.com/artifact/tech.powerjob/powerjob-worker-spring-boot-starter/versions -->
         <powerjob.version>5.1.7</powerjob.version>
         <!-- https://central.sonatype.com/artifact/org.dromara.sms4j/sms4j-spring-boot-starter/versions -->
@@ -86,9 +86,9 @@
         <!-- https://central.sonatype.com/artifact/org.projectlombok/lombok/versions -->
         <lombok.version>1.18.48</lombok.version>
         <!-- https://central.sonatype.com/artifact/org.roaringbitmap/RoaringBitmap/versions -->
-        <RoaringBitmap.version>1.6.24</RoaringBitmap.version>
+        <RoaringBitmap.version>1.6.25</RoaringBitmap.version>
         <!-- https://central.sonatype.com/artifact/com.julien-dubois.bootui/bootui-spring-boot-starter/versions -->
-        <bootui.version>2.0.0</bootui.version>
+        <bootui.version>2.1.0</bootui.version>
         <!-- https://central.sonatype.com/artifact/org.apache.maven.plugins/maven-compiler-plugin/versions -->
         <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
         <!-- https://central.sonatype.com/artifact/org.apache.maven.plugins/maven-javadoc-plugin/versions -->
@@ -98,7 +98,7 @@
         <!-- https://central.sonatype.com/artifact/org.apache.maven.plugins/maven-gpg-plugin/versions -->
         <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
         <!-- https://central.sonatype.com/artifact/org.sonatype.central/central-publishing-maven-plugin/versions -->
-        <central-publishing-maven-plugin.version>0.11.0</central-publishing-maven-plugin.version>
+        <central-publishing-maven-plugin.version>0.12.0</central-publishing-maven-plugin.version>
         <!-- https://central.sonatype.com/artifact/org.apache.maven.plugins/maven-surefire-plugin/versions -->
         <maven-surefire-plugin.version>3.6.0</maven-surefire-plugin.version>
         <!-- https://central.sonatype.com/artifact/org.apache.maven.plugins/maven-deploy-plugin/versions -->
