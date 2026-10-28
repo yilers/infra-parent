@@ -24,6 +24,10 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
 //        this.fillStrategy(metaObject, "createTime", LocalDateTime.now()); // 也可以使用(3.3.0 该方法有bug)
         this.strictInsertFill(metaObject, "tenantId", Long.class, RequestContextHolder.getTenantId());
         if (metaObject.hasSetter("createId")) {
+            // 系统调用已恢复租户但没有登录用户；不能从请求附带的用户token中串入创建人。
+            if (RequestContextHolder.getCredentialId() != null) {
+                return;
+            }
             try {
                 Object createId = this.getFieldValByName("createId", metaObject);
                 // 已有值不填充

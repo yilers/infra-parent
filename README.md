@@ -15,6 +15,7 @@ infra-parent 是一套基于 Spring Boot 4 的多租户基础服务，核心提�
 - SSO：基于 Sa-Token SSO 模式三实现统一登录，不要求 UPM 与业务系统共享 Redis。
 - 第三方登录：当前支持钉钉配置、账号绑定、解绑及已绑定账号直接登录 UPM。
 - 工作流（1.2.0开发中）：流程定义设计、版本与发布，个人待办/已办/我发起的、运行图和审批记录，支持本人任务通过与退回；新增独立的[请假业务示例](doc/modules/flow-leave.md)，支持草稿、首次提交自动完成申请节点、退回修改、原实例重新提交和授权业务详情；支持申请人、部门副主管及上级主管等[动态办理人规则](doc/modules/flow-assignees.md)。
+- 短链（1.2.0开发中）：多租户域名、路径配置、自动号段或自定义短码，支持本地调用、系统签名调用和公开跳转。
 - 基础能力：统一响应、异常处理、日志、缓存、分布式锁、限流和 API 文档。
 
 ## 权限模型
@@ -43,8 +44,8 @@ infra-parent 是一套基于 Spring Boot 4 的多租户基础服务，核心提�
 | 类型 | 技术 |
 | --- | --- |
 | 构建 JDK | JDK 25（产物目标版本为 Java 21） |
-| Web 框架 | Spring Boot 4.1.1 |
-| ORM | MyBatis Plus 3.5.17 |
+| Web 框架 | Spring Boot 4.1.2 |
+| ORM | MyBatis Plus 3.5.18 |
 | 数据库 | MySQL 5.7 / 8.x（同时提供 PostgreSQL SQL 脚本） |
 | 缓存 | Redis、Redisson、JetCache |
 | 认证授权 | Sa-Token 1.45.0 |
@@ -68,6 +69,7 @@ infra-parent
 │   ├── upm-core          # UPM 业务、HTTP 接口、SSO Server 和内置前端
 │   └── upm-start         # UPM 独立部署入口
 ├── file                  # 文件服务预留模块（规划中）
+├── shortlink             # 短链 API 契约与实现
 ├── notice                # 通知服务预留模块（规划中）
 ├── flow                  # Warm-Flow 1.8.9 工作流底座、流程定义与个人审批中心
 ├── ai                    # AI 能力预留模块
@@ -299,6 +301,7 @@ permission.column.table=upm_log,upm_user
 - [UPM 模块说明](doc/UPM.md)
 - [SSO 接入设计](doc/SSO.md)
 - [第三方认证设计](doc/THIRD_AUTH.md)
+- [短链与系统调用接入](doc/SHORTLINK.md)
 - [租户应用菜单同步](doc/TENANT_PERMISSION_SYNC.md)
 - [基础能力模块规划](doc/modules/README.md)
 - [SQL 执行说明](sql/README.md)

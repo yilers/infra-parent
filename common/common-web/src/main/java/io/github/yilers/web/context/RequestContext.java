@@ -19,5 +19,8 @@ public class RequestContext {
 
     private Long userId;
 
+    /** 系统调用凭证，与登录用户身份互斥；不存放密钥。 */
+    private Long credentialId;
+
     private Map<String, Object> extra;
 }

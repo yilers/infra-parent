@@ -47,6 +47,15 @@ public class RequestContextHolder {
         return context != null ? context.getUserId() : null;
     }
 
+    public void setCredentialId(Long credentialId) {
+        getOrCreate().setCredentialId(credentialId);
+    }
+
+    public Long getCredentialId() {
+        RequestContext context = CONTEXT.get();
+        return context != null ? context.getCredentialId() : null;
+    }
+
     private RequestContext getOrCreate() {
         RequestContext ctx = CONTEXT.get();
         if (ctx == null) {

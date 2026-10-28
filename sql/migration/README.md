@@ -134,6 +134,48 @@ GROUP BY t.id;
 
 ## 行为及接入边界
 
+### 20261028：短链及系统调用凭证
+
+- 在已有库备份、停写后执行对应 `20261028_shortlink.mysql.sql` 或 `20261028_shortlink.postgres.sql`。MySQL 5.7 支持；脚本中的临时表和后续菜单语句必须在同一个连接执行。
+- 执行前确认租户 1 中存在且仅存在一个 `infra` 应用及一个该应用下 `system` 顶级菜单，并检查不存在 `system:api-credential:%`、`shortlink:%` 权限和 `shortlink` 顶级菜单。菜单使用现有最大 ID 之后的连续区间，迁移期间不能写入菜单。
+- 可先执行以下检查；第一项必须为 1，第二项必须为 0：
+
+  ```sql
+  SELECT COUNT(*) AS system_root_count
+  FROM upm_permission p JOIN upm_application a ON a.id = p.app_id
+  WHERE p.tenant_id = 1 AND p.parent_id = 0 AND p.menu_url = 'system'
+    AND p.device = 'web' AND p.deleted = 0
+    AND a.tenant_id = 1 AND a.code = 'infra' AND a.deleted = 0;
+
+  SELECT COUNT(*) AS existing_menu_count FROM upm_permission
+  WHERE tenant_id = 1 AND deleted = 0
+    AND (permission_code LIKE 'system:api-credential:%'
+      OR permission_code LIKE 'shortlink:%'
+      OR (parent_id = 0 AND menu_url = 'shortlink'));
+  ```
+
+- 建表语句允许完整建表后重跑，但不会修复已存在表的缺列或错误索引；菜单插入不是幂等的。如果中途失败，先核对已创建表、菜单及角色关联，再从未执行的部分继续，不能直接重跑整段。
+- 完成后检查两张 `upm_api_credential*` 表、六张 `shortlink_*` 表和模板租户菜单；为已有租户执行菜单同步并检查角色授权。详细配置见 `doc/SHORTLINK.md`。
+
+### 20261028：短码打散
+
+- 已执行 `20261028_shortlink` 的数据库，备份并停止短链创建后执行对应的 `20261028_shortlink_scramble` 增量；新库的全量脚本已包含这两列，不再执行增量。
+- MySQL 5.7 需要先检查字段，若其中一列已经存在，只执行缺失列对应的 `ALTER TABLE`，不要重复执行：
+
+  ```sql
+  SELECT column_name, column_type, column_default
+  FROM information_schema.columns
+  WHERE table_schema = DATABASE() AND table_name = 'shortlink_namespace'
+    AND column_name IN ('code_algorithm', 'code_key_cipher');
+  ```
+
+- 已有路径默认为 `SEQUENTIAL`，不更换映射、不删除历史短链；新建自动路径使用 `FF1_V1`。不能在原路径直接切换算法或重置密钥，否则可能与旧短码冲突。配置独立的 `SHORTLINK_MASTER_KEY` 后才能创建或使用新打散路径。
+
+### 20261028：短链批次
+
+- 已安装短链模块的数据库执行 `20261028_shortlink_batch` 对应数据库的增量脚本；全量新库无需执行。MySQL 5.7 重跑前先检查 `shortlink_link` 的 `batch_id`、`business_id`、`idx_shortlink_link_batch`，部分成功时只执行缺失的 ALTER。
+- 核验 `shortlink_batch` 已创建，且包含 `(tenant_id, config_id, batch_id)` 唯一约束；批次记录不得删除，否则重试无法正确判断。
+
 - 新建应用只创建空应用，不复制菜单；编码在租户内唯一且不可修改。
 - 新建租户复制租户 1 所有未删除应用、设备端、菜单按钮，包括停用记录；重新生成 ID，记录菜单模板来源并重建父子关系。只创建租户管理员，不再为每个租户创建平台管理员。
 - 租户 1 的平台管理员可以在租户管理中预览并同步后续应用菜单变化。应用按不可变编码对应，菜单按模板来源对应；租户自建菜单不受影响，租户管理员的平台菜单授权与模板保持一致。

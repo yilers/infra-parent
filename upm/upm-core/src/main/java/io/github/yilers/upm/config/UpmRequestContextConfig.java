@@ -30,6 +30,17 @@ public class UpmRequestContextConfig implements WebMvcConfigurer {
             public boolean preHandle(@NotNull HttpServletRequest request,
                                      @NotNull HttpServletResponse response,
                                      @NotNull Object handler) {
+                if (handler instanceof org.springframework.web.method.HandlerMethod method
+                        && method.hasMethodAnnotation(io.github.yilers.auth.api.PublicTenantEndpoint.class)) {
+                    return true;
+                }
+                var caller = io.github.yilers.auth.api.ApiCallerContext.current();
+                if (caller != null) {
+                    RequestContextHolder.setTenantId(caller.tenantId());
+                    RequestContextHolder.setUserId(null);
+                    RequestContextHolder.setCredentialId(caller.credentialId());
+                    return true;
+                }
                 if (!StpUtil.isLogin()) {
                     return true;
                 }
