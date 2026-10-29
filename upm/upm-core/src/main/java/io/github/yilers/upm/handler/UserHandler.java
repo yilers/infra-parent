@@ -29,6 +29,7 @@ import io.github.yilers.upm.service.UserService;
 import io.github.yilers.api.base.BaseOperateRequest;
 import io.github.yilers.api.base.BasePageRequest;
 import io.github.yilers.web.exception.CommonException;
+import io.github.yilers.web.i18n.CommonMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -82,7 +83,7 @@ public class UserHandler {
         updateUser.setEmail(request.getEmail());
         updateUser.setPhone(request.getPhone());
         if (!userService.updateById(updateUser)) {
-            throw new CommonException("更新失败 数据已经变更，请刷新后重试");
+            throw new CommonException(UpmMessage.USER_UPDATE_CONFLICT_REFRESH);
         }
         userService.cleanCache(userId);
     }
@@ -123,7 +124,7 @@ public class UserHandler {
         String account = request.getAccount();
         User user = userService.findByAccount(account);
         if (ObjUtil.isNotEmpty(user)) {
-            throw new CommonException("账号已存在");
+            throw new CommonException(UpmMessage.USER_ACCOUNT_EXISTS);
         }
         commonHandler.checkDataScope(StpUtil.getLoginIdAsLong(), request.getDeptId());
         User addUser = CglibUtil.copy(request, User.class);
@@ -149,7 +150,7 @@ public class UserHandler {
             throw new CommonException(UpmMessage.USER_NOT_FOUND);
         }
         if (CommonConst.NO.equals(oldUser.getOperable())) {
-            throw new CommonException("数据不可操作");
+            throw new CommonException(UpmMessage.USER_NOT_OPERABLE);
         }
         long currentUserId = StpUtil.getLoginIdAsLong();
         // 先校验原部门，防止通过修改部门操作数据范围外的用户。
@@ -160,7 +161,7 @@ public class UserHandler {
         String account = request.getAccount();
         User user = userService.findByAccount(account);
         if (ObjUtil.isNotEmpty(user) && !user.getId().equals(id)) {
-            throw new CommonException("账号已存在");
+            throw new CommonException(UpmMessage.USER_ACCOUNT_EXISTS);
         }
         CglibUtil.copy(request, oldUser);
         if (StrUtil.isNotBlank(request.getPassword())) {
@@ -172,7 +173,7 @@ public class UserHandler {
         }
         boolean b = userService.updateById(oldUser);
         if (!b) {
-            throw new CommonException("更新失败 数据已经变更");
+            throw new CommonException(CommonMessage.UPDATE_CONFLICT);
         }
         userRoleService.deleteByUserId(id);
         userRoleService.saveUserRoleRelation(id, request.getRoleIdList());
@@ -187,21 +188,21 @@ public class UserHandler {
         Long id = dto.getId();
         User user = userService.getById(id);
         if (CommonConst.NO.equals(user.getOperable())) {
-            throw new CommonException("数据不可操作");
+            throw new CommonException(UpmMessage.USER_NOT_OPERABLE);
         }
         commonHandler.checkDataScope(StpUtil.getLoginIdAsLong(), user.getDeptId());
         if (id.equals(StpUtil.getLoginIdAsLong())) {
-            throw new CommonException("不能操作自己");
+            throw new CommonException(UpmMessage.USER_CANNOT_OPERATE_SELF);
         }
         boolean disable = CommonConst.YES.equals(user.getUsable());
         if (disable && !deptLeaderService.findCurrentByUserIds(List.of(id)).isEmpty()) {
-            throw new CommonException("该用户仍担任部门主管，请先调整部门主管");
+            throw new CommonException(UpmMessage.USER_DEPT_LEADER);
         }
         // 切换可用状态
         user.setUsable(disable ? CommonConst.NO : CommonConst.YES);
         user.setUpdateTime(LocalDateTime.now());
         if (!userService.updateById(user)) {
-            throw new CommonException("更新失败 数据已经变更");
+            throw new CommonException(CommonMessage.UPDATE_CONFLICT);
         }
         // 只有状态更新成功后才让被停用用户下线。
         if (disable) {
@@ -238,15 +239,15 @@ public class UserHandler {
     public void deleteById(Long userId) {
         User user = userService.getById(userId);
         if (!deptLeaderService.findCurrentByUserIds(List.of(userId)).isEmpty()) {
-            throw new CommonException("该用户仍担任部门主管，请先调整部门主管");
+            throw new CommonException(UpmMessage.USER_DEPT_LEADER);
         }
         if (CommonConst.NO.equals(user.getOperable())) {
-            throw new CommonException("数据不可操作");
+            throw new CommonException(UpmMessage.USER_NOT_OPERABLE);
         }
         commonHandler.checkDataScope(StpUtil.getLoginIdAsLong(), user.getDeptId());
         // 判断是不是自己 自己不能删除自己
         if (userId.equals(StpUtil.getLoginIdAsLong())) {
-            throw new CommonException("不能删除自己");
+            throw new CommonException(UpmMessage.USER_CANNOT_DELETE_SELF);
         }
         userService.removeById(userId);
         userRoleService.deleteByUserId(userId);
@@ -272,12 +273,12 @@ public class UserHandler {
         Long userId = request.getUserId();
         User user = userService.getById(userId);
         if (CommonConst.NO.equals(user.getOperable())) {
-            throw new CommonException("数据不可操作");
+            throw new CommonException(UpmMessage.USER_NOT_OPERABLE);
         }
         String oldPwd = request.getOldPwd();
         String newPwd = request.getNewPwd();
         if (!BCrypt.checkpw(oldPwd, user.getPassword())) {
-            throw new CommonException("旧密码错误");
+            throw new CommonException(UpmMessage.USER_OLD_PASSWORD_INCORRECT);
         }
         String pwd = BCrypt.hashpw(newPwd);
         User updateUser = new User();
@@ -288,7 +289,7 @@ public class UserHandler {
         updateUser.setExpand(UserExpandHelper.setInitPwd(user.getExpand(), false));
         boolean b = userService.updateById(updateUser);
         if (!b) {
-            throw new CommonException("修改密码失败 刷新重试");
+            throw new CommonException(UpmMessage.USER_PASSWORD_UPDATE_FAILED);
         }
         userService.cleanCache(userId);
     }

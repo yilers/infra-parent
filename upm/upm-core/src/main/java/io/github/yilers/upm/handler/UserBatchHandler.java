@@ -20,6 +20,7 @@ import io.github.yilers.upm.service.RoleService;
 import io.github.yilers.upm.service.UserRoleService;
 import io.github.yilers.upm.service.UserService;
 import io.github.yilers.web.exception.CommonException;
+import io.github.yilers.upm.i18n.UpmMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -241,7 +242,7 @@ public class UserBatchHandler {
         }
 
         if (!userService.saveBatch(users, 100)) {
-            throw new CommonException("批量新增用户失败");
+            throw new CommonException(UpmMessage.USER_BATCH_SAVE_FAILED);
         }
 
         List<UserRole> relations = new ArrayList<>();
@@ -262,7 +263,7 @@ public class UserBatchHandler {
             }
         }
         if (!relations.isEmpty() && !userRoleService.saveBatch(relations, 200)) {
-            throw new CommonException("批量保存用户角色失败");
+            throw new CommonException(UpmMessage.USER_BATCH_ROLE_SAVE_FAILED);
         }
         log.info("批量新增用户完成，成功数量:{}", validRows.size());
     }

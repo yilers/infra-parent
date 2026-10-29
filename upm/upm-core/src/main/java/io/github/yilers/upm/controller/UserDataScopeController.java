@@ -3,6 +3,7 @@ package io.github.yilers.upm.controller;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import io.github.yilers.upm.service.UserService;
 import io.github.yilers.web.exception.CommonException;
+import io.github.yilers.upm.i18n.UpmMessage;
 
 import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.github.yilers.core.util.Result;
@@ -34,7 +35,7 @@ public class UserDataScopeController {
     @Operation(summary = "通过用户id获取已经绑定的")
     public Result<List<UserDataScope>> findByUserId(@PathVariable("userId") Long userId) {
         if (userService.getById(userId) == null) {
-            throw new CommonException("用户不存在或不属于当前租户");
+            throw new CommonException(UpmMessage.USER_TENANT_MISMATCH);
         }
         List<UserDataScope> list = userDataScopeService.findByUserId(userId);
         return Result.ok(list);

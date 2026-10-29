@@ -16,6 +16,7 @@ import io.github.yilers.upm.entity.Role;
 import io.github.yilers.upm.entity.Tenant;
 import io.github.yilers.upm.entity.TenantLoginPolicy;
 import io.github.yilers.upm.entity.User;
+import io.github.yilers.upm.i18n.UpmMessage;
 import io.github.yilers.upm.request.LoginRequest;
 import io.github.yilers.upm.response.LoginResponse;
 import io.github.yilers.upm.service.RolePermissionService;
@@ -53,7 +54,7 @@ public class AuthHandler implements AuthService {
         String device = loginRequest.getDevice();
         User user = userService.findByAccount(account);
         if (ObjUtil.isEmpty(user)) {
-            throw new CommonException("账号或密码错误");
+            throw new CommonException(UpmMessage.LOGIN_INVALID_CREDENTIALS);
         }
         TenantLoginPolicy policy = loginRiskHandler.check(user);
         if (BCrypt.checkpw(password, user.getPassword())) {
@@ -61,7 +62,7 @@ public class AuthHandler implements AuthService {
             return login(user, device);
         }
         loginRiskHandler.recordFailure(user, policy);
-        throw new CommonException("账号或密码错误");
+        throw new CommonException(UpmMessage.LOGIN_INVALID_CREDENTIALS);
     }
 
     /**
@@ -72,11 +73,11 @@ public class AuthHandler implements AuthService {
     public LoginResponse login(User user, String device) {
         Tenant tenant = tenantService.getById(user.getTenantId());
         if (ObjUtil.isEmpty(tenant) || CommonConst.NO.equals(tenant.getUsable())) {
-            throw new CommonException("租户已禁用");
+            throw new CommonException(UpmMessage.LOGIN_TENANT_DISABLED);
         }
         Integer usable = user.getUsable();
         if (ObjUtil.isEmpty(usable) || CommonConst.NO.equals(usable)) {
-            throw new CommonException("账号暂不可用");
+            throw new CommonException(UpmMessage.LOGIN_ACCOUNT_DISABLED);
         }
         Long previousTenantId = RequestContextHolder.getTenantId();
         try {

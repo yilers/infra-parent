@@ -16,6 +16,7 @@ import io.github.yilers.upm.mapper.UserMapper;
 import io.github.yilers.upm.request.UserDataScopeItemRequest;
 import io.github.yilers.upm.request.UserDataScopeRequest;
 import io.github.yilers.web.exception.CommonException;
+import io.github.yilers.upm.i18n.UpmMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,14 +73,14 @@ public class UserDataScopeServiceImpl extends ServiceImpl<UserDataScopeMapper, U
     public void bind(UserDataScopeRequest request) {
         Long userId = request.getUserId();
         if (userMapper.selectById(userId) == null) {
-            throw new CommonException("用户不存在或不属于当前租户");
+            throw new CommonException(UpmMessage.USER_TENANT_MISMATCH);
         }
         List<UserDataScope> collect = new ArrayList<>();
         Set<String> paths = new HashSet<>();
         for (UserDataScopeItemRequest item : request.getScopes()) {
             String path = item.getInterfacePath();
             if (!path.startsWith("/") || !path.equals(path.trim()) || !paths.add(path)) {
-                throw new CommonException("接口路径格式错误或重复");
+                throw new CommonException(UpmMessage.USER_SCOPE_INVALID_PATH);
             }
             UserDataScope scope = new UserDataScope();
             scope.setUserId(userId);
@@ -89,15 +90,15 @@ public class UserDataScopeServiceImpl extends ServiceImpl<UserDataScopeMapper, U
             if (DataScopeEnum.CUSTOM.getValue().equals(item.getDataScope())) {
                 List<Long> ids = item.getDeptIdList();
                 if (ids == null || ids.isEmpty()) {
-                    throw new CommonException("自定义数据权限必须选择部门");
+                    throw new CommonException(UpmMessage.USER_SCOPE_DEPT_REQUIRED);
                 }
                 List<Long> deptIds = ids.stream().distinct().toList();
                 if (deptMapper.selectByIds(deptIds).size() != deptIds.size()) {
-                    throw new CommonException("部门不存在或不属于当前租户");
+                    throw new CommonException(UpmMessage.USER_SCOPE_DEPT_NOT_FOUND);
                 }
                 String expand = deptIds.stream().map(String::valueOf).collect(Collectors.joining(","));
                 if (expand.length() > 500) {
-                    throw new CommonException("自定义部门数量超出存储范围");
+                    throw new CommonException(UpmMessage.USER_SCOPE_DEPT_LIMIT);
                 }
                 scope.setExpand(expand);
             }

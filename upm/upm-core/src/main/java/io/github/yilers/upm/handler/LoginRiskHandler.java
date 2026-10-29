@@ -3,6 +3,7 @@ package io.github.yilers.upm.handler;
 import io.github.yilers.core.constant.CommonConst;
 import io.github.yilers.upm.entity.TenantLoginPolicy;
 import io.github.yilers.upm.entity.User;
+import io.github.yilers.upm.i18n.UpmMessage;
 import io.github.yilers.upm.service.TenantLoginPolicyService;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
@@ -77,7 +78,7 @@ public class LoginRiskHandler {
                 ? Math.max(1, (remainMillis + Duration.ofMinutes(1).toMillis() - 1)
                 / Duration.ofMinutes(1).toMillis())
                 : configuredMinutes;
-        return new CommonException("登录失败次数过多，请" + remainMinutes + "分钟后再试");
+        return new CommonException(UpmMessage.LOGIN_ACCOUNT_LOCKED, remainMinutes);
     }
 
     private String failureKey(User user) {
