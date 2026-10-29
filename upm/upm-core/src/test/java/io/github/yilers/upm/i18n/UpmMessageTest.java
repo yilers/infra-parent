@@ -2,6 +2,7 @@ package io.github.yilers.upm.i18n;
 
 import io.github.yilers.web.exception.CommonException;
 import io.github.yilers.web.i18n.InfraMessageResolver;
+import io.github.yilers.web.i18n.MessageCode;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 
@@ -29,6 +30,14 @@ class UpmMessageTest {
                 resolver.resolve(UpmMessage.LOGIN_ACCOUNT_LOCKED, new Object[]{10}, english));
         assertEquals("登录失败次数过多，请10分钟后再试",
                 new CommonException(UpmMessage.LOGIN_ACCOUNT_LOCKED, 10).getMessage());
+        assertEquals("The tenant code already exists.",
+                resolver.resolve(UpmManagementMessage.TENANT_CODE_EXISTS, new Object[0], english));
+        assertEquals("Department not found.",
+                resolver.resolve(UpmManagementMessage.DEPT_NOT_FOUND, new Object[0], english));
+        assertEquals("Role not found.",
+                resolver.resolve(UpmManagementMessage.ROLE_NOT_FOUND, new Object[0], english));
+        assertEquals("Resource not found.",
+                resolver.resolve(UpmManagementMessage.MENU_RESOURCE_NOT_FOUND, new Object[0], english));
     }
 
     @Test
@@ -38,7 +47,9 @@ class UpmMessageTest {
         try (var input = getClass().getResourceAsStream("/i18n/upm-messages_en.properties")) {
             english.load(input);
         }
-        for (UpmMessage message : UpmMessage.values()) {
+        var messages = java.util.stream.Stream.concat(java.util.Arrays.stream(UpmMessage.values()),
+                java.util.Arrays.stream(UpmManagementMessage.values())).map(message -> (MessageCode) message).toList();
+        for (MessageCode message : messages) {
             assertEquals(message.getDefaultMessage(), chinese.getString(message.getKey()));
             org.junit.jupiter.api.Assertions.assertTrue(english.keySet().contains(message.getKey()));
         }

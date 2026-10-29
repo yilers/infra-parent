@@ -24,6 +24,7 @@ import io.github.yilers.upm.service.RoleService;
 import io.github.yilers.upm.service.UserRoleService;
 import io.github.yilers.api.base.BaseOperateRequest;
 import io.github.yilers.api.base.BasePageRequest;
+import io.github.yilers.upm.i18n.UpmManagementMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +51,7 @@ public class RoleHandler {
         // 验证角色名称或角色编码不能重复
         Role r = roleService.findByRoleCode(roleRequest.getRoleCode());
         if (r != null) {
-            throw new CommonException("角色编号重复");
+            throw new CommonException(UpmManagementMessage.ROLE_CODE_DUPLICATE);
         }
         // 新建角色
         Role roleNew = new Role();
@@ -65,7 +66,7 @@ public class RoleHandler {
         if (DataScopeEnum.CUSTOM.getValue().equals(roleRequest.getDataScope())) {
             List<Long> roleDeptIdList = roleRequest.getRoleDeptIdList();
             if (CollUtil.isEmpty(roleDeptIdList)) {
-                throw new CommonException("必须选择部门");
+                throw new CommonException(UpmManagementMessage.ROLE_DEPT_REQUIRED);
             }
             List<RoleDept> collect = roleDeptIdList.stream().map(item -> {
                 RoleDept roleDept = new RoleDept();
@@ -83,12 +84,12 @@ public class RoleHandler {
         Role r = roleService.getById(roleRequest.getId());
         if (!StpUtil.hasRole(CommonConst.PLATFORM_ADMIN_ROLE_CODE)) {
             if (CommonConst.NO.equals(r.getOperable())) {
-                throw new CommonException("该角色不可操作");
+                throw new CommonException(UpmManagementMessage.ROLE_NOT_OPERABLE);
             }
         }
         if (!r.getRoleCode().equals(roleRequest.getRoleCode())) {
             Role roleOld = roleService.findByRoleCode(roleRequest.getRoleCode());
-            if (roleOld != null) throw new CommonException("角色编码已存在");
+            if (roleOld != null) throw new CommonException(UpmManagementMessage.ROLE_CODE_EXISTS);
         }
         if (DataScopeEnum.CUSTOM.getValue().equals(r.getDataScope())) {
             // 修改之前如果是自定义 修改后不是 则删除一下角色部门关联
@@ -101,13 +102,13 @@ public class RoleHandler {
         CglibUtil.copy(roleRequest, role);
         boolean b = role.updateById();
         if (!b) {
-            throw new CommonException("更新失败 数据已经变更");
+            throw new CommonException(UpmManagementMessage.DATA_UPDATE_CONFLICT);
         }
         if (DataScopeEnum.CUSTOM.getValue().equals(roleRequest.getDataScope())) {
             roleDeptService.deleteByRoleId(roleRequest.getId());
             List<Long> roleDeptIdList = roleRequest.getRoleDeptIdList();
             if (CollUtil.isEmpty(roleDeptIdList)) {
-                throw new CommonException("必须选择部门");
+                throw new CommonException(UpmManagementMessage.ROLE_DEPT_REQUIRED);
             }
             List<RoleDept> collect = roleDeptIdList.stream().map(item -> {
                 RoleDept roleDept = new RoleDept();
@@ -126,12 +127,12 @@ public class RoleHandler {
         Role role = roleService.getById(roleId);
         if (!StpUtil.hasRole(CommonConst.PLATFORM_ADMIN_ROLE_CODE)) {
             if (CommonConst.NO.equals(role.getOperable())) {
-                throw new CommonException("该角色不可操作");
+                throw new CommonException(UpmManagementMessage.ROLE_NOT_OPERABLE);
             }
         }
         List<UserRole> userRoleList = userRoleService.findByRoleId(roleId);
         if (CollUtil.isNotEmpty(userRoleList)) {
-            throw new CommonException("该角色下有用户，请先删除用户");
+            throw new CommonException(UpmManagementMessage.ROLE_HAS_USERS);
         }
         // 删除角色权限关联
         rolePermissionService.deleteByRoleId(roleId);
@@ -149,11 +150,11 @@ public class RoleHandler {
 
         Role role = roleService.getOne(Wrappers.<Role>lambdaQuery().eq(Role::getId, roleId).last("FOR UPDATE"));
         if (role == null) {
-            throw new CommonException("角色不存在");
+            throw new CommonException(UpmManagementMessage.ROLE_NOT_FOUND);
         }
         boolean platformAdmin = StpUtil.hasRole(CommonConst.PLATFORM_ADMIN_ROLE_CODE);
         if (!platformAdmin && CommonConst.NO.equals(role.getOperable())) {
-            throw new CommonException("该角色不可操作");
+            throw new CommonException(UpmManagementMessage.ROLE_NOT_OPERABLE);
         }
         applicationHandler.findById(dto.getAppId());
         List<Permission> scope = platformAdmin
@@ -161,7 +162,7 @@ public class RoleHandler {
                 : permissionService.findPermissionsByUserId(StpUtil.getLoginIdAsLong(), device, dto.getAppId());
         List<Long> scopeIds = scope.stream().map(Permission::getId).toList();
         if (permissionIdList == null || !new HashSet<>(scopeIds).containsAll(permissionIdList)) {
-            throw new CommonException("权限不属于当前应用、设备端或超出可授权范围");
+            throw new CommonException(UpmManagementMessage.ROLE_PERMISSION_OUTSIDE_SCOPE);
         }
         // 仅替换明确提交且可管理的范围，其余应用和设备端的授权保持不变。
         rolePermissionService.deleteByRoleIdAndPermissionIds(roleId, scopeIds);
@@ -185,7 +186,7 @@ public class RoleHandler {
         Set<String> scopes = new HashSet<>();
         for (RolePermissionRequest scope : dto.getScopes()) {
             if (!dto.getRoleId().equals(scope.getRoleId()) || !scopes.add(scope.getAppId() + ":" + scope.getDevice())) {
-                throw new CommonException("角色或权限范围不正确");
+                throw new CommonException(UpmManagementMessage.ROLE_SCOPE_INVALID);
             }
         }
         for (RolePermissionRequest scope : dto.getScopes()) {
@@ -214,14 +215,14 @@ public class RoleHandler {
         Role role = roleService.getById(id);
         if (!StpUtil.hasRole(CommonConst.PLATFORM_ADMIN_ROLE_CODE)) {
             if (CommonConst.NO.equals(role.getOperable())) {
-                throw new CommonException("该角色不可操作");
+                throw new CommonException(UpmManagementMessage.ROLE_NOT_OPERABLE);
             }
         }
         // 切换可用状态
         role.setUsable(role.getUsable().equals(CommonConst.YES) ? CommonConst.NO : CommonConst.YES);
         role.setUpdateTime(LocalDateTime.now());
         if (!roleService.updateById(role)) {
-            throw new CommonException("更新失败 数据已经变更");
+            throw new CommonException(UpmManagementMessage.DATA_UPDATE_CONFLICT);
         }
         cleanUserRoleCache(id);
     }

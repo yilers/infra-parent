@@ -16,6 +16,7 @@ import io.github.yilers.upm.service.RoleService;
 import io.github.yilers.upm.service.TenantService;
 import io.github.yilers.upm.service.UserRoleService;
 import io.github.yilers.web.context.RequestContextHolder;
+import io.github.yilers.upm.i18n.UpmManagementMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -93,7 +94,7 @@ public class TenantPermissionSyncHandler {
                 if (apply) {
                     target = newApplication(template, tenantId);
                     if (!applicationService.save(target)) {
-                        throw new CommonException("同步应用失败");
+                        throw new CommonException(UpmManagementMessage.SYNC_APP_FAILED);
                     }
                     targetApplicationMap.put(target.getCode(), target);
                 }
@@ -104,7 +105,7 @@ public class TenantPermissionSyncHandler {
                 if (apply) {
                     copyApplicationFields(template, target);
                     if (!applicationService.updateById(target)) {
-                        throw new CommonException("同步应用失败，数据已经变更");
+                        throw new CommonException(UpmManagementMessage.SYNC_APP_CONFLICT);
                     }
                 }
             }
@@ -121,11 +122,11 @@ public class TenantPermissionSyncHandler {
         Map<Long, Permission> targetBySourceId = new HashMap<>();
         for (Permission permission : targetPermissions) {
             if (permission.getSourceId() != null && targetBySourceId.put(permission.getSourceId(), permission) != null) {
-                throw new CommonException("目标租户存在重复的模板菜单来源");
+                throw new CommonException(UpmManagementMessage.SYNC_DUPLICATE_SOURCE);
             }
         }
         if (!targetPermissions.isEmpty() && targetBySourceId.isEmpty()) {
-            throw new CommonException("该租户为改造前创建的历史租户，请重新创建后再同步");
+            throw new CommonException(UpmManagementMessage.SYNC_LEGACY_TENANT);
         }
 
         Set<Long> templatePermissionIds = templatePermissions.stream()
@@ -188,12 +189,12 @@ public class TenantPermissionSyncHandler {
             return;
         }
         if (!additions.isEmpty() && !permissionService.saveBatch(additions)) {
-            throw new CommonException("同步菜单失败");
+            throw new CommonException(UpmManagementMessage.SYNC_MENU_FAILED);
         }
         disabled.forEach(permission -> permission.setUsable(CommonConst.NO));
         updates.addAll(disabled);
         if (!updates.isEmpty() && !permissionService.updateBatchById(updates)) {
-            throw new CommonException("同步菜单失败，数据已经变更");
+            throw new CommonException(UpmManagementMessage.SYNC_MENU_CONFLICT);
         }
     }
 
@@ -203,7 +204,7 @@ public class TenantPermissionSyncHandler {
                                                    boolean apply) {
         Role tenantAdmin = roleService.findByRoleCode(CommonConst.TENANT_ADMIN_ROLE_CODE);
         if (tenantAdmin == null) {
-            throw new CommonException("目标租户缺少租户管理员角色");
+            throw new CommonException(UpmManagementMessage.SYNC_NO_TENANT_ADMIN);
         }
         List<Permission> targetPermissions = permissionService.list();
         Map<Long, Permission> targetBySourceId = targetPermissions.stream()
@@ -237,7 +238,7 @@ public class TenantPermissionSyncHandler {
             List<RolePermission> relations = additionSourceIds.stream().map(sourceId -> {
                 Permission permission = targetBySourceId.get(sourceId);
                 if (permission == null) {
-                    throw new CommonException("租户管理员权限对应的菜单不存在");
+                    throw new CommonException(UpmManagementMessage.SYNC_ADMIN_MENU_MISSING);
                 }
                 RolePermission relation = new RolePermission();
                 relation.setRoleId(tenantAdmin.getId());
@@ -247,7 +248,7 @@ public class TenantPermissionSyncHandler {
                 return relation;
             }).toList();
             if (!rolePermissionService.saveBatch(relations)) {
-                throw new CommonException("同步租户管理员权限失败");
+                throw new CommonException(UpmManagementMessage.SYNC_ADMIN_FAILED);
             }
         }
         if (!additionSourceIds.isEmpty() || !removalSourceIds.isEmpty()) {
@@ -259,7 +260,7 @@ public class TenantPermissionSyncHandler {
         return withTenant(CommonConst.PLATFORM_TENANT_ID, () -> {
             Role tenantAdmin = roleService.findByRoleCode(CommonConst.TENANT_ADMIN_ROLE_CODE);
             if (tenantAdmin == null) {
-                throw new CommonException("平台模板缺少租户管理员角色");
+                throw new CommonException(UpmManagementMessage.SYNC_TEMPLATE_ADMIN_MISSING);
             }
             Set<Long> permissionIds = rolePermissionService.findPermissionListByRoleId(tenantAdmin.getId()).stream()
                     .map(Permission::getId).collect(Collectors.toSet());
@@ -270,14 +271,14 @@ public class TenantPermissionSyncHandler {
     private void checkTargetTenant(Long tenantId) {
         if (!CommonConst.PLATFORM_TENANT_ID.equals(RequestContextHolder.getTenantId())
                 || !StpUtil.hasRole(CommonConst.PLATFORM_ADMIN_ROLE_CODE)) {
-            throw new CommonException("只有平台管理员可以同步租户菜单");
+            throw new CommonException(UpmManagementMessage.SYNC_FORBIDDEN);
         }
         if (tenantId == null || CommonConst.PLATFORM_TENANT_ID.equals(tenantId)) {
-            throw new CommonException("不能同步平台模板租户");
+            throw new CommonException(UpmManagementMessage.SYNC_PLATFORM_FORBIDDEN);
         }
         Tenant tenant = tenantService.getById(tenantId);
         if (tenant == null) {
-            throw new CommonException("目标租户不存在");
+            throw new CommonException(UpmManagementMessage.SYNC_TARGET_MISSING);
         }
     }
 
@@ -319,7 +320,7 @@ public class TenantPermissionSyncHandler {
         String code = templateApplicationCodeMap.get(template.getAppId());
         Application application = targetApplicationMap.get(code);
         if (application == null) {
-            throw new CommonException("模板菜单所属应用同步失败");
+            throw new CommonException(UpmManagementMessage.SYNC_TEMPLATE_APP_FAILED);
         }
         return application.getId();
     }
@@ -330,7 +331,7 @@ public class TenantPermissionSyncHandler {
         }
         Permission parent = targetBySourceId.get(template.getParentId());
         if (parent == null) {
-            throw new CommonException("模板菜单父级不存在");
+            throw new CommonException(UpmManagementMessage.SYNC_TEMPLATE_PARENT_MISSING);
         }
         return parent.getId();
     }

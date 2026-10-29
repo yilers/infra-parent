@@ -7,6 +7,7 @@ import io.github.yilers.upm.entity.User;
 import io.github.yilers.upm.service.TenantService;
 import io.github.yilers.upm.service.UserService;
 import io.github.yilers.web.context.RequestContextHolder;
+import io.github.yilers.upm.i18n.UpmManagementMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -36,19 +37,19 @@ public class TenantHandler {
     public void deleteById(Long tenantId) {
         checkPlatformAdministrator();
         if (tenantId == null || CommonConst.PLATFORM_TENANT_ID.equals(tenantId)) {
-            throw new CommonException("平台租户不能删除");
+            throw new CommonException(UpmManagementMessage.TENANT_PLATFORM_DELETE);
         }
         Tenant tenant = tenantService.getById(tenantId);
         if (tenant == null) {
-            throw new CommonException("租户不存在");
+            throw new CommonException(UpmManagementMessage.TENANT_NOT_FOUND);
         }
         if (!CommonConst.YES.equals(tenant.getOperable())) {
-            throw new CommonException("该租户不可操作");
+            throw new CommonException(UpmManagementMessage.TENANT_NOT_OPERABLE);
         }
 
         List<Long> userIds = findTenantUserIds(tenantId);
         if (!tenantService.removeById(tenantId)) {
-            throw new CommonException("租户删除失败，数据已经变更");
+            throw new CommonException(UpmManagementMessage.TENANT_DELETE_CONFLICT);
         }
         withTenant(tenantId, () -> userIds.forEach(authHandler::logout));
     }
@@ -56,7 +57,7 @@ public class TenantHandler {
     private void checkPlatformAdministrator() {
         if (!CommonConst.PLATFORM_TENANT_ID.equals(RequestContextHolder.getTenantId())
                 || !StpUtil.hasRole(CommonConst.PLATFORM_ADMIN_ROLE_CODE)) {
-            throw new CommonException("只有平台管理员可以删除租户");
+            throw new CommonException(UpmManagementMessage.TENANT_DELETE_FORBIDDEN);
         }
     }
 

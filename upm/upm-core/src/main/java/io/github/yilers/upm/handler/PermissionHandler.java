@@ -15,6 +15,7 @@ import io.github.yilers.upm.request.SortMoveRequest;
 import io.github.yilers.upm.service.PermissionService;
 import io.github.yilers.upm.service.RolePermissionService;
 import io.github.yilers.web.context.RequestContextHolder;
+import io.github.yilers.upm.i18n.UpmManagementMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,11 +43,11 @@ public class PermissionHandler {
         if (CommonConst.BUTTON.equals(permissionType)) {
             String permissionCode = dto.getPermissionCode();
             if (StrUtil.isBlank(permissionCode)) {
-                throw new CommonException("按钮权限编码不能为空");
+                throw new CommonException(UpmManagementMessage.MENU_CODE_REQUIRED);
             }
             Permission permission = permissionService.findByPermissionCode(permissionCode, dto.getAppId());
             if (ObjUtil.isNotNull(permission)) {
-                throw new CommonException("按钮权限编码已存在");
+                throw new CommonException(UpmManagementMessage.MENU_CODE_EXISTS);
             }
         }
         Permission permission = BeanUtil.copyProperties(dto, Permission.class);
@@ -79,13 +80,13 @@ public class PermissionHandler {
         // 查询 并校验
         Permission p = permissionService.getById(id);
         if (ObjUtil.isNull(p)) {
-            throw new CommonException("资源不存在");
+            throw new CommonException(UpmManagementMessage.MENU_RESOURCE_NOT_FOUND);
         }
         if (CommonConst.NO.equals(p.getOperable())) {
-            throw new CommonException("该资源不可操作");
+            throw new CommonException(UpmManagementMessage.MENU_RESOURCE_NOT_OPERABLE);
         }
         if (p.getSourceId() != null) {
-            throw new CommonException("平台下发的菜单不能删除，可通过平台模板统一停用");
+            throw new CommonException(UpmManagementMessage.MENU_TEMPLATE_DELETE);
         }
 
         // 先判断子级有没有数据
@@ -93,7 +94,7 @@ public class PermissionHandler {
         wrapper.eq(Permission::getParentId, id).eq(Permission::getDeleted, CommonConst.NO);
         long count = permissionService.count(wrapper);
         if (count > 0) {
-            throw new CommonException("存在子资源，不能直接删除");
+            throw new CommonException(UpmManagementMessage.MENU_HAS_CHILDREN);
         }
 
         // 判断有没有角色绑定
@@ -101,7 +102,7 @@ public class PermissionHandler {
         select.eq(RolePermission::getPermissionId, id);
         long roleBindingCount = rolePermissionService.count(select);
         if (roleBindingCount > 0) {
-            throw new CommonException("有角色绑定，不能直接删除");
+            throw new CommonException(UpmManagementMessage.MENU_HAS_ROLES);
         }
 
         Permission permission = new Permission();
@@ -114,30 +115,30 @@ public class PermissionHandler {
         Long id = dto.getId();
         Permission p = permissionService.getById(id);
         if (p == null) {
-            throw new CommonException("资源不存在");
+            throw new CommonException(UpmManagementMessage.MENU_RESOURCE_NOT_FOUND);
         }
         if (CommonConst.NO.equals(p.getOperable())) {
-            throw new CommonException("该资源不可操作");
+            throw new CommonException(UpmManagementMessage.MENU_RESOURCE_NOT_OPERABLE);
         }
         if (CommonConst.BUTTON.equals(dto.getPermissionType())) {
             String permissionCode = dto.getPermissionCode();
             if (StrUtil.isBlank(permissionCode)) {
-                throw new CommonException("按钮权限编码不能为空");
+                throw new CommonException(UpmManagementMessage.MENU_CODE_REQUIRED);
             }
             Permission permission = permissionService.findByPermissionCode(permissionCode, dto.getAppId());
             if (ObjUtil.isNotNull(permission) && !permission.getId().equals(id)) {
-                throw new CommonException("按钮权限编码已存在");
+                throw new CommonException(UpmManagementMessage.MENU_CODE_EXISTS);
             }
         }
         Permission permission = new Permission();
         BeanUtil.copyProperties(dto, permission);
         if (!Objects.equals(p.getAppId(), dto.getAppId()) || !Objects.equals(p.getDevice(), dto.getDevice())) {
-            throw new CommonException("不能跨应用或设备端移动菜单");
+            throw new CommonException(UpmManagementMessage.MENU_MOVE_ACROSS_CONTEXT);
         }
         checkParent(dto);
         boolean b = permission.updateById();
         if (!b) {
-            throw new CommonException("更新失败 数据已经变更");
+            throw new CommonException(UpmManagementMessage.DATA_UPDATE_CONFLICT);
         }
     }
 
@@ -148,23 +149,23 @@ public class PermissionHandler {
         Permission up = permissionService.getById(fId);
         Permission down = permissionService.getById(sId);
         if (ObjUtil.isEmpty(up) || ObjUtil.isEmpty(down)) {
-            throw new CommonException("移动数据不存在");
+            throw new CommonException(UpmManagementMessage.MENU_MOVE_MISSING);
         }
         if (CommonConst.NO.equals(up.getOperable()) || CommonConst.NO.equals(down.getOperable())) {
-            throw new CommonException("该资源不可操作");
+            throw new CommonException(UpmManagementMessage.MENU_RESOURCE_NOT_OPERABLE);
         }
         if (!Objects.equals(up.getAppId(), down.getAppId()) || !Objects.equals(up.getDevice(), down.getDevice())) {
-            throw new CommonException("不能跨应用或设备端排序");
+            throw new CommonException(UpmManagementMessage.MENU_SORT_ACROSS_CONTEXT);
         }
         if (!up.getParentId().equals(down.getParentId())) {
-            throw new CommonException("不能非同级移动");
+            throw new CommonException(UpmManagementMessage.MENU_SORT_NOT_SIBLINGS);
         }
         Integer upSortNumber = up.getSortNumber();
         Integer downSortNumber = down.getSortNumber();
         up.setSortNumber(downSortNumber);
         down.setSortNumber(upSortNumber);
         if (!permissionService.updateById(up) || !permissionService.updateById(down)) {
-            throw new CommonException("排序失败 数据已经变更");
+            throw new CommonException(UpmManagementMessage.DATA_SORT_CONFLICT);
         }
     }
 
@@ -191,7 +192,7 @@ public class PermissionHandler {
         }
         if (!currentAppId.equals(appId) && !StpUtil.hasPermission("system:menu:list")
                 && !StpUtil.hasPermission("system:role:permission")) {
-            throw new CommonException("无权查询其他应用菜单");
+            throw new CommonException(UpmManagementMessage.MENU_QUERY_FORBIDDEN);
         }
         return applicationHandler.findById(appId).getId();
     }
@@ -202,15 +203,15 @@ public class PermissionHandler {
         Set<Long> visited = new HashSet<>();
         while (parentId != null && parentId != 0L) {
             if (Objects.equals(parentId, dto.getId()) || !visited.add(parentId)) {
-                throw new CommonException("不能选择自身或子菜单作为父级");
+                throw new CommonException(UpmManagementMessage.MENU_PARENT_CYCLE);
             }
             Permission parent = permissionService.getById(parentId);
             if (parent == null || !Objects.equals(parent.getAppId(), dto.getAppId())
                     || !Objects.equals(parent.getDevice(), dto.getDevice())) {
-                throw new CommonException("父菜单必须属于同一应用和设备端");
+                throw new CommonException(UpmManagementMessage.MENU_PARENT_CONTEXT);
             }
             if (CommonConst.BUTTON.equals(parent.getPermissionType())) {
-                throw new CommonException("按钮不能作为父菜单");
+                throw new CommonException(UpmManagementMessage.MENU_BUTTON_PARENT);
             }
             parentId = parent.getParentId();
         }

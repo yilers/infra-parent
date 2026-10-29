@@ -5,13 +5,22 @@ import io.github.yilers.web.exception.CommonException;
 import io.github.yilers.web.exception.GlobalExceptionHandler;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.validation.BindException;
+import org.springframework.validation.FieldError;
+import org.springframework.core.MethodParameter;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class InfraMessageResolverTest {
 
     private final InfraMessageResolver resolver = new InfraMessageResolver();
-    private final GlobalExceptionHandler handler = new GlobalExceptionHandler(resolver);
+    private final GlobalExceptionHandler handler = new GlobalExceptionHandler(resolver,
+            new LocalizedTextResolver(resolver, java.util.List.of()));
 
     @Test
     void resolvesCommonMessagesInChineseAndEnglish() {
@@ -39,6 +48,32 @@ class InfraMessageResolverTest {
         assertEquals("At most 3 attempts are allowed.", resolver.resolve(limit, exception.getMessageArguments(), request("en-US")));
         MessageCode missing = new TestMessage("test.missing", "默认最多 {0} 次");
         assertEquals("默认最多 2 次", resolver.resolve(missing, new Object[]{2}, request("en-US")));
+    }
+
+    @Test
+    void translatesRegisteredValidationMessagesAndKeepsUnknownMessages() throws Exception {
+        MessageCode code = new TestMessage("test.validation", "账号不能为空");
+        MessageTextCatalog catalog = () -> Map.of("账号不能为空", code);
+        GlobalExceptionHandler advice = new GlobalExceptionHandler(resolver,
+                new LocalizedTextResolver(resolver, List.of(catalog)));
+        BindException error = new BindException(new Object(), "request");
+        error.addError(new FieldError("request", "account", "账号不能为空"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        assertEquals("Account is required.", advice.bindExceptionHandler(response, request("en-US"), error).getMsg());
+        assertEquals(400, response.getStatus());
+        MethodParameter parameter = new MethodParameter(getClass().getDeclaredMethod("validationArgument", String.class), 0);
+        MethodArgumentNotValidException argumentError = new MethodArgumentNotValidException(parameter, error.getBindingResult());
+        Result<?> result = (Result<?>) advice.methodArgumentNotValidException(new MockHttpServletResponse(),
+                request("en-US"), argumentError);
+        assertEquals("Account is required.", result.getMsg());
+        assertEquals("账号不能为空", ((Result<?>) advice.methodArgumentNotValidException(new MockHttpServletResponse(),
+                request(null), argumentError)).getMsg());
+        assertEquals("未知校验", new LocalizedTextResolver(resolver, List.of(catalog))
+                .resolve("未知校验", request("en-US")));
+    }
+
+    private void validationArgument(String value) {
+        // 提供方法参数供 Spring 构造校验异常。
     }
 
     private MockHttpServletRequest request(String language) {

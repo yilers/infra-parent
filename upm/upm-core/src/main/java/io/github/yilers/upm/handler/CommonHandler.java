@@ -15,6 +15,7 @@ import io.github.yilers.core.enums.UserTypeEnum;
 import io.github.yilers.upm.entity.*;
 import io.github.yilers.upm.request.TenantRequest;
 import io.github.yilers.upm.service.*;
+import io.github.yilers.upm.i18n.UpmManagementMessage;
 import io.github.yilers.web.exception.CommonException;
 import io.github.yilers.web.permission.DataPermissionResourceResolver;
 import lombok.RequiredArgsConstructor;
@@ -167,7 +168,7 @@ public class CommonHandler {
         List<Long> deptIdList = findDataScopeByUserId(currentUserId, null);
         // null 表示全部权限；空集合表示没有可访问部门，不允许操作。
         if (deptIdList != null && !deptIdList.contains(deptId)) {
-            throw new CommonException("越权操作");
+            throw new CommonException(UpmManagementMessage.DATA_FORBIDDEN);
         }
     }
 
@@ -176,14 +177,14 @@ public class CommonHandler {
         log.info("添加租户:{}", JSONUtil.toJsonStr(dto));
         Tenant tenant = tenantService.findByCode(dto.getCode());
         if (tenant != null) {
-            throw new CommonException("租户编码已存在");
+            throw new CommonException(UpmManagementMessage.TENANT_CODE_EXISTS);
         }
         Tenant copy = CglibUtil.copy(dto, Tenant.class);
         copy.setOperable(CommonConst.YES);
         copy.setId(null);
         copy.setVersion(1);
         if (!tenantService.save(copy) || copy.getId() == null) {
-            throw new CommonException("租户创建失败");
+            throw new CommonException(UpmManagementMessage.TENANT_CREATE_FAILED);
         }
         Long tenantId = copy.getId();
         tenantLoginPolicyHandler.createDefault(tenantId);
@@ -264,7 +265,7 @@ public class CommonHandler {
             newPerm.setSourceId(oldPerm.getId());
             Long appId = applicationIdMap.get(oldPerm.getAppId());
             if (appId == null) {
-                throw new CommonException("模板菜单所属应用不存在");
+                throw new CommonException(UpmManagementMessage.TENANT_TEMPLATE_APP_MISSING);
             }
             newPerm.setAppId(appId);
             newPerm.setVersion(1);
@@ -287,7 +288,7 @@ public class CommonHandler {
                 // 原本是顶级节点
                 newPerm.setParentId(0L);
             } else {
-                throw new CommonException("模板菜单父级不存在");
+                throw new CommonException(UpmManagementMessage.SYNC_TEMPLATE_PARENT_MISSING);
             }
             newAllList.add(newPerm);
             if (tenantPermIds.contains(oldPerm.getId())) {

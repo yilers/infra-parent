@@ -15,6 +15,7 @@ import io.github.yilers.upm.service.DeptLeaderService;
 import io.github.yilers.upm.service.DeptService;
 import io.github.yilers.upm.service.UserService;
 import io.github.yilers.web.context.RequestContextHolder;
+import io.github.yilers.upm.i18n.UpmManagementMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -107,7 +108,7 @@ public class DeptLeaderHandler {
         Long deptId = request.getDeptId();
         checkDeptScope(deptId);
         if (deptMapper.lockById(deptId, RequestContextHolder.getTenantId()) == null) {
-            throw new CommonException("部门不存在");
+            throw new CommonException(UpmManagementMessage.DEPT_NOT_FOUND);
         }
 
         Map<Long, Integer> desired = new LinkedHashMap<>();
@@ -117,18 +118,18 @@ public class DeptLeaderHandler {
         if (request.getDeputyUserIds() != null) {
             for (Long userId : request.getDeputyUserIds()) {
                 if (userId == null || desired.putIfAbsent(userId, DEPUTY) != null) {
-                    throw new CommonException("主管和副主管不能重复");
+                    throw new CommonException(UpmManagementMessage.DEPT_LEADER_DUPLICATE);
                 }
             }
         }
         if (desired.size() > 20) {
-            throw new CommonException("一个部门最多设置20位负责人");
+            throw new CommonException(UpmManagementMessage.DEPT_LEADER_LIMIT);
         }
         for (Long userId : desired.keySet()) {
             User user = userService.getById(userId);
             if (user == null || !Objects.equals(user.getTenantId(), RequestContextHolder.getTenantId())
                     || !CommonConst.YES.equals(user.getUsable())) {
-                throw new CommonException("主管用户不存在或已停用");
+                throw new CommonException(UpmManagementMessage.DEPT_LEADER_UNAVAILABLE);
             }
         }
 
@@ -142,7 +143,7 @@ public class DeptLeaderHandler {
             }
             leader.setEndDate(today);
             if (!deptLeaderService.updateById(leader)) {
-                throw new CommonException("主管任职更新失败");
+                throw new CommonException(UpmManagementMessage.DEPT_LEADER_UPDATE_FAILED);
             }
         }
         for (Map.Entry<Long, Integer> entry : desired.entrySet()) {
@@ -156,7 +157,7 @@ public class DeptLeaderHandler {
             leader.setStartDate(today);
             leader.setTenantId(RequestContextHolder.getTenantId());
             if (!deptLeaderService.save(leader)) {
-                throw new CommonException("主管任职保存失败");
+                throw new CommonException(UpmManagementMessage.DEPT_LEADER_SAVE_FAILED);
             }
         }
     }
@@ -176,7 +177,7 @@ public class DeptLeaderHandler {
     private Dept checkDeptScope(Long deptId) {
         Dept dept = deptId == null ? null : deptService.getById(deptId);
         if (dept == null) {
-            throw new CommonException("部门不存在");
+            throw new CommonException(UpmManagementMessage.DEPT_NOT_FOUND);
         }
         commonHandler.checkDataScope(StpUtil.getLoginIdAsLong(), deptId);
         return dept;

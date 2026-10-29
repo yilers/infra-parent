@@ -17,11 +17,13 @@ import io.github.yilers.upm.response.UserInfoResponse;
 import io.github.yilers.api.base.BaseOperateRequest;
 import io.github.yilers.api.base.BasePageRequest;
 import io.github.yilers.web.log.SysLog;
+import io.github.yilers.web.i18n.LocalizedTextResolver;
 import io.github.yilers.web.permission.DataPermissionResource;
 import io.github.yilers.api.validated.Update;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotNull;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -37,6 +39,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
     private final UserHandler userHandler;
     private final UserBatchHandler userBatchHandler;
+    private final LocalizedTextResolver textResolver;
 
     @GetMapping("/current")
     @Operation(summary = "当前用户信息")
@@ -66,8 +69,12 @@ public class UserController {
     @SysLog(module = "用户模块", value = "批量添加用户", recordParams = false)
     @DataPermissionResource(name = "批量新增用户")
     @SaCheckPermission("system:user:batch:add")
-    public Result<UserBatchAddResponse> batchAdd(@Validated @RequestBody UserBatchAddRequest request) {
-        return Result.ok(userBatchHandler.add(request));
+    public Result<UserBatchAddResponse> batchAdd(@Validated @RequestBody UserBatchAddRequest request,
+                                                 HttpServletRequest httpRequest) {
+        UserBatchAddResponse response = userBatchHandler.add(request);
+        response.getRows().forEach(row -> row.setMessages(row.getMessages().stream()
+                .map(message -> textResolver.resolve(message, httpRequest)).toList()));
+        return Result.ok(response);
     }
 
     @PostMapping("/updateUser")

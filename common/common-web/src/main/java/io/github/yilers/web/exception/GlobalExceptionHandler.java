@@ -4,6 +4,7 @@ import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.SaTokenException;
 import io.github.yilers.core.util.Result;
 import io.github.yilers.web.i18n.InfraMessageResolver;
+import io.github.yilers.web.i18n.LocalizedTextResolver;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     private final InfraMessageResolver messageResolver;
+    private final LocalizedTextResolver textResolver;
 
     @ExceptionHandler
     public Result<?> exceptionHandler(Exception e) {
@@ -56,21 +58,21 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
-    public Object methodArgumentNotValidException(HttpServletResponse response, Exception e) {
+    public Object methodArgumentNotValidException(HttpServletResponse response, HttpServletRequest request, Exception e) {
         log.error("参数异常验证:{}", e.getMessage());
         int status = HttpStatus.BAD_REQUEST.value();
         response.setStatus(status);
         MethodArgumentNotValidException ex = (MethodArgumentNotValidException) e;
-        return Result.build(status, ex.getBindingResult().getFieldError().getDefaultMessage());
+        return Result.build(status, textResolver.resolve(ex.getBindingResult().getFieldError().getDefaultMessage(), request));
     }
 
     @ExceptionHandler(value = BindException.class)
-    public Result<?> bindExceptionHandler(HttpServletResponse response, Exception e) {
+    public Result<?> bindExceptionHandler(HttpServletResponse response, HttpServletRequest request, Exception e) {
         log.error("参数异常验证:{}", e.getMessage());
         int status = HttpStatus.BAD_REQUEST.value();
         response.setStatus(status);
         BindException ex = (BindException) e;
-        return Result.build(status, ex.getBindingResult().getFieldError().getDefaultMessage());
+        return Result.build(status, textResolver.resolve(ex.getBindingResult().getFieldError().getDefaultMessage(), request));
     }
 
 //    @ExceptionHandler(value = RateLimitException.class)

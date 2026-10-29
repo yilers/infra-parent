@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import io.github.yilers.core.constant.CommonConst;
 import io.github.yilers.upm.entity.Dept;
 import io.github.yilers.upm.mapper.DeptMapper;
+import io.github.yilers.upm.i18n.UpmManagementMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +40,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     @Override
     public List<Dept> findByIdList(List<Long> idList) {
         if (CollUtil.isEmpty(idList)) {
-            throw new CommonException("部门id不能为空");
+            throw new CommonException(UpmManagementMessage.DEPT_ID_REQUIRED);
         }
         LambdaQueryWrapper<Dept> query = Wrappers.lambdaQuery(Dept.class);
         query.in(Dept::getId, idList);

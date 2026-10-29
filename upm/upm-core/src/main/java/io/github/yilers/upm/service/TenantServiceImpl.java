@@ -8,6 +8,7 @@ import io.github.yilers.core.constant.CommonConst;
 import io.github.yilers.upm.entity.Tenant;
 import io.github.yilers.upm.mapper.TenantMapper;
 import io.github.yilers.upm.request.TenantRequest;
+import io.github.yilers.upm.i18n.UpmManagementMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,13 +33,13 @@ public class TenantServiceImpl extends ServiceImpl<TenantMapper, Tenant> impleme
     public void updateTenant(TenantRequest dto) {
         Tenant tenant = findByCode(dto.getCode());
         if (tenant != null && !tenant.getId().equals(dto.getId())) {
-            throw new CommonException("租户编码已存在");
+            throw new CommonException(UpmManagementMessage.TENANT_CODE_EXISTS);
         }
         Tenant copy = CglibUtil.copy(dto, Tenant.class);
         copy.setOperable(CommonConst.YES);
         int i = tenantMapper.updateById(copy);
         if (i == 0) {
-            throw new CommonException("更新失败 刷新重试");
+            throw new CommonException(UpmManagementMessage.TENANT_UPDATE_FAILED);
         }
     }
 

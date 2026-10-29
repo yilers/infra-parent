@@ -6,6 +6,7 @@ import io.github.yilers.upm.entity.TenantLoginPolicy;
 import io.github.yilers.upm.request.TenantLoginPolicyRequest;
 import io.github.yilers.upm.service.TenantLoginPolicyService;
 import io.github.yilers.upm.service.TenantService;
+import io.github.yilers.upm.i18n.UpmManagementMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -44,18 +45,18 @@ public class TenantLoginPolicyHandler {
             policy.setTenantId(tenantId);
             policy.setVersion(1);
             if (!tenantLoginPolicyService.save(policy)) {
-                throw new CommonException("登录策略保存失败");
+                throw new CommonException(UpmManagementMessage.POLICY_SAVE_FAILED);
             }
             return;
         }
         if (request.getVersion() == null || !Objects.equals(policy.getVersion(), request.getVersion())) {
-            throw new CommonException("登录策略已经变更，请刷新后重试");
+            throw new CommonException(UpmManagementMessage.POLICY_CONFLICT);
         }
         policy.setMaxFailures(request.getMaxFailures());
         policy.setFailureWindowMinutes(request.getFailureWindowMinutes());
         policy.setLockDurationMinutes(request.getLockDurationMinutes());
         if (!tenantLoginPolicyService.updateById(policy)) {
-            throw new CommonException("登录策略已经变更，请刷新后重试");
+            throw new CommonException(UpmManagementMessage.POLICY_CONFLICT);
         }
     }
 
@@ -70,7 +71,7 @@ public class TenantLoginPolicyHandler {
             return;
         }
         if (!tenantLoginPolicyService.removeById(policy.getId())) {
-            throw new CommonException("登录策略删除失败，请刷新后重试");
+            throw new CommonException(UpmManagementMessage.POLICY_DELETE_FAILED);
         }
     }
 
@@ -85,14 +86,14 @@ public class TenantLoginPolicyHandler {
         policy.setLockDurationMinutes(DEFAULT_LOCK_DURATION_MINUTES);
         policy.setVersion(1);
         if (!tenantLoginPolicyService.save(policy)) {
-            throw new CommonException("租户默认登录策略创建失败");
+            throw new CommonException(UpmManagementMessage.POLICY_INIT_FAILED);
         }
     }
 
     private void checkTenant(Long tenantId) {
         Tenant tenant = tenantId == null ? null : tenantService.getById(tenantId);
         if (tenant == null) {
-            throw new CommonException("租户不存在");
+            throw new CommonException(UpmManagementMessage.TENANT_NOT_FOUND);
         }
     }
 }

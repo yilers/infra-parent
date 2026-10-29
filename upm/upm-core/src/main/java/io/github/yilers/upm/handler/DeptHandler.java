@@ -13,6 +13,7 @@ import io.github.yilers.upm.request.SortMoveRequest;
 import io.github.yilers.upm.service.DeptService;
 import io.github.yilers.upm.service.DeptLeaderService;
 import io.github.yilers.upm.service.UserService;
+import io.github.yilers.upm.i18n.UpmManagementMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +38,7 @@ public class DeptHandler {
         String deptCode = dto.getDeptCode();
         Dept d = deptService.findByDeptCode(deptCode);
         if (d != null) {
-            throw new CommonException("部门编码重复");
+            throw new CommonException(UpmManagementMessage.DEPT_CODE_EXISTS);
         }
         Dept dept = new Dept();
         CglibUtil.copy(dto, dept);
@@ -70,22 +71,22 @@ public class DeptHandler {
         Dept dept = deptService.getById(deptRequest.getId());
         if (dept != null) {
             if (CommonConst.NO.equals(dept.getOperable())) {
-                throw new CommonException("数据不可操作");
+                throw new CommonException(UpmManagementMessage.DATA_NOT_OPERABLE);
             }
             if (!deptRequest.getDeptCode().equals(dept.getDeptCode())) {
                 Dept d = deptService.findByDeptCode(deptRequest.getDeptCode());
                 if (d != null)
-                    throw new CommonException("部门编码重复");
+                    throw new CommonException(UpmManagementMessage.DEPT_CODE_EXISTS);
             }
             commonHandler.checkDataScope(StpUtil.getLoginIdAsLong(), deptRequest.getId());
             Dept d = new Dept();
             CglibUtil.copy(deptRequest, d);
             boolean b = deptService.updateById(d);
             if (!b) {
-                throw new CommonException("更新失败 数据已经变更");
+                throw new CommonException(UpmManagementMessage.DATA_UPDATE_CONFLICT);
             }
         } else {
-            throw new CommonException("数据不存在");
+            throw new CommonException(UpmManagementMessage.DATA_NOT_FOUND);
         }
     }
 
@@ -93,22 +94,22 @@ public class DeptHandler {
         Dept dept = deptService.getById(id);
         if (dept != null) {
             if (CommonConst.NO.equals(dept.getOperable())) {
-                throw new CommonException("数据不可操作");
+                throw new CommonException(UpmManagementMessage.DATA_NOT_OPERABLE);
             }
             List<User> userList = userService.findByDeptId(id);
             if (CollUtil.isNotEmpty(userList)) {
-                throw new CommonException("部门下有用户，不能删除");
+                throw new CommonException(UpmManagementMessage.DEPT_HAS_USERS);
             }
             List<Dept> deptList = deptService.findByParentId(dept.getId(), null);
             if (CollUtil.isNotEmpty(deptList)) {
-                throw new CommonException("部门下有子部门，不能删除");
+                throw new CommonException(UpmManagementMessage.DEPT_HAS_CHILDREN);
             }
             if (!deptLeaderService.findCurrentByDeptId(id).isEmpty()) {
-                throw new CommonException("部门已设置主管，请先撤销主管任职");
+                throw new CommonException(UpmManagementMessage.DEPT_HAS_LEADERS);
             }
             commonHandler.checkDataScope(StpUtil.getLoginIdAsLong(), id);
         } else {
-            throw new CommonException("id不存在");
+            throw new CommonException(UpmManagementMessage.DATA_ID_NOT_FOUND);
         }
         deptService.removeById(id);
         deptService.cleanCache(id);
@@ -120,21 +121,21 @@ public class DeptHandler {
         Long sId = dto.getSId();
         List<Dept> deptList = deptService.findByIdList(ListUtil.of(fId, sId));
         if (deptList.size() != 2) {
-            throw new CommonException("数据不存在");
+            throw new CommonException(UpmManagementMessage.DATA_NOT_FOUND);
         }
         Dept fDept = deptList.get(0);
         Dept sDept = deptList.get(1);
         if (CommonConst.NO.equals(fDept.getOperable()) || CommonConst.NO.equals(sDept.getOperable())) {
-            throw new CommonException("数据不可操作");
+            throw new CommonException(UpmManagementMessage.DATA_NOT_OPERABLE);
         }
         if (!fDept.getParentId().equals(sDept.getParentId())) {
-            throw new CommonException("不同父级不能移动");
+            throw new CommonException(UpmManagementMessage.DEPT_DIFFERENT_PARENT);
         }
         Integer fSortNumber = fDept.getSortNumber();
         fDept.setSortNumber(sDept.getSortNumber());
         sDept.setSortNumber(fSortNumber);
         if (!deptService.updateById(fDept) || !deptService.updateById(sDept)) {
-            throw new CommonException("排序失败 数据已经变更");
+            throw new CommonException(UpmManagementMessage.DATA_SORT_CONFLICT);
         }
         deptService.cleanCache(fId);
         deptService.cleanCache(sId);
