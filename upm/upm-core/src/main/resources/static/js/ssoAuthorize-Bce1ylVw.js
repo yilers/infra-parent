@@ -1,0 +1,1 @@
+var e=`缺少 client 或 redirect 参数`,t=`单点登录授权失败`,n=`应用 Logo`,r=`正在完成单点登录授权…`,i=`已有配置（当前接口列表未收录）`,a={missingParameters:e,failed:t,logo:n,authorizing:r,undiscoveredScope:i};export{r as authorizing,a as default,t as failed,n as logo,e as missingParameters,i as undiscoveredScope};

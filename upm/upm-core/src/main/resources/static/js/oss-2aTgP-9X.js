@@ -1,0 +1,1 @@
+import{n as e,r as t}from"./objectWithoutProperties-Du_sVRBz.js";import{n}from"./request-Cs38nDBt.js";t();function r(){return i.apply(this,arguments)}function i(){return i=e(function*(){return n.post(`/file/getTempToken`)}),i.apply(this,arguments)}export{r as t};

@@ -1,1 +1,0 @@
-var e={login:`Login`,register:`Register`,codeLogin:`Code Login`,qrcodeLogin:`Qr Code Login`,forgetPassword:`Forget Password`},t={title:`Dashboard`,analytics:`Analytics`,workspace:`Workspace`,home:`Home`},n={auth:e,dashboard:t};export{e as auth,t as dashboard,n as default};

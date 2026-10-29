@@ -1,1 +1,0 @@
-import{n as e,t}from"./asyncToGenerator-D80LCgGJ.js";import{n}from"./request-Cs38nDBt.js";e();function r(){return i.apply(this,arguments)}function i(){return i=t(function*(){return n.post(`/file/getTempToken`)}),i.apply(this,arguments)}export{r as t};

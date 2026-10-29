@@ -1,0 +1,1 @@
+var e=`节点状态：`,t=`父子节点关联`,n=`父子节点独立`,r=`已选中 {0} 个节点`,i=`展开/折叠全部`,a=`全选/取消全选`,o={nodeStatus:e,linked:t,independent:n,selected:r,expandAll:i,selectAll:a};export{o as default,i as expandAll,n as independent,t as linked,e as nodeStatus,a as selectAll,r as selected};
