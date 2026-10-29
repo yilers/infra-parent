@@ -15,6 +15,7 @@ import io.github.yilers.core.enums.UserTypeEnum;
 import io.github.yilers.upm.entity.Permission;
 import io.github.yilers.upm.entity.Role;
 import io.github.yilers.upm.entity.User;
+import io.github.yilers.upm.i18n.UpmMessage;
 import io.github.yilers.upm.request.UserPageRequest;
 import io.github.yilers.upm.request.UserProfileUpdateRequest;
 import io.github.yilers.upm.request.UserRequest;
@@ -145,7 +146,7 @@ public class UserHandler {
         Long id = request.getId();
         User oldUser = userService.getById(id);
         if (oldUser == null) {
-            throw new CommonException("用户不存在");
+            throw new CommonException(UpmMessage.USER_NOT_FOUND);
         }
         if (CommonConst.NO.equals(oldUser.getOperable())) {
             throw new CommonException("数据不可操作");
@@ -260,7 +261,7 @@ public class UserHandler {
     public void unlockLogin(Long userId) {
         User user = userService.getById(userId);
         if (user == null) {
-            throw new CommonException("用户不存在");
+            throw new CommonException(UpmMessage.USER_NOT_FOUND);
         }
         commonHandler.checkDataScope(StpUtil.getLoginIdAsLong(), user.getDeptId());
         loginRiskHandler.clear(user);

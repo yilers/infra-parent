@@ -3,7 +3,10 @@ package io.github.yilers.web.exception;
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.SaTokenException;
 import io.github.yilers.core.util.Result;
+import io.github.yilers.web.i18n.InfraMessageResolver;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindException;
@@ -20,7 +23,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    private final InfraMessageResolver messageResolver;
 
     @ExceptionHandler
     public Result<?> exceptionHandler(Exception e) {
@@ -42,9 +48,11 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(value = CommonException.class)
-    public Result<?> commonExceptionHandler(CommonException e) {
+    public Result<?> commonExceptionHandler(CommonException e, HttpServletRequest request) {
         e.printStackTrace();
-        return Result.build(e.getCode(), e.getMessage());
+        String message = e.getMessageCode() == null ? e.getMessage()
+                : messageResolver.resolve(e.getMessageCode(), e.getMessageArguments(), request);
+        return Result.build(e.getCode(), message);
     }
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
