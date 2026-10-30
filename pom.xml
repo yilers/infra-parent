@@ -58,7 +58,7 @@
         <spring-boot.version>4.1.2</spring-boot.version>
         <!-- https://central.sonatype.com/artifact/cn.hutool.v7/hutool-all/versions -->
         <hutool-v7.version>7.0.0-M8</hutool-v7.version>
-        <!-- https://central.sonatype.com/artifact/com.dtflys.forest/forest-spring-boot-starter -->
+        <!-- https://central.sonatype.com/artifact/com.dtflys.forest/forest-spring-boot-starter/versions -->
         <forest.version>1.8.1</forest.version>
         <!-- https://central.sonatype.com/artifact/org.redisson/redisson-spring-boot-starter/versions -->
         <redisson.version>4.8.0</redisson.version>
@@ -71,7 +71,7 @@
         <!-- https://central.sonatype.com/artifact/org.dromara.warm/warm-flow-mybatis-plus-sb4-starter/versions -->
         <warm-flow.version>1.8.9</warm-flow.version>
         <!-- https://central.sonatype.com/artifact/com.baizhukui/knife4j-openapi3-boot4-spring-boot-starter/versions -->
-        <knife4j-next.version>5.7.10</knife4j-next.version>
+        <knife4j-next.version>5.8.0</knife4j-next.version>
         <!-- 与knife4j-next使用的 Swagger 注解版本保持一致 https://central.sonatype.com/artifact/com.baizhukui/knife4j-openapi3-boot4-spring-boot-starter/dependencies -->
         <swagger-annotations.version>2.2.55</swagger-annotations.version>
         <!-- https://central.sonatype.com/artifact/com.baomidou/dynamic-datasource-spring-boot-starter/versions -->
@@ -87,9 +87,15 @@
         <!-- https://central.sonatype.com/artifact/org.projectlombok/lombok/versions -->
         <lombok.version>1.18.48</lombok.version>
         <!-- https://central.sonatype.com/artifact/org.roaringbitmap/RoaringBitmap/versions -->
-        <RoaringBitmap.version>1.6.25</RoaringBitmap.version>
+        <RoaringBitmap.version>1.6.29</RoaringBitmap.version>
         <!-- https://central.sonatype.com/artifact/com.julien-dubois.bootui/bootui-spring-boot-starter/versions -->
         <bootui.version>2.2.0</bootui.version>
+        <!-- https://central.sonatype.com/artifact/org.springframework.ai/spring-ai-starter-model-openai/versions -->
+        <spring-ai.version>2.0.2</spring-ai.version>
+        <!-- https://central.sonatype.com/artifact/com.alibaba.cloud.ai/spring-ai-alibaba/versions -->
+        <spring-ai-alibaba.version>2.0.0-M1.1</spring-ai-alibaba.version>
+        <!-- https://central.sonatype.com/artifact/org.springaicommunity/spring-ai-agent-utils/versions -->
+        <spring-ai-agent-utils.version>0.13.0</spring-ai-agent-utils.version>
         <!-- https://central.sonatype.com/artifact/org.apache.maven.plugins/maven-compiler-plugin/versions -->
         <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
         <!-- https://central.sonatype.com/artifact/org.apache.maven.plugins/maven-javadoc-plugin/versions -->
@@ -101,7 +107,7 @@
         <!-- https://central.sonatype.com/artifact/org.sonatype.central/central-publishing-maven-plugin/versions -->
         <central-publishing-maven-plugin.version>0.12.0</central-publishing-maven-plugin.version>
         <!-- https://central.sonatype.com/artifact/org.apache.maven.plugins/maven-surefire-plugin/versions -->
-        <maven-surefire-plugin.version>3.6.0</maven-surefire-plugin.version>
+        <maven-surefire-plugin.version>3.6.1</maven-surefire-plugin.version>
         <!-- https://central.sonatype.com/artifact/org.apache.maven.plugins/maven-deploy-plugin/versions -->
         <maven-deploy-plugin.version>3.2.0</maven-deploy-plugin.version>
         <!-- https://central.sonatype.com/artifact/org.codehaus.mojo/flatten-maven-plugin/versions -->
