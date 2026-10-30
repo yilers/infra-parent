@@ -4,6 +4,7 @@ import io.github.yilers.flow.mapper.WorkflowInboxMapper;
 import io.github.yilers.flow.model.WorkflowAssigneeRule;
 import io.github.yilers.flow.service.WorkflowIdentityProvider;
 import io.github.yilers.web.context.RequestContextHolder;
+import io.github.yilers.flow.i18n.FlowMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.dromara.warm.flow.core.FlowEngine;
@@ -42,7 +43,7 @@ public class LeaveApplicationTasks {
         }
         Task task = currentTask(instance, nodeCode);
         if (task == null) {
-            throw new CommonException("请假流程的申请提交节点必须是开始后的首个办理节点，且不能与其他任务并行");
+            throw new CommonException(FlowMessage.LEAVE_START_NODE);
         }
         return task;
     }
@@ -57,7 +58,7 @@ public class LeaveApplicationTasks {
     public Task lockCurrentTask(Long instanceId, Long taskId, String userId) {
         if (!Integer.valueOf(java.sql.Connection.TRANSACTION_READ_COMMITTED)
                 .equals(TransactionSynchronizationManager.getCurrentTransactionIsolationLevel())) {
-            throw new CommonException("请假修改和重新提交必须在READ_COMMITTED事务中执行，请检查外层事务配置");
+            throw new CommonException(FlowMessage.LEAVE_TRANSACTION);
         }
         if (taskId == null || taskId <= 0 || !instanceId.equals(inboxMapper.lockInstanceByTask(taskId, tenantId()))) {
             throw changed();
@@ -91,7 +92,7 @@ public class LeaveApplicationTasks {
                 .filter(node -> NodeType.BETWEEN.getKey().equals(node.getNodeType())
                         && WorkflowAssigneeRule.APPLICANT.expression().equals(node.getPermissionFlag())).toList();
         if (nodes.size() > 1) {
-            throw new CommonException("请假流程只能有一个仅使用动态规则“申请人”的申请提交节点");
+            throw new CommonException(FlowMessage.LEAVE_SINGLE_SUBMISSION);
         }
         return nodes.isEmpty() ? null : nodes.getFirst().getNodeCode();
     }
@@ -99,7 +100,7 @@ public class LeaveApplicationTasks {
     private Instance instance(Long instanceId) {
         Instance instance = FlowEngine.insService().getById(instanceId);
         if (instance == null || !tenantId().equals(instance.getTenantId())) {
-            throw new CommonException("请假流程不存在或无权操作");
+            throw new CommonException(FlowMessage.LEAVE_FLOW_UNAVAILABLE);
         }
         return instance;
     }
@@ -107,12 +108,12 @@ public class LeaveApplicationTasks {
     private String tenantId() {
         Long tenantId = RequestContextHolder.getTenantId();
         if (tenantId == null) {
-            throw new CommonException("Flow租户上下文不能为空");
+            throw new CommonException(FlowMessage.TENANT_REQUIRED);
         }
         return tenantId.toString();
     }
 
     private CommonException changed() {
-        return new CommonException("申请任务已变更或无权操作，请刷新后重新打开请假表单");
+        return new CommonException(FlowMessage.LEAVE_TASK_CHANGED);
     }
 }

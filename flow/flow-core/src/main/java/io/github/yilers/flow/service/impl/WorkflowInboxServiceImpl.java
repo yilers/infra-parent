@@ -13,6 +13,7 @@ import io.github.yilers.flow.service.WorkflowBusinessProvider;
 import io.github.yilers.flow.service.WorkflowIdentityProvider;
 import io.github.yilers.flow.service.WorkflowInboxService;
 import io.github.yilers.web.context.RequestContextHolder;
+import io.github.yilers.flow.i18n.FlowMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.dromara.warm.flow.core.FlowEngine;
@@ -74,12 +75,12 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
     @Override
     @Transactional
     public void readCc(Long ccId) {
-        if (ccId == null || ccId <= 0) throw new CommonException("抄送记录ID必须为正数");
+        if (ccId == null || ccId <= 0) throw new CommonException(FlowMessage.CC_ID_INVALID);
         String userId = identityProvider.currentUserId();
         String tenantId = tenantId();
         WorkflowCc cc = ccMapper.selectById(ccId);
         if (cc == null || !tenantId.equals(cc.getTenantId()) || !userId.equals(cc.getRecipientId())) {
-            throw new CommonException(404, "抄送记录不存在或无权查看");
+            throw new CommonException(404, FlowMessage.CC_NOT_FOUND);
         }
         if (cc.getReadTime() == null) {
             ccMapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<WorkflowCc>()
@@ -93,7 +94,7 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
     @Transactional(readOnly = true)
     public WorkflowInstanceDetail detail(Long instanceId) {
         if (instanceId == null || instanceId <= 0) {
-            throw new CommonException("流程实例ID必须为正数");
+            throw new CommonException(FlowMessage.INSTANCE_ID_INVALID);
         }
         String userId = identityProvider.currentUserId();
         String tenantId = tenantId();
@@ -113,7 +114,7 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
     @Override
     public void checkInstanceAccess(Long instanceId) {
         if (instanceId == null || instanceId <= 0) {
-            throw new CommonException("流程实例ID必须为正数");
+            throw new CommonException(FlowMessage.INSTANCE_ID_INVALID);
         }
         String userId = identityProvider.currentUserId();
         requireVisible(instanceId, tenantId(), userId, flags());
@@ -122,7 +123,7 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
     private WorkflowWorkItem requireVisible(Long instanceId, String tenantId, String userId, List<String> flags) {
         WorkflowWorkItem instance = mapper.visibleInstance(instanceId, tenantId, userId, flags);
         if (instance == null) {
-            throw new CommonException(404, "流程不存在或无权查看");
+            throw new CommonException(404, FlowMessage.INSTANCE_NOT_FOUND);
         }
         return instance;
     }
@@ -131,7 +132,7 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
         List<WorkflowBusinessReference> references = businessProviders.stream()
                 .map(provider -> provider.findReference(instanceId)).filter(java.util.Objects::nonNull).toList();
         if (references.size() > 1) {
-            throw new CommonException("流程实例关联了多个业务单据，请检查业务配置");
+            throw new CommonException(FlowMessage.INSTANCE_MULTIPLE_BUSINESS);
         }
         return references.isEmpty() ? null : references.getFirst();
     }
@@ -234,11 +235,11 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
     private List<String> flags() {
         List<String> flags = identityProvider.currentPermissionFlags();
         if (flags == null || flags.isEmpty()) {
-            throw new CommonException("当前用户没有有效的流程办理身份");
+            throw new CommonException(FlowMessage.TASK_IDENTITY_INVALID);
         }
         List<String> result = flags.stream().filter(flag -> flag != null && !flag.isBlank()).distinct().toList();
         if (result.isEmpty()) {
-            throw new CommonException("当前用户没有有效的流程办理身份");
+            throw new CommonException(FlowMessage.TASK_IDENTITY_INVALID);
         }
         return result;
     }
@@ -246,14 +247,14 @@ public class WorkflowInboxServiceImpl implements WorkflowInboxService {
     private String tenantId() {
         Long tenantId = RequestContextHolder.getTenantId();
         if (tenantId == null) {
-            throw new CommonException("Flow租户上下文不能为空");
+            throw new CommonException(FlowMessage.TENANT_REQUIRED);
         }
         return tenantId.toString();
     }
 
     private Page<WorkflowWorkItem> page(int pageNum, int pageSize) {
         if (pageNum < 1 || pageSize < 1 || pageSize > 100) {
-            throw new CommonException("页码必须大于0，且每页最多100条");
+            throw new CommonException(FlowMessage.PAGE_INVALID);
         }
         return new Page<>(pageNum, pageSize);
     }

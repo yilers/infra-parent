@@ -3,6 +3,7 @@ package io.github.yilers.shortlink.service;
 import io.github.yilers.shortlink.mapper.ShortlinkSequenceMapper;
 import io.github.yilers.shortlink.support.ShortlinkRules;
 import io.github.yilers.web.context.RequestContextHolder;
+import io.github.yilers.shortlink.i18n.ShortlinkMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,13 +22,13 @@ public class ShortlinkSegmentService {
     @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
     public Segment allocate(Long namespaceId, int length) {
         Long tenantId = RequestContextHolder.getTenantId();
-        if (tenantId == null) throw new CommonException("缺少可信租户上下文");
+        if (tenantId == null) throw new CommonException(ShortlinkMessage.TENANT_REQUIRED);
         Long high = mapper.lockHighWatermark(namespaceId, tenantId);
-        if (high == null) throw new CommonException("短链号段未初始化");
+        if (high == null) throw new CommonException(ShortlinkMessage.SEGMENT_UNINITIALIZED);
         long maximum = ShortlinkRules.capacity(length) - 1;
-        if (high >= maximum) throw new CommonException("短链号段已耗尽，请创建新namespace");
+        if (high >= maximum) throw new CommonException(ShortlinkMessage.SEGMENT_EXHAUSTED);
         long next = Math.min(maximum, Math.addExact(high, ShortlinkRules.SEGMENT_SIZE));
-        if (mapper.advance(namespaceId, tenantId, high, next) != 1) throw new CommonException("号段分配冲突");
+        if (mapper.advance(namespaceId, tenantId, high, next) != 1) throw new CommonException(ShortlinkMessage.SEGMENT_CONFLICT);
         return new Segment(high + 1, next);
     }
 }

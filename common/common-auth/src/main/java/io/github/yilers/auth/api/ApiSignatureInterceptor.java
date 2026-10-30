@@ -42,7 +42,7 @@ public class ApiSignatureInterceptor implements HandlerInterceptor {
         // 路径本身不代表放行：未声明能力的机器接口一律拒绝。
         if (!(handler instanceof HandlerMethod method)
                 || method.getMethodAnnotation(ApiPermission.class) == null) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "接口未声明系统调用权限");
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, ApiAuthMessages.resolve(ApiAuthMessages.Code.PERMISSION_UNDECLARED, request));
             return false;
         }
         ApiPermission permission = method.getMethodAnnotation(ApiPermission.class);
@@ -50,7 +50,7 @@ public class ApiSignatureInterceptor implements HandlerInterceptor {
             if (!"POST".equals(request.getMethod()) || request.getQueryString() != null
                     || request.getContentType() == null
                     || !request.getContentType().toLowerCase(java.util.Locale.ROOT).startsWith("application/json")) {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "签名入口仅支持无查询串的POST JSON请求");
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, ApiAuthMessages.resolve(ApiAuthMessages.Code.REQUEST_INVALID, request));
                 return false;
             }
             String key = required(request, ApiSignProtocol.ACCESS_KEY, "[A-Za-z0-9_-]{16,64}");
@@ -76,7 +76,7 @@ public class ApiSignatureInterceptor implements HandlerInterceptor {
                 throw new IllegalArgumentException("签名不匹配");
             }
             if (!identity.permissions().contains(permission.code())) {
-                response.sendError(HttpServletResponse.SC_FORBIDDEN, "调用凭证未获得接口权限");
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, ApiAuthMessages.resolve(ApiAuthMessages.Code.PERMISSION_DENIED, request));
                 return false;
             }
             StringRedisTemplate storage = redis.getObject();
@@ -88,14 +88,14 @@ public class ApiSignatureInterceptor implements HandlerInterceptor {
             }
             Long count = storage.execute(RATE_SCRIPT, List.of(RATE_PREFIX + identity.credentialId()));
             if (count == null || count > identity.requestsPerMinute()) {
-                response.sendError(429, "调用频率超过限制");
+                response.sendError(429, ApiAuthMessages.resolve(ApiAuthMessages.Code.RATE_LIMITED, request));
                 return false;
             }
             ApiCallerContext.set(new ApiCallerContext.Caller(identity.credentialId(), identity.tenantId()));
             return true;
         } catch (Exception e) {
             // 不输出签名参数或底层异常，避免把密钥和凭证细节写入日志、响应。
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "系统调用认证失败");
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, ApiAuthMessages.resolve(ApiAuthMessages.Code.AUTH_FAILED, request));
             return false;
         }
     }

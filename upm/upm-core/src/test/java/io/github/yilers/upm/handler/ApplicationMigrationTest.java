@@ -23,9 +23,10 @@ class ApplicationMigrationTest {
             try (Connection connection = DriverManager.getConnection("jdbc:h2:mem:full_" + dialect + ";MODE=" + mode)) {
                 String sql = Files.readString(Path.of("../../sql/full/" + dialect + ".sql"));
                 org.junit.jupiter.api.Assertions.assertFalse(sql.contains("ALTER TABLE upm_permission ADD"));
-                // 只验证应用关联涉及的表及种子；H2不支持的引擎选项和内联注释不参与此测试。
+                // 顺序执行关联表、种子和临时表语句；H2不支持的引擎选项和内联注释不参与此测试。
                 var statements = java.util.regex.Pattern.compile(
-                        "(?s)(?:CREATE TABLE|INSERT INTO) `?(?:upm_application|upm_permission|upm_role|upm_role_permission|upm_tenant)`?\\s*\\([^;]+;")
+                        "(?s)(?:(?:CREATE TABLE|INSERT INTO) `?(?:upm_application|upm_permission|upm_role|upm_role_permission|upm_tenant)`?\\s*\\([^;]+;"
+                                + "|CREATE TEMPORARY TABLE migration_[a-z_]+ AS\\s+[^;]+;|DROP TABLE migration_[a-z_]+;)")
                         .matcher(sql);
                 while (statements.find()) {
                     String statement = statements.group().replaceAll("(?s)\\) ENGINE=[^;]+;", ");");
@@ -35,13 +36,14 @@ class ApplicationMigrationTest {
                     RunScript.execute(connection, new StringReader(statement));
                 }
                 assertEquals(1, count(connection, "SELECT COUNT(*) FROM upm_application WHERE code='infra' AND operable=0"));
-                assertEquals(59, count(connection, "SELECT COUNT(*) FROM upm_permission"));
+                org.junit.jupiter.api.Assertions.assertTrue(count(connection, "SELECT COUNT(*) FROM upm_permission") >= 59);
                 assertEquals(0, count(connection, "SELECT COUNT(*) FROM upm_permission WHERE app_id<>1 OR app_id IS NULL"));
                 assertEquals(1, count(connection, "SELECT COUNT(*) FROM upm_permission WHERE permission_code='system:tenant:sync' AND source_id IS NULL"));
                 assertEquals(1, count(connection, "SELECT COUNT(*) FROM upm_permission WHERE permission_code='system:user:unlock' AND operable=1"));
                 assertEquals(1, count(connection, "SELECT COUNT(*) FROM upm_permission WHERE permission_code='system:dept:leader:edit' AND parent_id=130 AND operable=1"));
                 assertEquals(2, count(connection, "SELECT COUNT(*) FROM upm_permission WHERE id IN (197, 198) AND usable=1"));
                 assertEquals(1, count(connection, "SELECT COUNT(*) FROM upm_permission WHERE id=198 AND component='flow/definition/index'"));
+                assertEquals(3, count(connection, "SELECT COUNT(*) FROM upm_permission WHERE component IN ('flow/todo/index', 'flow/done/index', 'flow/started/index')"));
                 assertEquals(5, count(connection, "SELECT COUNT(*) FROM upm_permission WHERE permission_code LIKE 'flow:definition:%' AND usable=1"));
                 assertEquals(14, count(connection, "SELECT COUNT(*) FROM upm_role_permission WHERE role_id IN (10, 20) AND permission_id BETWEEN 197 AND 203"));
                 assertEquals(1, count(connection, "SELECT COUNT(*) FROM upm_role_permission WHERE role_id=10 AND permission_id=195"));

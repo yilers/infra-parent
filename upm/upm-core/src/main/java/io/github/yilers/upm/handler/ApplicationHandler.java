@@ -12,6 +12,8 @@ import io.github.yilers.upm.service.ApplicationService;
 import io.github.yilers.upm.service.TenantService;
 import io.github.yilers.upm.sso.SsoSecretCipher;
 import io.github.yilers.web.context.RequestContextHolder;
+import io.github.yilers.upm.i18n.UpmAccessMessage;
+import io.github.yilers.upm.i18n.UpmManagementMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -42,7 +44,7 @@ public class ApplicationHandler {
     public Application findById(Long id) {
         Application application = applicationService.getById(id);
         if (application == null) {
-            throw new CommonException("应用不存在");
+            throw new CommonException(UpmAccessMessage.APP_NOT_FOUND);
         }
         return application;
     }
@@ -50,7 +52,7 @@ public class ApplicationHandler {
     @Transactional(rollbackFor = Exception.class)
     public void save(ApplicationRequest dto) {
         if (applicationService.findByCode(dto.getCode()) != null) {
-            throw new CommonException("应用编码已存在");
+            throw new CommonException(UpmAccessMessage.APP_CODE_EXISTS);
         }
         Application application = new Application();
         application.setName(dto.getName());
@@ -72,7 +74,7 @@ public class ApplicationHandler {
     public void update(ApplicationRequest dto) {
         Application application = findOperable(dto.getId());
         if (dto.getCode() != null && !application.getCode().equals(dto.getCode())) {
-            throw new CommonException("应用编码不可修改");
+            throw new CommonException(UpmAccessMessage.APP_CODE_IMMUTABLE);
         }
         application.setName(dto.getName());
         application.setIcon(dto.getIcon());
@@ -88,7 +90,7 @@ public class ApplicationHandler {
         application.setSortNumber(dto.getSortNumber());
         application.setVersion(dto.getVersion());
         if (!applicationService.updateById(application)) {
-            throw new CommonException("更新失败 数据已经变更");
+            throw new CommonException(UpmManagementMessage.DATA_UPDATE_CONFLICT);
         }
     }
 
@@ -102,7 +104,7 @@ public class ApplicationHandler {
         application.setSsoSecret(secretCipher.encrypt(secret));
         application.setSecretUpdateTime(LocalDateTime.now());
         if (!applicationService.updateById(application)) {
-            throw new CommonException("更新失败 数据已经变更");
+            throw new CommonException(UpmManagementMessage.DATA_UPDATE_CONFLICT);
         }
         String tenantCode = tenantService.getById(application.getTenantId()).getCode();
         return new ApplicationSecretResponse(clientId(tenantCode, application.getCode()), secret,
@@ -114,14 +116,14 @@ public class ApplicationHandler {
         Application application = findOperable(id);
         application.setUsable(CommonConst.YES.equals(application.getUsable()) ? CommonConst.NO : CommonConst.YES);
         if (!applicationService.updateById(application)) {
-            throw new CommonException("更新失败 数据已经变更");
+            throw new CommonException(UpmManagementMessage.DATA_UPDATE_CONFLICT);
         }
     }
 
     private Application findOperable(Long id) {
         Application application = findById(id);
         if (!CommonConst.YES.equals(application.getOperable())) {
-            throw new CommonException("内置应用不可操作");
+            throw new CommonException(UpmAccessMessage.APP_BUILTIN_PROTECTED);
         }
         return application;
     }
@@ -145,9 +147,9 @@ public class ApplicationHandler {
                 continue;
             }
             if (value.contains("*")) {
-                throw new CommonException("回调地址不允许使用通配符");
+                throw new CommonException(UpmAccessMessage.APP_CALLBACK_WILDCARD);
             }
-            validateHttpUrl(value, "回调地址");
+            validateHttpUrl(value, UpmAccessMessage.APP_CALLBACK_INVALID);
             values.add(value);
         }
         return String.join(",", values);
@@ -159,17 +161,17 @@ public class ApplicationHandler {
 
     private void validateSsoConfiguration(Application application) {
         if (StrUtil.isBlank(application.getSsoSecret())) {
-            throw new CommonException("请先生成SSO客户端密钥");
+            throw new CommonException(UpmAccessMessage.APP_SECRET_REQUIRED);
         }
         if (StrUtil.isBlank(application.getRedirectUris())) {
-            throw new CommonException("启用SSO前至少配置一个回调地址");
+            throw new CommonException(UpmAccessMessage.APP_CALLBACK_REQUIRED);
         }
-        validateHttpUrl(application.getSsoPushUrl(), "SSO推送地址");
+        validateHttpUrl(application.getSsoPushUrl(), UpmAccessMessage.APP_PUSH_INVALID);
         // 启用时主动验证主密钥，避免直到首次登录才暴露配置错误。
         secretCipher.decrypt(application.getSsoSecret());
     }
 
-    private void validateHttpUrl(String value, String name) {
+    private void validateHttpUrl(String value, UpmAccessMessage invalidMessage) {
         try {
             URI uri = URI.create(value);
             if (!("http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme()))
@@ -177,7 +179,7 @@ public class ApplicationHandler {
                 throw new IllegalArgumentException();
             }
         } catch (Exception e) {
-            throw new CommonException(name + "格式不正确");
+            throw new CommonException(invalidMessage);
         }
     }
 

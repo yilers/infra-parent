@@ -1,6 +1,7 @@
 package io.github.yilers.flow.service.impl;
 
 import io.github.yilers.flow.model.WorkflowAssigneeRule;
+import io.github.yilers.flow.i18n.FlowMessage;
 import io.github.yilers.web.exception.CommonException;
 import org.dromara.warm.flow.core.FlowEngine;
 
@@ -50,27 +51,27 @@ public record WorkflowCcConfig(boolean enabled, boolean includeChildDepartments,
         } catch (CommonException e) {
             throw e;
         } catch (RuntimeException e) {
-            throw new CommonException("节点抄送配置格式不正确：" + e.getMessage());
+            throw new CommonException(FlowMessage.CC_CONFIG_INVALID, e.getMessage());
         }
     }
 
     private void validate() {
         if (!enabled) return;
         if (recipients.isEmpty() || recipients.size() > MAX_RECIPIENTS) {
-            throw new CommonException("启用抄送后请选择1至100个抄送对象");
+            throw new CommonException(FlowMessage.CC_RECIPIENT_COUNT);
         }
         Set<String> unique = new LinkedHashSet<>(recipients);
-        if (unique.size() != recipients.size()) throw new CommonException("抄送对象不能重复");
+        if (unique.size() != recipients.size()) throw new CommonException(FlowMessage.CC_RECIPIENT_DUPLICATE);
         for (String flag : recipients) {
             if (flag == null || (!flag.matches("(?:user|role|dept):[1-9][0-9]{0,18}")
                     && WorkflowAssigneeRule.fromExpression(flag) == null)) {
-                throw new CommonException("不支持的抄送对象：" + flag);
+                throw new CommonException(FlowMessage.CC_RECIPIENT_UNSUPPORTED, flag);
             }
             if (!flag.startsWith("${")) {
                 try {
                     Long.parseLong(flag.substring(flag.indexOf(':') + 1));
                 } catch (NumberFormatException e) {
-                    throw new CommonException("抄送对象ID超出范围：" + flag);
+                    throw new CommonException(FlowMessage.CC_RECIPIENT_ID_RANGE, flag);
                 }
             }
         }

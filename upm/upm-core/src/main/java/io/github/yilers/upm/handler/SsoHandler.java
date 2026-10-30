@@ -19,6 +19,7 @@ import io.github.yilers.upm.service.UserRoleService;
 import io.github.yilers.upm.service.UserService;
 import io.github.yilers.upm.sso.SsoClientResolver;
 import io.github.yilers.web.context.RequestContextHolder;
+import io.github.yilers.upm.i18n.UpmAccessMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -44,12 +45,12 @@ public class SsoHandler {
         SsoClientResolver.Client client = clientResolver.requireEnabled(clientResolver.resolve(request.getClient()));
         User user = findUser(StpUtil.getLoginIdAsLong());
         if (!client.tenant().getId().equals(user.getTenantId())) {
-            throw new CommonException("当前账号无权访问该租户应用");
+            throw new CommonException(UpmAccessMessage.SSO_TENANT_APP_FORBIDDEN);
         }
         String device = StpUtil.getLoginDeviceType();
         List<Permission> permissions = findPermissions(client, user.getId(), device);
         if (permissions.isEmpty()) {
-            throw new CommonException("当前账号没有该应用的访问权限");
+            throw new CommonException(UpmAccessMessage.SSO_CURRENT_APP_FORBIDDEN);
         }
         String redirectUrl = ssoServerTemplate.buildRedirectUrl(request.getClient(), request.getRedirect(),
                 user.getId(), StpUtil.getTokenValue());
@@ -64,7 +65,7 @@ public class SsoHandler {
         SsoClientResolver.Client client = clientResolver.requireEnabled(clientResolver.resolve(clientId));
         User user = findUser(userId);
         if (!client.tenant().getId().equals(user.getTenantId())) {
-            throw new CommonException("用户与应用不属于同一租户");
+            throw new CommonException(UpmAccessMessage.SSO_TENANT_MISMATCH);
         }
         String device = StpUtil.getStpLogic().getLoginDeviceTypeByToken(tokenValue);
         Long previousTenantId = RequestContextHolder.getTenantId();
@@ -74,7 +75,7 @@ public class SsoHandler {
                     .filter(role -> CommonConst.YES.equals(role.getUsable())).toList();
             List<Permission> permissions = filterPermissions(client, roles, device);
             if (permissions.isEmpty()) {
-                throw new CommonException("用户没有该应用的访问权限");
+                throw new CommonException(UpmAccessMessage.SSO_USER_APP_FORBIDDEN);
             }
             SsoLoginContextResponse response = new SsoLoginContextResponse();
             response.setApplication(toApplicationResponse(client));
@@ -118,7 +119,7 @@ public class SsoHandler {
             InterceptorIgnoreHelper.handle(IgnoreStrategy.builder().tenantLine(true).build());
             User user = userService.getById(userId);
             if (user == null || !CommonConst.YES.equals(user.getUsable())) {
-                throw new CommonException("账号不存在或已停用");
+                throw new CommonException(UpmAccessMessage.SSO_USER_UNAVAILABLE);
             }
             return user;
         } finally {

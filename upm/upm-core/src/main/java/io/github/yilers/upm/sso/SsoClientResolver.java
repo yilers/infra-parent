@@ -11,6 +11,7 @@ import io.github.yilers.upm.entity.Tenant;
 import io.github.yilers.upm.handler.ApplicationHandler;
 import io.github.yilers.upm.service.ApplicationService;
 import io.github.yilers.upm.service.TenantService;
+import io.github.yilers.upm.i18n.UpmAccessMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -35,13 +36,13 @@ public class SsoClientResolver {
             InterceptorIgnoreHelper.handle(IgnoreStrategy.builder().tenantLine(true).build());
             Tenant tenant = tenantService.findByCode(value[0]);
             if (tenant == null || !CommonConst.YES.equals(tenant.getUsable())) {
-                throw new CommonException("租户不存在或已停用");
+                throw new CommonException(UpmAccessMessage.SSO_TENANT_UNAVAILABLE);
             }
             Application application = applicationService.getOne(Wrappers.<Application>lambdaQuery()
                     .eq(Application::getTenantId, tenant.getId())
                     .eq(Application::getCode, value[1]));
             if (application == null || !CommonConst.YES.equals(application.getUsable())) {
-                throw new CommonException("应用不存在或已停用");
+                throw new CommonException(UpmAccessMessage.APP_UNAVAILABLE);
             }
             return new Client(clientId, tenant, application);
         } finally {
@@ -75,11 +76,11 @@ public class SsoClientResolver {
     public Client requireEnabled(Client client) {
         Application application = client.application();
         if (!CommonConst.YES.equals(application.getSsoEnabled())) {
-            throw new CommonException("应用未启用单点登录");
+            throw new CommonException(UpmAccessMessage.SSO_NOT_ENABLED);
         }
         if (StrUtil.isBlank(application.getSsoSecret()) || StrUtil.isBlank(application.getRedirectUris())
                 || StrUtil.isBlank(application.getSsoPushUrl())) {
-            throw new CommonException("应用单点登录配置不完整");
+            throw new CommonException(UpmAccessMessage.SSO_CONFIG_INCOMPLETE);
         }
         return client;
     }
@@ -104,11 +105,11 @@ public class SsoClientResolver {
 
     private String[] splitClientId(String clientId) {
         if (StrUtil.isBlank(clientId)) {
-            throw new CommonException("client不能为空");
+            throw new CommonException(UpmAccessMessage.SSO_CLIENT_REQUIRED);
         }
         int separator = clientId.indexOf(':');
         if (separator <= 0 || separator == clientId.length() - 1 || clientId.indexOf(':', separator + 1) >= 0) {
-            throw new CommonException("client格式应为tenantCode:applicationCode");
+            throw new CommonException(UpmAccessMessage.SSO_CLIENT_FORMAT);
         }
         return new String[]{clientId.substring(0, separator), clientId.substring(separator + 1)};
     }

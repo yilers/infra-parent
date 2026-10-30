@@ -1,5 +1,6 @@
 package io.github.yilers.upm.credential;
 
+import io.github.yilers.upm.i18n.UpmExtraMessage;
 import io.github.yilers.web.exception.CommonException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -37,7 +38,7 @@ public class ApiSecretCipher {
         } catch (CommonException e) {
             throw e;
         } catch (Exception e) {
-            throw new CommonException("系统调用密钥加密失败");
+            throw new CommonException(UpmExtraMessage.API_SECRET_ENCRYPT);
         }
     }
 
@@ -45,7 +46,7 @@ public class ApiSecretCipher {
         try {
             byte[] value = Base64.getDecoder().decode(ciphertext);
             if (value.length <= IV_BYTES + TAG_BITS / Byte.SIZE) {
-                throw new CommonException("系统调用密钥格式错误");
+                throw new CommonException(UpmExtraMessage.API_SECRET_FORMAT);
             }
             ByteBuffer buffer = ByteBuffer.wrap(value);
             byte[] iv = new byte[IV_BYTES];
@@ -58,7 +59,7 @@ public class ApiSecretCipher {
         } catch (CommonException e) {
             throw e;
         } catch (Exception e) {
-            throw new CommonException("系统调用密钥解密失败，请检查主密钥配置");
+            throw new CommonException(UpmExtraMessage.API_SECRET_DECRYPT);
         }
     }
 
@@ -70,7 +71,7 @@ public class ApiSecretCipher {
             }
             return new SecretKeySpec(bytes, "AES");
         } catch (IllegalArgumentException e) {
-            throw new CommonException("upm.api.secret-key必须配置为Base64编码的32字节随机主密钥");
+            throw new CommonException(UpmExtraMessage.API_MASTER_INVALID);
         }
     }
 }

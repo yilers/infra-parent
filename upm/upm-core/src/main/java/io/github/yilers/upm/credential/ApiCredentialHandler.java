@@ -8,6 +8,7 @@ import io.github.yilers.upm.mapper.ApiCredentialPermissionMapper;
 import io.github.yilers.upm.request.ApiCredentialRequest;
 import io.github.yilers.upm.response.ApiCredentialSecretResponse;
 import io.github.yilers.web.context.RequestContextHolder;
+import io.github.yilers.upm.i18n.UpmExtraMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -38,7 +39,7 @@ public class ApiCredentialHandler {
 
     public List<String> permissions(Long id) {
         requireTenant();
-        if (mapper.selectById(id) == null) throw new CommonException("调用凭证不存在");
+        if (mapper.selectById(id) == null) throw new CommonException(UpmExtraMessage.API_CREDENTIAL_NOT_FOUND);
         return permissionMapper.selectList(new LambdaQueryWrapper<ApiCredentialPermission>()
                 .eq(ApiCredentialPermission::getCredentialId, id))
                 .stream().map(ApiCredentialPermission::getPermissionCode).toList();
@@ -66,14 +67,14 @@ public class ApiCredentialHandler {
     @Transactional(rollbackFor = Exception.class)
     public void update(ApiCredentialRequest request) {
         validate(request);
-        if (request.getId() == null || request.getVersion() == null) throw new CommonException("ID和版本号不能为空");
+        if (request.getId() == null || request.getVersion() == null) throw new CommonException(UpmExtraMessage.API_ID_VERSION_REQUIRED);
         ApiCredential value = mapper.selectById(request.getId());
-        if (value == null) throw new CommonException("调用凭证不存在");
-        if (!request.getVersion().equals(value.getVersion())) throw new CommonException("数据已变化，请刷新");
+        if (value == null) throw new CommonException(UpmExtraMessage.API_CREDENTIAL_NOT_FOUND);
+        if (!request.getVersion().equals(value.getVersion())) throw new CommonException(UpmExtraMessage.API_CONFLICT);
         // 使用显式更新以允许清空expireTime；版本条件不可省略。
         int count = mapper.updateConfiguration(value.getId(), value.getTenantId(), request.getVersion(),
                 request.getName(), request.getExpireTime(), request.getRateLimit(), request.getUsable());
-        if (count != 1) throw new CommonException("数据已变化，请刷新");
+        if (count != 1) throw new CommonException(UpmExtraMessage.API_CONFLICT);
         replacePermissions(value.getId(), request.getPermissions());
     }
 
@@ -85,19 +86,19 @@ public class ApiCredentialHandler {
     public ApiCredentialSecretResponse resetSecret(Long id, Integer version) {
         Long tenantId = requireTenant();
         if (id == null || version == null) {
-            throw new CommonException("ID和版本号不能为空");
+            throw new CommonException(UpmExtraMessage.API_ID_VERSION_REQUIRED);
         }
         ApiCredential value = mapper.selectById(id);
         if (value == null) {
-            throw new CommonException("调用凭证不存在");
+            throw new CommonException(UpmExtraMessage.API_CREDENTIAL_NOT_FOUND);
         }
         if (!version.equals(value.getVersion())) {
-            throw new CommonException("数据已变化，请刷新");
+            throw new CommonException(UpmExtraMessage.API_CONFLICT);
         }
         String secret = randomValue();
         String secretCipher = cipher.encrypt(secret);
         if (mapper.resetSecret(id, tenantId, version, secretCipher) != 1) {
-            throw new CommonException("数据已变化，请刷新");
+            throw new CommonException(UpmExtraMessage.API_CONFLICT);
         }
         return new ApiCredentialSecretResponse(id, value.getAccessKey(), secret);
     }
@@ -120,15 +121,15 @@ public class ApiCredentialHandler {
     private void validate(ApiCredentialRequest request) {
         requireTenant();
         if (request.getExpireTime() != null && !request.getExpireTime().isAfter(LocalDateTime.now())) {
-            throw new CommonException("凭证失效时间必须晚于当前时间");
+            throw new CommonException(UpmExtraMessage.API_EXPIRATION_INVALID);
         }
         Set<String> allowed = catalog.list().stream().map(ApiPermissionCatalog.Capability::code).collect(Collectors.toSet());
-        if (!allowed.containsAll(request.getPermissions())) throw new CommonException("包含未注册的接口权限");
+        if (!allowed.containsAll(request.getPermissions())) throw new CommonException(UpmExtraMessage.API_PERMISSION_UNKNOWN);
     }
 
     private Long requireTenant() {
         Long tenantId = RequestContextHolder.getTenantId();
-        if (tenantId == null) throw new CommonException("缺少可信租户上下文");
+        if (tenantId == null) throw new CommonException(UpmExtraMessage.API_TENANT_REQUIRED);
         return tenantId;
     }
 

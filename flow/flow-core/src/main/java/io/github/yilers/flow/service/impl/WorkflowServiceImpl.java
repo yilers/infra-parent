@@ -6,6 +6,7 @@ import io.github.yilers.flow.service.WorkflowIdentityProvider;
 import io.github.yilers.flow.service.WorkflowService;
 import io.github.yilers.flow.model.WorkflowUserInfo;
 import io.github.yilers.web.context.RequestContextHolder;
+import io.github.yilers.flow.i18n.FlowMessage;
 import io.github.yilers.web.exception.CommonException;
 import org.dromara.warm.flow.core.FlowEngine;
 import org.dromara.warm.flow.core.dto.FlowParams;
@@ -90,7 +91,7 @@ public class WorkflowServiceImpl implements WorkflowService {
     private Long changeHandler(Long taskId, Long targetUserId, String message, boolean delegation) {
         requireTaskId(taskId);
         if (targetUserId == null || targetUserId <= 0) {
-            throw new CommonException("目标用户ID必须为正数");
+            throw new CommonException(FlowMessage.TARGET_ID_INVALID);
         }
         Task task = lockAndAuthorize(taskId);
         requireApprovalTask(task);
@@ -98,12 +99,12 @@ public class WorkflowServiceImpl implements WorkflowService {
         String currentUserId = identityProvider.currentUserId();
         String targetId = targetUserId.toString();
         if (currentUserId.equals(targetId)) {
-            throw new CommonException("不能将任务转给自己");
+            throw new CommonException(FlowMessage.TARGET_SELF);
         }
         // UPM适配器只会返回当前租户内启用用户；缺失即视为无效目标。
         List<String> validTargets = identityProvider.resolveUserIds(List.of("user:" + targetId));
         if (validTargets.size() != 1 || !targetId.equals(validTargets.getFirst())) {
-            throw new CommonException("目标用户不存在、已停用或不属于当前租户");
+            throw new CommonException(FlowMessage.TARGET_UNAVAILABLE);
         }
         Map<String, WorkflowUserInfo> users = identityProvider.resolveUsers(List.of(targetId));
         WorkflowUserInfo target = users.get(targetId);
@@ -120,7 +121,7 @@ public class WorkflowServiceImpl implements WorkflowService {
                 ? FlowEngine.taskService().depute(taskId, params)
                 : FlowEngine.taskService().transfer(taskId, params);
         if (!changed) {
-            throw new CommonException(delegation ? "委派失败，请刷新待办后重试" : "转办失败，请刷新待办后重试");
+            throw new CommonException(delegation ? FlowMessage.DELEGATE_FAILED : FlowMessage.TRANSFER_FAILED);
         }
         return task.getInstanceId();
     }
@@ -132,7 +133,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         WorkflowTaskActionConfig config = WorkflowTaskActionConfig.fromChart(chart, task.getNodeCode());
         boolean allowed = delegation ? config.delegationEnabled() : config.transferEnabled();
         if (!allowed) {
-            throw new CommonException(delegation ? "当前审批节点未允许委派" : "当前审批节点未允许转办");
+            throw new CommonException(delegation ? FlowMessage.DELEGATE_DISABLED : FlowMessage.TRANSFER_DISABLED);
         }
     }
 
@@ -142,7 +143,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         Instance instance = lockOwnedInstance(instanceId);
         requireActiveInstance(instance, List.of(FlowStatus.APPROVAL));
         if (FlowEngine.taskService().getByInsId(instanceId).isEmpty()) {
-            throw new CommonException("流程已没有待办任务，不能拿回");
+            throw new CommonException(FlowMessage.TAKEBACK_NO_TASK);
         }
         FlowParams params = applicantActionParams("申请人拿回申请");
         Instance result = FlowEngine.taskService().taskBackByInsId(instanceId, params);
@@ -156,7 +157,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         Instance instance = lockOwnedInstance(instanceId);
         requireActiveInstance(instance, List.of(FlowStatus.APPROVAL, FlowStatus.REJECT, FlowStatus.TASK_BACK));
         if (FlowEngine.taskService().getByInsId(instanceId).isEmpty()) {
-            throw new CommonException("流程已没有待办任务，不能撤销");
+            throw new CommonException(FlowMessage.REVOKE_NO_TASK);
         }
         Instance result = FlowEngine.taskService().revoke(instanceId, applicantActionParams("申请人撤销申请"));
         return result.getId();
@@ -164,21 +165,21 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     private Instance lockOwnedInstance(Long instanceId) {
         if (instanceId == null || instanceId <= 0) {
-            throw new CommonException("流程实例ID必须为正数");
+            throw new CommonException(FlowMessage.INSTANCE_ID_INVALID);
         }
         if (!Integer.valueOf(java.sql.Connection.TRANSACTION_READ_COMMITTED)
                 .equals(TransactionSynchronizationManager.getCurrentTransactionIsolationLevel())) {
-            throw new CommonException("流程操作必须在READ_COMMITTED事务中执行，请检查外层事务配置");
+            throw new CommonException(FlowMessage.ACTION_TRANSACTION);
         }
         String userId = identityProvider.currentUserId();
         Long tenantId = RequestContextHolder.getTenantId();
         if (tenantId == null || inboxMapper.lockOwnedInstance(instanceId, tenantId.toString(), userId) == null) {
-            throw new CommonException("流程实例不存在、已变化或无权操作");
+            throw new CommonException(FlowMessage.INSTANCE_CHANGED);
         }
         Instance instance = FlowEngine.insService().getById(instanceId);
         if (instance == null || !tenantId.toString().equals(instance.getTenantId())
                 || !userId.equals(instance.getCreateBy())) {
-            throw new CommonException("流程实例不存在、已变化或无权操作");
+            throw new CommonException(FlowMessage.INSTANCE_CHANGED);
         }
         return instance;
     }
@@ -186,7 +187,7 @@ public class WorkflowServiceImpl implements WorkflowService {
     private void requireActiveInstance(Instance instance, List<FlowStatus> allowedStatuses) {
         if (!ActivityStatus.ACTIVITY.getKey().equals(instance.getActivityStatus())
                 || allowedStatuses.stream().noneMatch(status -> status.getKey().equals(instance.getFlowStatus()))) {
-            throw new CommonException("流程当前状态不支持此操作");
+            throw new CommonException(FlowMessage.INSTANCE_STATUS_INVALID);
         }
     }
 
@@ -204,7 +205,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         Task task = lockAndAuthorize(taskId);
         var reference = WorkflowBusinessTasks.submission(businessProviders, task.getInstanceId(), task.getNodeCode());
         if (reference == null || !businessType.equals(reference.type())) {
-            throw new CommonException("该任务不是指定业务的申请提交任务");
+            throw new CommonException(FlowMessage.SUBMISSION_WRONG_BUSINESS);
         }
         Long instanceId = FlowEngine.taskService().pass(taskId, message, assigneeResolver.copyBusinessVariables(variables)).getId();
         validateAssignees(instanceId);
@@ -213,7 +214,7 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     private void requireApprovalTask(Task task) {
         if (WorkflowBusinessTasks.submission(businessProviders, task.getInstanceId(), task.getNodeCode()) != null) {
-            throw new CommonException("这是申请提交任务，请从业务表单修改或重新提交，不能使用审批通过或退回");
+            throw new CommonException(FlowMessage.SUBMISSION_NO_APPROVAL);
         }
     }
 
@@ -224,24 +225,24 @@ public class WorkflowServiceImpl implements WorkflowService {
     private Task lockAndAuthorize(Long taskId) {
         if (!Integer.valueOf(java.sql.Connection.TRANSACTION_READ_COMMITTED)
                 .equals(TransactionSynchronizationManager.getCurrentTransactionIsolationLevel())) {
-            throw new CommonException("流程审批必须在READ_COMMITTED事务中执行，请检查业务外层事务配置");
+            throw new CommonException(FlowMessage.APPROVAL_TRANSACTION);
         }
         String userId = identityProvider.currentUserId();
         Long tenantId = RequestContextHolder.getTenantId();
         if (tenantId == null) {
-            throw new CommonException("Flow租户上下文不能为空");
+            throw new CommonException(FlowMessage.TENANT_REQUIRED);
         }
         if (inboxMapper.lockInstanceByTask(taskId, tenantId.toString()) == null) {
-            throw new CommonException("任务已处理、不存在或无权办理，请刷新待办");
+            throw new CommonException(FlowMessage.TASK_CHANGED);
         }
         List<String> flags = identityProvider.currentPermissionFlags();
         if (flags == null || flags.isEmpty()
                 || inboxMapper.actionableTaskCount(taskId, tenantId.toString(), userId, flags) != 1) {
-            throw new CommonException("任务已处理、不存在或无权办理，请刷新待办");
+            throw new CommonException(FlowMessage.TASK_CHANGED);
         }
         Task task = FlowEngine.taskService().getById(taskId);
         if (task == null) {
-            throw new CommonException("任务已处理、不存在或无权办理，请刷新待办");
+            throw new CommonException(FlowMessage.TASK_CHANGED);
         }
         return task;
     }
@@ -259,7 +260,7 @@ public class WorkflowServiceImpl implements WorkflowService {
                             || user.getProcessedBy().startsWith("role:")
                             || user.getProcessedBy().contains("${")
                             || user.getProcessedBy().startsWith("dept:"))) {
-                throw new CommonException("节点“" + task.getNodeName() + "”未解析出有效审批人，请检查办理人配置");
+                throw new CommonException(FlowMessage.NODE_ASSIGNEE_MISSING, task.getNodeName());
             }
         });
     }

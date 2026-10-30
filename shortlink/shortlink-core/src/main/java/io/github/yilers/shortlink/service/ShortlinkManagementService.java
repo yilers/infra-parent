@@ -7,6 +7,7 @@ import io.github.yilers.shortlink.entity.*;
 import io.github.yilers.shortlink.mapper.*;
 import io.github.yilers.shortlink.request.*;
 import io.github.yilers.shortlink.support.NamespaceKeyCipher;
+import io.github.yilers.shortlink.i18n.ShortlinkMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
@@ -51,17 +52,17 @@ public class ShortlinkManagementService {
     public Long saveConfig(ShortlinkConfigRequest request) {
         ShortlinkServiceImpl.tenant();
         if (TEMPLATE.equals(request.getTargetType())) {
-            if (request.getUrlTemplate() == null || !request.getUrlTemplate().contains("{code}")) throw new CommonException("模板必须包含{code}");
+            if (request.getUrlTemplate() == null || !request.getUrlTemplate().contains("{code}")) throw new CommonException(ShortlinkMessage.TEMPLATE_CODE_REQUIRED);
             validateUrl(request.getUrlTemplate().replace("{code}", "example"));
         } else if (request.getUrlTemplate() != null && !request.getUrlTemplate().isBlank()) {
-            throw new CommonException("URL模式不需要模板");
+            throw new CommonException(ShortlinkMessage.URL_TEMPLATE_FORBIDDEN);
         }
         ShortlinkConfig value = request.getId() == null ? new ShortlinkConfig() : configs.selectById(request.getId());
-        if (value == null) throw new CommonException("配置不存在");
+        if (value == null) throw new CommonException(ShortlinkMessage.CONFIG_NOT_FOUND);
         if (request.getId() != null) {
             checkVersion(value, request.getVersion());
             if (!Objects.equals(value.getCode(), request.getCode()) || !Objects.equals(value.getTargetType(), request.getTargetType())) {
-                throw new CommonException("配置编码和目标类型不可修改");
+                throw new CommonException(ShortlinkMessage.CONFIG_IMMUTABLE);
             }
         }
         value.setName(request.getName());
@@ -75,7 +76,7 @@ public class ShortlinkManagementService {
             configs.insert(value);
         } else if (configs.updateConfiguration(value.getId(), ShortlinkServiceImpl.tenant(), request.getVersion(),
                 value.getName(), value.getUrlTemplate(), value.getDefaultValidSeconds(), value.getUsable()) != 1) {
-            throw new CommonException("数据已变化，请刷新");
+            throw new CommonException(ShortlinkMessage.DATA_CONFLICT);
         }
         return value.getId();
     }
@@ -90,15 +91,15 @@ public class ShortlinkManagementService {
                     || host.contains("..") || host.endsWith(".")) throw new IllegalArgumentException();
             validateUrl(request.getScheme() + "://" + host);
         } catch (Exception e) {
-            throw new CommonException("请输入不含协议、端口和路径的合法域名");
+            throw new CommonException(ShortlinkMessage.DOMAIN_FORMAT_INVALID);
         }
         ShortlinkDomain value = request.getId() == null ? new ShortlinkDomain() : domains.selectById(request.getId());
-        if (value == null) throw new CommonException("域名不存在");
+        if (value == null) throw new CommonException(ShortlinkMessage.DOMAIN_NOT_FOUND);
         if (request.getId() != null) {
             checkVersion(value, request.getVersion());
             if (!Objects.equals(value.getHost(), host) || !Objects.equals(value.getScheme(), request.getScheme())
                     || !Objects.equals(value.getPublicPort(), request.getPublicPort())) {
-                throw new CommonException("已有域名和协议不可修改，请新建域名");
+                throw new CommonException(ShortlinkMessage.DOMAIN_IMMUTABLE);
             }
         }
         value.setHost(host);
@@ -108,7 +109,7 @@ public class ShortlinkManagementService {
         if (request.getId() == null) {
             initialize(value);
             domains.insert(value);
-        } else if (domains.updateById(value) != 1) throw new CommonException("数据已变化，请刷新");
+        } else if (domains.updateById(value) != 1) throw new CommonException(ShortlinkMessage.DATA_CONFLICT);
         return value.getId();
     }
 
@@ -116,17 +117,17 @@ public class ShortlinkManagementService {
     public Long saveNamespace(ShortlinkNamespaceRequest request) {
         Long tenant = ShortlinkServiceImpl.tenant();
         capacity(request.getCodeLength());
-        if (RESERVED_PATHS.contains(request.getPathCode())) throw new CommonException("该路径为系统保留路径");
+        if (RESERVED_PATHS.contains(request.getPathCode())) throw new CommonException(ShortlinkMessage.PATH_RESERVED);
         if (configs.selectById(request.getConfigId()) == null || domains.selectById(request.getDomainId()) == null) {
-            throw new CommonException("配置或域名不属于当前租户");
+            throw new CommonException(ShortlinkMessage.CONFIG_DOMAIN_TENANT);
         }
         ShortlinkNamespace value = request.getId() == null ? new ShortlinkNamespace() : namespaces.selectById(request.getId());
-        if (value == null) throw new CommonException("namespace不存在");
+        if (value == null) throw new CommonException(ShortlinkMessage.NAMESPACE_NOT_FOUND);
         if (request.getId() != null) {
             checkVersion(value, request.getVersion());
             if (!Objects.equals(value.getConfigId(), request.getConfigId()) || !Objects.equals(value.getDomainId(), request.getDomainId())
                     || !Objects.equals(value.getPathCode(), request.getPathCode()) || !Objects.equals(value.getGenerateType(), request.getGenerateType())
-                    || !Objects.equals(value.getCodeLength(), request.getCodeLength())) throw new CommonException("namespace标识和生成规则不可修改");
+                    || !Objects.equals(value.getCodeLength(), request.getCodeLength())) throw new CommonException(ShortlinkMessage.NAMESPACE_IMMUTABLE);
         }
         value.setConfigId(request.getConfigId());
         value.setDomainId(request.getDomainId());
@@ -144,13 +145,13 @@ public class ShortlinkManagementService {
             }
             namespaces.insert(value);
             if (AUTO.equals(value.getGenerateType())) sequences.initialize(value.getId(), tenant, SEGMENT_SIZE);
-        } else if (namespaces.updateById(value) != 1) throw new CommonException("数据已变化，请刷新");
+        } else if (namespaces.updateById(value) != 1) throw new CommonException(ShortlinkMessage.DATA_CONFLICT);
         return value.getId();
     }
 
     public List<Long> grants(Long configId) {
         ShortlinkServiceImpl.tenant();
-        if (configs.selectById(configId) == null) throw new CommonException("短链配置不存在");
+        if (configs.selectById(configId) == null) throw new CommonException(ShortlinkMessage.SHORTLINK_CONFIG_NOT_FOUND);
         return grants.selectList(new LambdaQueryWrapper<ShortlinkConfigGrant>().eq(ShortlinkConfigGrant::getConfigId, configId))
                 .stream().map(ShortlinkConfigGrant::getCredentialId).toList();
     }
@@ -159,13 +160,13 @@ public class ShortlinkManagementService {
     public void grant(Long configId, Integer version, Set<Long> credentialIds) {
         Long tenant = ShortlinkServiceImpl.tenant();
         ShortlinkConfig config = configs.selectById(configId);
-        if (config == null) throw new CommonException("短链配置不存在");
+        if (config == null) throw new CommonException(ShortlinkMessage.SHORTLINK_CONFIG_NOT_FOUND);
         checkVersion(config, version);
         for (Long id : credentialIds) {
-            if (!credentials.getObject().belongsToTenant(id, tenant)) throw new CommonException("凭证不属于当前租户");
+            if (!credentials.getObject().belongsToTenant(id, tenant)) throw new CommonException(ShortlinkMessage.CREDENTIAL_TENANT);
         }
         // 授权修改也递增配置版本，阻止并发编辑互相覆盖。
-        if (configs.updateById(config) != 1) throw new CommonException("数据已变化，请刷新");
+        if (configs.updateById(config) != 1) throw new CommonException(ShortlinkMessage.DATA_CONFLICT);
         grants.deleteForConfig(configId, tenant);
         for (Long id : credentialIds) {
             ShortlinkConfigGrant value = new ShortlinkConfigGrant();
@@ -177,7 +178,7 @@ public class ShortlinkManagementService {
     }
 
     private static void checkVersion(BaseAllColumnDomain<?> value, Integer version) {
-        if (version == null || !version.equals(value.getVersion())) throw new CommonException("版本号为空或数据已变化，请刷新");
+        if (version == null || !version.equals(value.getVersion())) throw new CommonException(ShortlinkMessage.VERSION_CONFLICT);
     }
 
     private static void initialize(BaseAllColumnDomain<?> value) {

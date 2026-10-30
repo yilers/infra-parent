@@ -48,6 +48,7 @@ class InfraMessageResolverTest {
         assertEquals("At most 3 attempts are allowed.", resolver.resolve(limit, exception.getMessageArguments(), request("en-US")));
         MessageCode missing = new TestMessage("test.missing", "默认最多 {0} 次");
         assertEquals("默认最多 2 次", resolver.resolve(missing, new Object[]{2}, request("en-US")));
+        assertEquals("模板必须包含{code}", new CommonException(new TestMessage("test.literal", "模板必须包含{code}")).getMessage());
     }
 
     @Test
@@ -68,8 +69,14 @@ class InfraMessageResolverTest {
         assertEquals("Account is required.", result.getMsg());
         assertEquals("账号不能为空", ((Result<?>) advice.methodArgumentNotValidException(new MockHttpServletResponse(),
                 request(null), argumentError)).getMsg());
+        assertEquals("ID is required.", new LocalizedTextResolver(resolver, List.of(new CommonMessageTextCatalog()))
+                .resolve("id不能为空", request("en-US")));
         assertEquals("未知校验", new LocalizedTextResolver(resolver, List.of(catalog))
                 .resolve("未知校验", request("en-US")));
+        assertEquals("Account is required.", advice.exceptionHandler(new IllegalArgumentException("账号不能为空"),
+                request("en-US")).getMsg());
+        assertEquals("账号不能为空", advice.exceptionHandler(new IllegalStateException("账号不能为空"),
+                request("en-US")).getMsg());
     }
 
     private void validationArgument(String value) {

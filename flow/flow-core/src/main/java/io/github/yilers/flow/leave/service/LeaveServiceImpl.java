@@ -13,6 +13,7 @@ import io.github.yilers.flow.service.WorkflowIdentityProvider;
 import io.github.yilers.flow.service.WorkflowInboxService;
 import io.github.yilers.flow.service.WorkflowService;
 import io.github.yilers.web.context.RequestContextHolder;
+import io.github.yilers.flow.i18n.FlowMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.dromara.warm.flow.core.enums.FlowStatus;
@@ -50,7 +51,7 @@ public class LeaveServiceImpl implements LeaveService {
     @Override
     public LeavePage page(String status, int pageNum, int pageSize) {
         if (pageNum < 1 || pageSize < 1 || pageSize > 100) {
-            throw new CommonException("页码必须大于0，且每页最多100条");
+            throw new CommonException(FlowMessage.PAGE_INVALID);
         }
         String userId = identityProvider.currentUserId();
         Page<LeaveInfo> page = mapper.pageMine(new Page<>(pageNum, pageSize), tenantId(), userId,
@@ -65,7 +66,7 @@ public class LeaveServiceImpl implements LeaveService {
         validate(request);
         String userId = identityProvider.currentUserId();
         if (properties.getFlowCode() == null || properties.getFlowCode().isBlank()) {
-            throw new CommonException("请先配置请假业务流程编码");
+            throw new CommonException(FlowMessage.LEAVE_CODE_REQUIRED);
         }
         LeaveApplication leave = new LeaveApplication();
         leave.setTenantId(tenantId());
@@ -82,7 +83,7 @@ public class LeaveServiceImpl implements LeaveService {
         leave.setCreateTime(LocalDateTime.now());
         leave.setUpdateTime(leave.getCreateTime());
         if (mapper.insert(leave) != 1) {
-            throw new CommonException("保存请假草稿失败");
+            throw new CommonException(FlowMessage.LEAVE_SAVE_FAILED);
         }
         return decorate(mapper.info(leave.getId(), leave.getTenantId()), userId);
     }
@@ -178,11 +179,11 @@ public class LeaveServiceImpl implements LeaveService {
         String userId = identityProvider.currentUserId();
         LeaveInfo leave = mapper.info(id, tenantId());
         if (leave == null) {
-            throw new CommonException(404, "请假申请不存在或无权查看");
+            throw new CommonException(404, FlowMessage.LEAVE_NOT_FOUND);
         }
         if (!userId.equals(leave.getApplicantId())) {
             if (leave.getInstanceId() == null) {
-                throw new CommonException(404, "请假申请不存在或无权查看");
+                throw new CommonException(404, FlowMessage.LEAVE_NOT_FOUND);
             }
             inboxService.checkInstanceAccess(leave.getInstanceId());
         }
@@ -232,47 +233,47 @@ public class LeaveServiceImpl implements LeaveService {
     /** 服务契约也校验业务规则，避免其他模块直接调用Service时绕过Controller校验。 */
     private void validate(LeaveSaveRequest request) {
         if (request == null || !LeaveTypeEnum.supports(request.leaveType())) {
-            throw new CommonException("请选择有效的请假类型");
+            throw new CommonException(FlowMessage.LEAVE_TYPE_INVALID);
         }
         if (request.startTime() == null || request.endTime() == null || !request.endTime().isAfter(request.startTime())) {
-            throw new CommonException("请假结束时间必须晚于开始时间");
+            throw new CommonException(FlowMessage.LEAVE_TIME_INVALID);
         }
         BigDecimal hours = request.durationHours();
         if (hours == null || hours.compareTo(DURATION_STEP_HOURS) < 0 || hours.compareTo(MAX_DURATION_HOURS) > 0
                 || hours.remainder(DURATION_STEP_HOURS).signum() != 0) {
-            throw new CommonException("请假时长须为0.5小时的整数倍，且不超过8760小时");
+            throw new CommonException(FlowMessage.LEAVE_DURATION_INVALID);
         }
         BigDecimal intervalMinutes = BigDecimal.valueOf(Duration.between(request.startTime(), request.endTime()).toMinutes());
         if (hours.multiply(MINUTES_PER_HOUR).compareTo(intervalMinutes) > 0) {
-            throw new CommonException("请假时长不能超过起止时间的自然时长");
+            throw new CommonException(FlowMessage.LEAVE_DURATION_EXCEEDS);
         }
         if (request.reason() == null || request.reason().isBlank()
                 || request.reason().trim().length() > LeaveConst.MAX_REASON_LENGTH) {
-            throw new CommonException("请填写请假原因，最多1000字");
+            throw new CommonException(FlowMessage.LEAVE_REASON_INVALID);
         }
     }
 
     private String tenantId() {
         Long tenantId = RequestContextHolder.getTenantId();
         if (tenantId == null) {
-            throw new CommonException("Flow租户上下文不能为空");
+            throw new CommonException(FlowMessage.TENANT_REQUIRED);
         }
         return tenantId.toString();
     }
 
     private void requireId(Long id) {
         if (id == null || id <= 0) {
-            throw new CommonException("请假申请ID必须为正数");
+            throw new CommonException(FlowMessage.LEAVE_ID_INVALID);
         }
     }
 
     private void requireVersion(Integer version) {
         if (version == null || version < 1) {
-            throw new CommonException("请携带有效的申请版本号");
+            throw new CommonException(FlowMessage.LEAVE_VERSION_REQUIRED);
         }
     }
 
     private CommonException staleDraft() {
-        return new CommonException("申请已变更、当前不可编辑或无权操作，请刷新后重新打开表单");
+        return new CommonException(FlowMessage.LEAVE_EDIT_CONFLICT);
     }
 }

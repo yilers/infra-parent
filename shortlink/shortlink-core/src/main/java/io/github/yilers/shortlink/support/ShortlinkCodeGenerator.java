@@ -3,6 +3,7 @@ package io.github.yilers.shortlink.support;
 import io.github.yilers.shortlink.service.ShortlinkSegmentService;
 import io.github.yilers.shortlink.entity.ShortlinkNamespace;
 import io.github.yilers.web.context.RequestContextHolder;
+import io.github.yilers.shortlink.i18n.ShortlinkMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -31,7 +32,7 @@ public class ShortlinkCodeGenerator {
         int length = namespace.getCodeLength();
         boolean legacy = ShortlinkRules.ALGORITHM_SEQUENTIAL.equals(namespace.getCodeAlgorithm());
         if (!legacy && !ShortlinkRules.ALGORITHM_FF1_V1.equals(namespace.getCodeAlgorithm())) {
-            throw new CommonException("短码算法未配置或不受支持");
+            throw new CommonException(ShortlinkMessage.ALGORITHM_UNSUPPORTED);
         }
         // 先校验主密钥，避免主密钥错误时仍持续占用已提交的号段。
         byte[] key = legacy ? null : namespaceKeys.decryptKey(namespace.getCodeKeyCipher());

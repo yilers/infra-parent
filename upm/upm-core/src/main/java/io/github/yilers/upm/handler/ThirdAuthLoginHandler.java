@@ -21,6 +21,7 @@ import io.github.yilers.upm.thirdauth.ThirdAuthProvider;
 import io.github.yilers.upm.thirdauth.ThirdAuthProviderRegistry;
 import io.github.yilers.upm.thirdauth.ThirdAuthUserIdentity;
 import io.github.yilers.web.context.RequestContextHolder;
+import io.github.yilers.upm.i18n.UpmAccessMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RBucket;
@@ -66,7 +67,7 @@ public class ThirdAuthLoginHandler {
     public List<ThirdAuthPlatformResponse> findEnabledPlatforms(String tenantCode) {
         Tenant tenant = tenantService.findByCode(tenantCode);
         if (tenant == null || !CommonConst.YES.equals(tenant.getUsable())) {
-            throw new CommonException("租户不存在或已停用");
+            throw new CommonException(UpmAccessMessage.SSO_TENANT_UNAVAILABLE);
         }
         Long previousTenantId = RequestContextHolder.getTenantId();
         try {
@@ -97,7 +98,7 @@ public class ThirdAuthLoginHandler {
     public ThirdAuthAuthorizeResponse authorize(ThirdAuthLoginAuthorizeRequest request) {
         Tenant tenant = tenantService.findByCode(request.getTenantCode());
         if (tenant == null || !CommonConst.YES.equals(tenant.getUsable())) {
-            throw new CommonException("租户不存在或已停用");
+            throw new CommonException(UpmAccessMessage.SSO_TENANT_UNAVAILABLE);
         }
         ThirdAuthProvider provider = providerRegistry.get(request.getPlatform());
         Long previousTenantId = RequestContextHolder.getTenantId();
@@ -119,7 +120,7 @@ public class ThirdAuthLoginHandler {
      */
     public LoginResponse login(ThirdAuthLoginRequest request) {
         if (!request.getState().startsWith(LOGIN_STATE_PREFIX)) {
-            throw new CommonException("第三方登录状态无效，请重新发起登录");
+            throw new CommonException(UpmAccessMessage.THIRD_LOGIN_STATE_INVALID);
         }
         ThirdAuthLoginState state = consumeState(request.getState());
         Long previousTenantId = RequestContextHolder.getTenantId();
@@ -130,11 +131,11 @@ public class ThirdAuthLoginHandler {
                     .exchangeUserIdentity(config, request.getAuthCode());
             UserThird binding = findBinding(identity, state.platform());
             if (binding == null) {
-                throw new CommonException("该第三方账号尚未绑定UPM账号，请先使用账号密码登录并完成绑定");
+                throw new CommonException(UpmAccessMessage.THIRD_ACCOUNT_NOT_BOUND);
             }
             User user = userService.findById(binding.getUserId());
             if (user == null || !state.tenantId().equals(user.getTenantId())) {
-                throw new CommonException("绑定的UPM账号不存在或租户不匹配");
+                throw new CommonException(UpmAccessMessage.THIRD_BOUND_USER_INVALID);
             }
             return authHandler.login(user, state.device());
         } finally {
@@ -145,11 +146,11 @@ public class ThirdAuthLoginHandler {
     private ThirdAuthConfig findAvailableConfig(String platform) {
         ThirdAuthConfig config = thirdAuthConfigService.findByPlatform(platform);
         if (config == null || !CommonConst.YES.equals(config.getUsable())) {
-            throw new CommonException("当前租户尚未启用该第三方认证平台");
+            throw new CommonException(UpmAccessMessage.THIRD_PLATFORM_DISABLED);
         }
         if (StrUtil.isBlank(config.getClientId()) || StrUtil.isBlank(config.getClientSecret())
                 || StrUtil.isBlank(config.getRedirectUri())) {
-            throw new CommonException("第三方认证平台配置不完整");
+            throw new CommonException(UpmAccessMessage.THIRD_CONFIG_INCOMPLETE);
         }
         return config;
     }
@@ -166,19 +167,19 @@ public class ThirdAuthLoginHandler {
         try {
             return objectMapper.writeValueAsString(state);
         } catch (JacksonException exception) {
-            throw new CommonException("生成第三方登录状态失败");
+            throw new CommonException(UpmAccessMessage.THIRD_LOGIN_STATE_CREATE_FAILED);
         }
     }
 
     private ThirdAuthLoginState consumeState(String state) {
         String value = stateBucket(state).getAndDelete();
         if (StrUtil.isBlank(value)) {
-            throw new CommonException("第三方登录状态已过期，请重新发起登录");
+            throw new CommonException(UpmAccessMessage.THIRD_LOGIN_STATE_EXPIRED);
         }
         try {
             return objectMapper.readValue(value, ThirdAuthLoginState.class);
         } catch (JacksonException exception) {
-            throw new CommonException("第三方登录状态无效，请重新发起登录");
+            throw new CommonException(UpmAccessMessage.THIRD_LOGIN_STATE_INVALID);
         }
     }
 

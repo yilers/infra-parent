@@ -14,6 +14,8 @@ import io.github.yilers.upm.service.RolePermissionService;
 import io.github.yilers.upm.service.UserRoleService;
 import io.github.yilers.upm.service.UserService;
 import io.github.yilers.web.context.RequestContextHolder;
+import io.github.yilers.upm.i18n.UpmAccessMessage;
+import io.github.yilers.upm.i18n.UpmMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,7 +42,7 @@ public class ApplicationAccessHandler {
                 .eq(Application::getTenantId, RequestContextHolder.getTenantId())
                 .eq(Application::getCode, applicationCode));
         if (application == null || !CommonConst.YES.equals(application.getUsable())) {
-            throw new CommonException("应用不存在或已停用");
+            throw new CommonException(UpmAccessMessage.APP_UNAVAILABLE);
         }
         return application;
     }
@@ -51,7 +53,7 @@ public class ApplicationAccessHandler {
             InterceptorIgnoreHelper.handle(IgnoreStrategy.builder().tenantLine(true).build());
             User user = userService.getById(StpUtil.getLoginIdAsLong());
             if (user == null || !CommonConst.YES.equals(user.getUsable())) {
-                throw new CommonException("账号暂不可用");
+                throw new CommonException(UpmMessage.LOGIN_ACCOUNT_DISABLED);
             }
             return user;
         } finally {

@@ -15,6 +15,7 @@ import io.github.yilers.upm.thirdauth.ThirdAuthProvider;
 import io.github.yilers.upm.thirdauth.ThirdAuthProviderRegistry;
 import io.github.yilers.upm.thirdauth.ThirdAuthUserIdentity;
 import io.github.yilers.web.context.RequestContextHolder;
+import io.github.yilers.upm.i18n.UpmAccessMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -75,7 +76,7 @@ public class ThirdAuthBindingHandler {
             stateBucket(state).set(objectMapper.writeValueAsString(stateValue),
                     Duration.ofMinutes(STATE_TIMEOUT_MINUTES));
         } catch (JacksonException exception) {
-            throw new CommonException("生成第三方认证状态失败");
+            throw new CommonException(UpmAccessMessage.THIRD_STATE_CREATE_FAILED);
         }
         return new ThirdAuthAuthorizeResponse(provider.buildAuthorizeUrl(config, state));
     }
@@ -90,7 +91,7 @@ public class ThirdAuthBindingHandler {
         long currentTenantId = currentTenantId();
         if (!Long.valueOf(currentUserId).equals(state.userId())
                 || !Long.valueOf(currentTenantId).equals(state.tenantId())) {
-            throw new CommonException("第三方认证状态与当前登录用户不匹配");
+            throw new CommonException(UpmAccessMessage.THIRD_BIND_STATE_MISMATCH);
         }
 
         ThirdAuthConfig config = findAvailableConfig(state.platform());
@@ -112,7 +113,7 @@ public class ThirdAuthBindingHandler {
         try {
             userThirdService.saveOrUpdate(binding);
         } catch (DuplicateKeyException exception) {
-            throw new CommonException("该第三方账号已经被其他用户绑定");
+            throw new CommonException(UpmAccessMessage.THIRD_ALREADY_BOUND);
         }
     }
 
@@ -125,7 +126,7 @@ public class ThirdAuthBindingHandler {
         long userId = StpUtil.getLoginIdAsLong();
         UserThird binding = userThirdService.findByUserIdAndPlatform(userId, platform);
         if (binding == null) {
-            throw new CommonException("当前用户尚未绑定该第三方账号");
+            throw new CommonException(UpmAccessMessage.THIRD_NOT_BOUND);
         }
         userThirdService.physicallyDelete(currentTenantId(), userId, platform);
     }
@@ -133,11 +134,11 @@ public class ThirdAuthBindingHandler {
     private ThirdAuthConfig findAvailableConfig(String platform) {
         ThirdAuthConfig config = thirdAuthConfigService.findByPlatform(platform);
         if (config == null || !CommonConst.YES.equals(config.getUsable())) {
-            throw new CommonException("当前租户尚未启用该第三方认证平台");
+            throw new CommonException(UpmAccessMessage.THIRD_PLATFORM_DISABLED);
         }
         if (StrUtil.isBlank(config.getClientId()) || StrUtil.isBlank(config.getClientSecret())
                 || StrUtil.isBlank(config.getRedirectUri())) {
-            throw new CommonException("第三方认证平台配置不完整");
+            throw new CommonException(UpmAccessMessage.THIRD_CONFIG_INCOMPLETE);
         }
         return config;
     }
@@ -145,24 +146,24 @@ public class ThirdAuthBindingHandler {
     private ThirdAuthBindState consumeState(String state) {
         String value = stateBucket(state).getAndDelete();
         if (StrUtil.isBlank(value)) {
-            throw new CommonException("第三方认证状态已过期，请重新发起绑定");
+            throw new CommonException(UpmAccessMessage.THIRD_BIND_STATE_EXPIRED);
         }
         try {
             return objectMapper.readValue(value, ThirdAuthBindState.class);
         } catch (JacksonException exception) {
-            throw new CommonException("第三方认证状态无效，请重新发起绑定");
+            throw new CommonException(UpmAccessMessage.THIRD_BIND_STATE_INVALID);
         }
     }
 
     private void checkIdentityOwner(ThirdAuthUserIdentity identity, String platform, long currentUserId) {
         UserThird openIdOwner = userThirdService.findByOpenIdAndPlatform(identity.openId(), platform);
         if (openIdOwner != null && !Long.valueOf(currentUserId).equals(openIdOwner.getUserId())) {
-            throw new CommonException("该第三方账号已经被其他用户绑定");
+            throw new CommonException(UpmAccessMessage.THIRD_ALREADY_BOUND);
         }
         if (StrUtil.isNotBlank(identity.unionId())) {
             UserThird unionIdOwner = userThirdService.findByUnionIdAndPlatform(identity.unionId(), platform);
             if (unionIdOwner != null && !Long.valueOf(currentUserId).equals(unionIdOwner.getUserId())) {
-                throw new CommonException("该第三方账号已经被其他用户绑定");
+                throw new CommonException(UpmAccessMessage.THIRD_ALREADY_BOUND);
             }
         }
     }
@@ -188,7 +189,7 @@ public class ThirdAuthBindingHandler {
             return objectMapper.writeValueAsString(new ThirdAuthUserSnapshot(
                     identity.nickname(), identity.avatarUrl()));
         } catch (JacksonException exception) {
-            throw new CommonException("保存第三方用户信息失败");
+            throw new CommonException(UpmAccessMessage.THIRD_USER_SAVE_FAILED);
         }
     }
 
@@ -211,7 +212,7 @@ public class ThirdAuthBindingHandler {
     private long currentTenantId() {
         Long tenantId = RequestContextHolder.getTenantId();
         if (tenantId == null) {
-            throw new CommonException("无法获取当前租户信息");
+            throw new CommonException(UpmAccessMessage.THIRD_TENANT_CONTEXT_MISSING);
         }
         return tenantId;
     }

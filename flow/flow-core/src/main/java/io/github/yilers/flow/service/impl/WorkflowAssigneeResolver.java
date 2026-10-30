@@ -2,6 +2,7 @@ package io.github.yilers.flow.service.impl;
 
 import io.github.yilers.flow.model.WorkflowAssigneeRule;
 import io.github.yilers.flow.service.WorkflowIdentityProvider;
+import io.github.yilers.flow.i18n.FlowMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.dromara.warm.flow.core.FlowEngine;
@@ -25,7 +26,7 @@ public class WorkflowAssigneeResolver {
         Map<String, Object> result = copyBusinessVariables(variables);
         var definition = FlowEngine.defService().getPublishByFlowCode(flowCode);
         if (definition == null) {
-            throw new CommonException("当前租户没有已发布的流程：" + flowCode);
+            throw new CommonException(FlowMessage.ASSIGNEE_FLOW_NOT_PUBLISHED, flowCode);
         }
         Set<WorkflowAssigneeRule> rules = new LinkedHashSet<>();
         FlowEngine.nodeService().list(FlowEngine.newNode().setDefinitionId(definition.getId())).forEach(node -> {
@@ -37,7 +38,12 @@ public class WorkflowAssigneeResolver {
         for (WorkflowAssigneeRule rule : rules) {
             List<String> resolved = identityProvider.resolveDynamicAssignees(applicantId, rule);
             if (resolved == null || resolved.isEmpty() || resolved.stream().anyMatch(id -> id == null || id.isBlank())) {
-                throw new CommonException("“" + rule.getLabel() + "”未找到有效审批人，请检查部门主管配置");
+                FlowMessage ruleName = switch (rule) {
+                    case APPLICANT -> FlowMessage.RULE_APPLICANT;
+                    case DEPARTMENT_APPROVERS -> FlowMessage.RULE_DEPARTMENT_APPROVERS;
+                    case PARENT_DEPARTMENT_APPROVERS -> FlowMessage.RULE_PARENT_APPROVERS;
+                };
+                throw new CommonException(FlowMessage.ASSIGNEE_RULE_EMPTY, ruleName);
             }
             result.put(rule.getVariable(), resolved.stream().distinct().toList());
         }
@@ -49,7 +55,7 @@ public class WorkflowAssigneeResolver {
         Map<String, Object> result = variables == null ? new HashMap<>() : new HashMap<>(variables);
         for (WorkflowAssigneeRule rule : WorkflowAssigneeRule.values()) {
             if (result.containsKey(rule.getVariable())) {
-                throw new CommonException("不允许提交内置办理人变量：" + rule.getVariable());
+                throw new CommonException(FlowMessage.ASSIGNEE_VARIABLE_RESERVED, rule.getVariable());
             }
         }
         return result;

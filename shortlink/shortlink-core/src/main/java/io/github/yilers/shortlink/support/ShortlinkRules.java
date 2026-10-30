@@ -1,5 +1,6 @@
 package io.github.yilers.shortlink.support;
 
+import io.github.yilers.shortlink.i18n.ShortlinkMessage;
 import io.github.yilers.web.exception.CommonException;
 import java.net.URI;
 
@@ -23,14 +24,14 @@ public final class ShortlinkRules {
     }
 
     public static long capacity(int length) {
-        if (length != 6 && length != 8) throw new CommonException("短码长度只支持6或8");
+        if (length != 6 && length != 8) throw new CommonException(ShortlinkMessage.CODE_LENGTH_INVALID);
         long result = 1;
         for (int i = 0; i < length; i++) result = Math.multiplyExact(result, ALPHABET.length());
         return result;
     }
 
     public static String encode(long value, int length) {
-        if (value < 0 || value >= capacity(length)) throw new CommonException("短码号段已耗尽");
+        if (value < 0 || value >= capacity(length)) throw new CommonException(ShortlinkMessage.CODE_SPACE_EXHAUSTED);
         char[] code = new char[length];
         for (int i = length - 1; i >= 0; i--) {
             code[i] = ALPHABET.charAt((int) (value % ALPHABET.length()));
@@ -49,7 +50,7 @@ public final class ShortlinkRules {
             }
             return value;
         } catch (Exception e) {
-            throw new CommonException("目标地址必须是有效的HTTP或HTTPS地址，不能包含用户信息或控制字符");
+            throw new CommonException(ShortlinkMessage.TARGET_URL_INVALID);
         }
     }
 }

@@ -56,6 +56,8 @@ class UpmTextMessageTest {
         when(http.getLocales()).thenAnswer(invocation -> Collections.enumeration(List.of(Locale.US)));
 
         assertEquals("Role ID is required.", resolver.resolve("角色id不能为空", http));
+        assertEquals("Authentication platform is required.", resolver.resolve("认证平台不能为空", http));
+        assertEquals("Application name is required.", resolver.resolve("应用名称不能为空", http));
         assertEquals("机构名称不能为空", resolver.resolve("机构名称不能为空", null));
 
         UserBatchAddResponse result = controller.batchAdd(request, http).getData();

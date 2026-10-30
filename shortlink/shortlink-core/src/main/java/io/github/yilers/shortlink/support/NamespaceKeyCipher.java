@@ -1,5 +1,6 @@
 package io.github.yilers.shortlink.support;
 
+import io.github.yilers.shortlink.i18n.ShortlinkMessage;
 import io.github.yilers.web.exception.CommonException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -40,7 +41,7 @@ public class NamespaceKeyCipher {
         } catch (CommonException e) {
             throw e;
         } catch (Exception e) {
-            throw new CommonException("短码打散密钥加密失败");
+            throw new CommonException(ShortlinkMessage.KEY_ENCRYPT_FAILED);
         } finally {
             Arrays.fill(key, (byte) 0);
         }
@@ -49,11 +50,11 @@ public class NamespaceKeyCipher {
     public byte[] decryptKey(String ciphertext) {
         try {
             if (ciphertext == null || ciphertext.isBlank()) {
-                throw new CommonException("短码打散密钥缺失，无法生成短链");
+                throw new CommonException(ShortlinkMessage.KEY_MISSING);
             }
             byte[] value = Base64.getDecoder().decode(ciphertext);
             if (value.length != IV_BYTES + KEY_BYTES + TAG_BITS / Byte.SIZE) {
-                throw new CommonException("短码打散密钥格式错误");
+                throw new CommonException(ShortlinkMessage.KEY_FORMAT_INVALID);
             }
             ByteBuffer buffer = ByteBuffer.wrap(value);
             byte[] iv = new byte[IV_BYTES];
@@ -66,7 +67,7 @@ public class NamespaceKeyCipher {
         } catch (CommonException e) {
             throw e;
         } catch (Exception e) {
-            throw new CommonException("短码打散密钥解密失败，请检查短链主密钥");
+            throw new CommonException(ShortlinkMessage.KEY_DECRYPT_FAILED);
         }
     }
 
@@ -82,7 +83,7 @@ public class NamespaceKeyCipher {
                 Arrays.fill(decoded, (byte) 0);
             }
         } catch (IllegalArgumentException e) {
-            throw new CommonException("SHORTLINK_MASTER_KEY必须配置为Base64编码的32字节主密钥");
+            throw new CommonException(ShortlinkMessage.MASTER_KEY_INVALID);
         }
     }
 }

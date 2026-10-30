@@ -5,6 +5,7 @@ import io.github.yilers.core.util.Result;
 import io.github.yilers.flow.request.WorkflowTaskActionRequest;
 import io.github.yilers.flow.request.WorkflowTaskAssignRequest;
 import io.github.yilers.flow.service.WorkflowService;
+import io.github.yilers.flow.i18n.FlowMessage;
 import io.github.yilers.web.exception.CommonException;
 import io.github.yilers.web.log.SysLog;
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,7 +44,7 @@ public class WorkflowTaskController {
     public Result<Long> reject(@PathVariable Long id, @Valid @RequestBody WorkflowTaskActionRequest request) {
         String message = normalize(request.message());
         if (message == null) {
-            throw new CommonException("请填写退回原因");
+            throw new CommonException(FlowMessage.REJECT_REASON_REQUIRED);
         }
         return Result.ok(workflowService.reject(id, message, Map.of()));
     }

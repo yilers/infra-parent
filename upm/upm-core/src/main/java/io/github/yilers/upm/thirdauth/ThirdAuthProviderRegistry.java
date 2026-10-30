@@ -1,5 +1,6 @@
 package io.github.yilers.upm.thirdauth;
 
+import io.github.yilers.upm.i18n.UpmAccessMessage;
 import io.github.yilers.web.exception.CommonException;
 import org.springframework.stereotype.Component;
 
@@ -24,7 +25,7 @@ public class ThirdAuthProviderRegistry {
     public ThirdAuthProvider get(String platform) {
         ThirdAuthProvider provider = providerMap.get(platform);
         if (provider == null) {
-            throw new CommonException("暂不支持该第三方认证平台");
+            throw new CommonException(UpmAccessMessage.THIRD_PLATFORM_UNSUPPORTED);
         }
         return provider;
     }

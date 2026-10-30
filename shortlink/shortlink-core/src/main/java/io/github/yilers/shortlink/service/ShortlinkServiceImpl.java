@@ -11,6 +11,7 @@ import io.github.yilers.shortlink.support.ShortlinkCodeGenerator;
 import io.github.yilers.shortlink.support.ShortlinkCache;
 import io.github.yilers.shortlink.support.ShortlinkRules;
 import io.github.yilers.web.context.RequestContextHolder;
+import io.github.yilers.shortlink.i18n.ShortlinkMessage;
 import io.github.yilers.web.exception.CommonException;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
@@ -55,26 +56,26 @@ public class ShortlinkServiceImpl implements ShortlinkService {
                 .eq(ShortlinkLink::getConfigId, config.getId()).eq(ShortlinkLink::getRequestId, request.getRequestId()));
         if (previous != null) {
             if (!hash.equals(previous.getRequestHash()) || !Objects.equals(batchId, previous.getBatchId())
-                    || !Objects.equals(businessId, previous.getBusinessId())) throw new CommonException("requestId已使用且请求参数不同");
+                    || !Objects.equals(businessId, previous.getBusinessId())) throw new CommonException(ShortlinkMessage.REQUEST_ID_CONFLICT);
             return response(previous);
         }
         // 已删除记录仍占用幂等标识，禁止重新创建不同对象。
         if (links.requestExists(config.getId(), tenant(), request.getRequestId()) > 0) {
-            throw new CommonException("requestId对应的短链已删除，请使用新的requestId");
+            throw new CommonException(ShortlinkMessage.REQUEST_ID_DELETED);
         }
         String target = target(config, request);
         LocalDateTime expireTime = expiration(config, request);
         String code;
         if (AUTO.equals(namespace.getGenerateType())) {
-            if (request.getShortCode() != null) throw new CommonException("自动模式不能指定短码");
+            if (request.getShortCode() != null) throw new CommonException(ShortlinkMessage.AUTO_CODE_FORBIDDEN);
             code = generator.next(namespace);
         } else {
             code = request.getShortCode();
-            if (code == null || code.length() != namespace.getCodeLength()) throw new CommonException("自定义短码长度不正确");
+            if (code == null || code.length() != namespace.getCodeLength()) throw new CommonException(ShortlinkMessage.CUSTOM_CODE_LENGTH);
         }
         // 自动模式的号段和固定映射保证不重复，数据库唯一约束作为兜底；自定义码需提示已占用。
         if (CUSTOM.equals(namespace.getGenerateType()) && links.codeExists(namespace.getId(), tenant(), code) > 0) {
-            throw new CommonException("短码已使用，不能重复分配");
+            throw new CommonException(ShortlinkMessage.CODE_DUPLICATE);
         }
         ShortlinkLink value = new ShortlinkLink();
         value.setConfigId(config.getId());
@@ -102,7 +103,7 @@ public class ShortlinkServiceImpl implements ShortlinkService {
     public List<ShortlinkResponse> createBatch(List<ShortlinkCreateRequest> requests) {
         tenant();
         if (requests == null || requests.isEmpty() || requests.size() > BATCH_LIMIT) {
-            throw new CommonException("每批需包含1到1000条短链");
+            throw new CommonException(ShortlinkMessage.BATCH_SIZE_INVALID);
         }
         requests.forEach(this::validate);
         // 多配置批量请求按ID顺序预锁，避免两个批次相反顺序持锁造成死锁。
@@ -119,7 +120,7 @@ public class ShortlinkServiceImpl implements ShortlinkService {
     public List<ShortlinkResponse> createBatch(ShortlinkBatchRequest request) {
         tenant();
         validate(request);
-        if (request.isPermanent() && request.getExpireTime() != null) throw new CommonException("永久有效不能同时指定到期时间");
+        if (request.isPermanent() && request.getExpireTime() != null) throw new CommonException(ShortlinkMessage.PERMANENT_WITH_EXPIRY);
         ShortlinkNamespace namespace = namespace(request.getNamespaceId());
         configs.lockConfiguration(namespace.getConfigId(), tenant());
         config(namespace.getConfigId()); // 校验调用凭证授权，不能只依赖租户过滤。
@@ -132,7 +133,7 @@ public class ShortlinkServiceImpl implements ShortlinkService {
             ShortlinkBatchRequest.Item item = request.getItems().get(i);
             String businessId = item.getBusinessId();
             if (businessId != null && (businessId.isBlank() || !businessIds.add(businessId))) {
-                throw new CommonException("批次内业务标识不能为空或重复");
+                throw new CommonException(ShortlinkMessage.BATCH_ITEM_ID_INVALID);
             }
             appendFingerprint(fingerprint, businessId, item.getTargetUrl(), item.getBusinessCode(),
                     item.getShortCode(), item.getExpireTime(), item.getPermanent());
@@ -166,7 +167,7 @@ public class ShortlinkServiceImpl implements ShortlinkService {
             batch.setDeleted(DISABLED);
             batches.insert(batch);
         } else if (!hash.equals(batch.getRequestHash())) {
-            throw new CommonException("批次标识已使用且请求内容不同");
+            throw new CommonException(ShortlinkMessage.BATCH_ID_CONFLICT);
         }
         List<ShortlinkResponse> result = new ArrayList<>(items.size());
         for (int i = 0; i < items.size(); i++) {
@@ -188,7 +189,7 @@ public class ShortlinkServiceImpl implements ShortlinkService {
         config(configId);
         ShortlinkLink link = links.selectOne(new LambdaQueryWrapper<ShortlinkLink>()
                 .eq(ShortlinkLink::getConfigId, configId).eq(ShortlinkLink::getRequestId, requestId));
-        if (link == null) throw new CommonException("短链不存在");
+        if (link == null) throw new CommonException(ShortlinkMessage.LINK_NOT_FOUND);
         return response(link);
     }
 
@@ -198,12 +199,12 @@ public class ShortlinkServiceImpl implements ShortlinkService {
         validate(request);
         ShortlinkLink value = link(request.getId());
         LocalDateTime expiration = request.getExpireTime();
-        if (request.isPermanent() == (expiration != null)) throw new CommonException("请选择新的到期时间或永久有效");
+        if (request.isPermanent() == (expiration != null)) throw new CommonException(ShortlinkMessage.EXPIRY_SELECTION);
         if (!request.isPermanent() && (value.getExpireTime() == null || !expiration.isAfter(LocalDateTime.now())
-                || expiration.isBefore(value.getExpireTime()))) throw new CommonException("续期不能缩短原有效期");
+                || expiration.isBefore(value.getExpireTime()))) throw new CommonException(ShortlinkMessage.RENEW_SHORTENS);
         cache.invalidateBeforeUpdate(value);
         if (links.renew(value.getId(), tenant(), request.getVersion(), expiration) != 1) {
-            throw new CommonException("数据已变化，请刷新后重试");
+            throw new CommonException(ShortlinkMessage.DATA_CONFLICT_RETRY);
         }
     }
 
@@ -220,33 +221,33 @@ public class ShortlinkServiceImpl implements ShortlinkService {
     }
 
     private void changeUsable(Long id, Integer version, int usable) {
-        if (version == null) throw new CommonException("版本号不能为空");
+        if (version == null) throw new CommonException(ShortlinkMessage.VERSION_REQUIRED);
         ShortlinkLink value = link(id);
         cache.invalidateBeforeUpdate(value);
         value.setVersion(version);
         value.setUsable(usable);
-        if (links.updateById(value) != 1) throw new CommonException("数据已变化，请刷新后重试");
+        if (links.updateById(value) != 1) throw new CommonException(ShortlinkMessage.DATA_CONFLICT_RETRY);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(Long id, Integer version) {
-        if (version == null) throw new CommonException("版本号不能为空");
+        if (version == null) throw new CommonException(ShortlinkMessage.VERSION_REQUIRED);
         ShortlinkLink value = link(id);
         cache.invalidateBeforeUpdate(value);
-        if (links.markDeleted(id, tenant(), version) != 1) throw new CommonException("数据已变化，请刷新后重试");
+        if (links.markDeleted(id, tenant(), version) != 1) throw new CommonException(ShortlinkMessage.DATA_CONFLICT_RETRY);
     }
 
     public ShortlinkConfig config(Long id) {
         tenant();
         ShortlinkConfig value = configs.selectById(id);
-        if (value == null || !Integer.valueOf(ENABLED).equals(value.getUsable())) throw new CommonException("短链配置不存在或已停用");
+        if (value == null || !Integer.valueOf(ENABLED).equals(value.getUsable())) throw new CommonException(ShortlinkMessage.CONFIG_UNAVAILABLE);
         ApiCallerContext.Caller caller = ApiCallerContext.current();
         if (caller != null && grants.selectCount(new LambdaQueryWrapper<ShortlinkConfigGrant>()
                 .eq(ShortlinkConfigGrant::getConfigId, id)
                 .eq(ShortlinkConfigGrant::getCredentialId, caller.credentialId())
                 .eq(ShortlinkConfigGrant::getUsable, ENABLED)) == 0) {
-            throw new CommonException("调用凭证未获得该短链配置的授权");
+            throw new CommonException(ShortlinkMessage.CREDENTIAL_NOT_GRANTED);
         }
         return value;
     }
@@ -254,7 +255,7 @@ public class ShortlinkServiceImpl implements ShortlinkService {
     private ShortlinkLink link(Long id) {
         tenant();
         ShortlinkLink value = links.selectById(id);
-        if (value == null) throw new CommonException("短链不存在");
+        if (value == null) throw new CommonException(ShortlinkMessage.LINK_NOT_FOUND);
         config(value.getConfigId());
         return value;
     }
@@ -262,17 +263,17 @@ public class ShortlinkServiceImpl implements ShortlinkService {
     private ShortlinkNamespace namespace(Long id) {
         tenant();
         ShortlinkNamespace value = namespaces.selectById(id);
-        if (value == null || !Integer.valueOf(ENABLED).equals(value.getUsable())) throw new CommonException("namespace不存在或已停用");
+        if (value == null || !Integer.valueOf(ENABLED).equals(value.getUsable())) throw new CommonException(ShortlinkMessage.NAMESPACE_UNAVAILABLE);
         ShortlinkDomain domain = domains.selectById(value.getDomainId());
-        if (domain == null || !Integer.valueOf(ENABLED).equals(domain.getUsable())) throw new CommonException("短链域名不存在或已停用");
+        if (domain == null || !Integer.valueOf(ENABLED).equals(domain.getUsable())) throw new CommonException(ShortlinkMessage.DOMAIN_UNAVAILABLE);
         return value;
     }
 
     private ShortlinkResponse response(ShortlinkLink link) {
         ShortlinkNamespace namespace = namespaces.selectById(link.getNamespaceId());
-        if (namespace == null) throw new CommonException("短链路径不存在");
+        if (namespace == null) throw new CommonException(ShortlinkMessage.PATH_NOT_FOUND);
         ShortlinkDomain domain = domains.selectById(namespace.getDomainId());
-        if (domain == null) throw new CommonException("短链域名不存在");
+        if (domain == null) throw new CommonException(ShortlinkMessage.SHORT_DOMAIN_NOT_FOUND);
         return new ShortlinkResponse(link.getId(), link.getRequestId(), link.getBatchId(), link.getBusinessId(), namespace.getPathCode(), link.getShortCode(),
                 domain.getScheme() + "://" + domain.getHost()
                         + (domain.getPublicPort() == null ? "" : ":" + domain.getPublicPort())
@@ -282,24 +283,24 @@ public class ShortlinkServiceImpl implements ShortlinkService {
 
     private String target(ShortlinkConfig config, ShortlinkCreateRequest request) {
         if (URL.equals(config.getTargetType())) {
-            if (request.getBusinessCode() != null) throw new CommonException("URL模式不接受业务编码");
+            if (request.getBusinessCode() != null) throw new CommonException(ShortlinkMessage.URL_BUSINESS_CODE_FORBIDDEN);
             return validateUrl(request.getTargetUrl());
         }
         if (request.getTargetUrl() != null || request.getBusinessCode() == null || request.getBusinessCode().isBlank()) {
-            throw new CommonException("模板模式只接受非空业务编码");
+            throw new CommonException(ShortlinkMessage.TEMPLATE_BUSINESS_CODE_REQUIRED);
         }
         String code = URLEncoder.encode(request.getBusinessCode(), StandardCharsets.UTF_8).replace("+", "%20");
         return validateUrl(config.getUrlTemplate().replace("{code}", code));
     }
 
     private LocalDateTime expiration(ShortlinkConfig config, ShortlinkCreateRequest request) {
-        if (request.isPermanent() && request.getExpireTime() != null) throw new CommonException("永久有效不能同时指定到期时间");
+        if (request.isPermanent() && request.getExpireTime() != null) throw new CommonException(ShortlinkMessage.PERMANENT_WITH_EXPIRY);
         if (request.isPermanent()) return null;
         LocalDateTime expiration = request.getExpireTime();
         if (expiration == null && config.getDefaultValidSeconds() != null) {
             expiration = LocalDateTime.now().plusSeconds(config.getDefaultValidSeconds());
         }
-        if (expiration != null && !expiration.isAfter(LocalDateTime.now())) throw new CommonException("到期时间必须晚于当前时间");
+        if (expiration != null && !expiration.isAfter(LocalDateTime.now())) throw new CommonException(ShortlinkMessage.EXPIRY_PAST);
         return expiration;
     }
 
@@ -315,12 +316,12 @@ public class ShortlinkServiceImpl implements ShortlinkService {
     }
 
     private void validate(Object request) {
-        if (request == null || !validator.validate(request).isEmpty()) throw new CommonException("请求参数校验失败");
+        if (request == null || !validator.validate(request).isEmpty()) throw new CommonException(ShortlinkMessage.REQUEST_VALIDATION_FAILED);
     }
 
     public static Long tenant() {
         Long id = RequestContextHolder.getTenantId();
-        if (id == null) throw new CommonException("缺少可信租户上下文");
+        if (id == null) throw new CommonException(ShortlinkMessage.TENANT_REQUIRED);
         return id;
     }
 }

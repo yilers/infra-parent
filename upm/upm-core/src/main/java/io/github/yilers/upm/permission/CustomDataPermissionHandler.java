@@ -6,6 +6,7 @@ import cn.hutool.v7.core.text.StrUtil;
 import cn.hutool.v7.extra.spring.SpringUtil;
 import com.baomidou.mybatisplus.extension.plugins.handler.MultiDataPermissionHandler;
 import io.github.yilers.upm.handler.UserHandler;
+import io.github.yilers.upm.i18n.UpmExtraMessage;
 import io.github.yilers.web.exception.CommonException;
 import io.github.yilers.web.permission.DataPermission;
 import io.github.yilers.web.permission.DataPermissionContext;
@@ -216,7 +217,7 @@ public class CustomDataPermissionHandler implements MultiDataPermissionHandler {
             // 仅自己
             return prefix + userField + " = " + userId;
         } else if (dataScope.isEmpty()) {
-            throw new CommonException(HttpStatus.UNAUTHORIZED.value(), "没有权限");
+            throw new CommonException(HttpStatus.UNAUTHORIZED.value(), UpmExtraMessage.NO_PERMISSION);
         }
         return prefix + deptField + " in (" + dataScope.stream().map(String::valueOf).collect(Collectors.joining(",")) + ")";
     }

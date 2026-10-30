@@ -8,6 +8,7 @@ import io.github.yilers.flow.model.WorkflowUserInfo;
 import io.github.yilers.flow.model.WorkflowUserProfile;
 import io.github.yilers.flow.service.WorkflowDataProvider;
 import io.github.yilers.flow.service.WorkflowIdentityProvider;
+import io.github.yilers.flow.i18n.FlowMessage;
 import io.github.yilers.web.exception.CommonException;
 import org.springframework.stereotype.Service;
 
@@ -99,11 +100,11 @@ public class WorkflowIdentityService implements WorkflowIdentityProvider {
     public List<String> resolveDynamicAssignees(String applicantId, WorkflowAssigneeRule rule) {
         WorkflowUserProfile currentUser = requireCurrentUser();
         if (!currentUser.id().equals(applicantId)) {
-            throw new CommonException("动态办理人只能依据当前申请人的组织信息生成");
+            throw new CommonException(FlowMessage.IDENTITY_APPLICANT_ONLY);
         }
         WorkflowUserProfile applicant = dataProvider.findUsersByIds(List.of(applicantId)).get(applicantId);
         if (applicant == null) {
-            throw new CommonException("申请人不存在或已停用");
+            throw new CommonException(FlowMessage.IDENTITY_APPLICANT_MISSING);
         }
         return resolveApplicantRule(applicant, rule);
     }
@@ -229,22 +230,22 @@ public class WorkflowIdentityService implements WorkflowIdentityProvider {
     private List<String> resolveApplicantRule(WorkflowUserProfile applicant, WorkflowAssigneeRule rule) {
         if (rule == WorkflowAssigneeRule.APPLICANT) return List.of(applicant.id());
         if (!hasText(applicant.departmentId())) {
-            throw new CommonException("申请人没有有效的所属部门");
+            throw new CommonException(FlowMessage.IDENTITY_DEPT_REQUIRED);
         }
         WorkflowDepartmentInfo department = dataProvider.findDepartmentsByIds(List.of(applicant.departmentId()))
                 .get(applicant.departmentId());
-        requireDepartment(department, "申请人所在部门不存在或已停用");
+        requireDepartment(department, FlowMessage.IDENTITY_DEPT_MISSING);
 
         if (rule == WorkflowAssigneeRule.PARENT_DEPARTMENT_APPROVERS) {
             if (!hasText(department.parentId())) {
-                throw new CommonException("申请人所在部门没有有效的上一级部门");
+                throw new CommonException(FlowMessage.IDENTITY_PARENT_REQUIRED);
             }
             WorkflowDepartmentInfo parent = dataProvider.findDepartmentsByIds(List.of(department.parentId()))
                     .get(department.parentId());
-            requireDepartment(parent, "申请人所在部门没有有效的上一级部门");
+            requireDepartment(parent, FlowMessage.IDENTITY_PARENT_REQUIRED);
             List<String> leaders = activeLeaders(parent.id(), WorkflowLeaderType.PRIMARY, applicant.id());
             if (leaders.isEmpty()) {
-                throw new CommonException("上一级部门未配置有效主管，或主管就是申请人本人");
+                throw new CommonException(FlowMessage.IDENTITY_PARENT_LEADER_MISSING);
             }
             return leaders;
         }
@@ -253,7 +254,7 @@ public class WorkflowIdentityService implements WorkflowIdentityProvider {
         if (!deputies.isEmpty()) return deputies;
         List<String> leaders = activeLeaders(department.id(), WorkflowLeaderType.PRIMARY, applicant.id());
         if (leaders.isEmpty()) {
-            throw new CommonException("本部门未配置有效副主管或主管，或审批人就是申请人本人");
+            throw new CommonException(FlowMessage.IDENTITY_DEPT_LEADER_MISSING);
         }
         return leaders;
     }
@@ -265,14 +266,14 @@ public class WorkflowIdentityService implements WorkflowIdentityProvider {
         return dataProvider.findUsersByIds(ids).keySet().stream().filter(id -> !id.equals(applicantId)).toList();
     }
 
-    private void requireDepartment(WorkflowDepartmentInfo department, String message) {
+    private void requireDepartment(WorkflowDepartmentInfo department, FlowMessage message) {
         if (department == null) throw new CommonException(message);
     }
 
     private WorkflowUserProfile requireCurrentUser() {
         WorkflowUserProfile user = dataProvider.currentUser();
         if (user == null || !isNumericId(user.id())) {
-            throw new CommonException("当前用户没有有效的流程身份");
+            throw new CommonException(FlowMessage.IDENTITY_USER_INVALID);
         }
         return user;
     }

@@ -20,7 +20,15 @@ public class InfraMessageResolver {
     /** 缺少请求语言或不支持时回退到中文，缺少消息时使用定义中的默认值。 */
     public String resolve(MessageCode message, Object[] arguments, HttpServletRequest request) {
         ResourceBundleMessageSource source = sources.computeIfAbsent(message.getBasename(), this::createSource);
-        return source.getMessage(message.getKey(), arguments, message.getDefaultMessage(), resolveLocale(request));
+        Object[] values = arguments == null ? null : arguments.clone();
+        if (values != null) {
+            for (int i = 0; i < values.length; i++) {
+                if (values[i] instanceof MessageCode nested) {
+                    values[i] = resolve(nested, null, request);
+                }
+            }
+        }
+        return source.getMessage(message.getKey(), values, message.getDefaultMessage(), resolveLocale(request));
     }
 
     private ResourceBundleMessageSource createSource(String basename) {

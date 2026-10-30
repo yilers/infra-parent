@@ -11,6 +11,8 @@ import io.github.yilers.upm.response.ThirdAuthConfigResponse;
 import io.github.yilers.upm.response.ThirdAuthPlatformResponse;
 import io.github.yilers.upm.service.ThirdAuthConfigService;
 import io.github.yilers.upm.thirdauth.ThirdAuthProviderRegistry;
+import io.github.yilers.upm.i18n.UpmAccessMessage;
+import io.github.yilers.upm.i18n.UpmManagementMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -72,7 +74,7 @@ public class ThirdAuthConfigHandler {
     public void save(ThirdAuthConfigRequest request) {
         validatePlatform(request.getPlatform());
         if (thirdAuthConfigService.findByPlatform(request.getPlatform()) != null) {
-            throw new CommonException("该第三方认证平台已经配置");
+            throw new CommonException(UpmAccessMessage.THIRD_CONFIG_EXISTS);
         }
         ThirdAuthConfig config = new ThirdAuthConfig();
         config.setPlatform(request.getPlatform());
@@ -91,12 +93,12 @@ public class ThirdAuthConfigHandler {
     public void update(ThirdAuthConfigRequest request) {
         ThirdAuthConfig config = findOperable(request.getId());
         if (!config.getPlatform().equals(request.getPlatform())) {
-            throw new CommonException("第三方认证平台不可修改");
+            throw new CommonException(UpmAccessMessage.THIRD_PLATFORM_IMMUTABLE);
         }
         fillConfiguration(config, request, false);
         config.setVersion(request.getVersion());
         if (!thirdAuthConfigService.updateById(config)) {
-            throw new CommonException("更新失败 数据已经变更");
+            throw new CommonException(UpmManagementMessage.DATA_UPDATE_CONFLICT);
         }
     }
 
@@ -113,17 +115,17 @@ public class ThirdAuthConfigHandler {
             config.setUsable(CommonConst.NO);
         }
         if (!thirdAuthConfigService.updateById(config)) {
-            throw new CommonException("更新失败 数据已经变更");
+            throw new CommonException(UpmManagementMessage.DATA_UPDATE_CONFLICT);
         }
     }
 
     private ThirdAuthConfig findOperable(Long id) {
         ThirdAuthConfig config = thirdAuthConfigService.getById(id);
         if (config == null) {
-            throw new CommonException("第三方认证配置不存在");
+            throw new CommonException(UpmAccessMessage.THIRD_CONFIG_MISSING);
         }
         if (!CommonConst.YES.equals(config.getOperable())) {
-            throw new CommonException("内置配置不可操作");
+            throw new CommonException(UpmAccessMessage.THIRD_CONFIG_BUILTIN_PROTECTED);
         }
         return config;
     }
@@ -140,16 +142,16 @@ public class ThirdAuthConfigHandler {
 
     private void validatePlatform(String platform) {
         if (!providerRegistry.supports(platform)) {
-            throw new CommonException("暂不支持该第三方认证平台");
+            throw new CommonException(UpmAccessMessage.THIRD_PLATFORM_UNSUPPORTED);
         }
     }
 
     private void validateCompleteConfiguration(ThirdAuthConfig config) {
         if (StrUtil.isBlank(config.getClientId())) {
-            throw new CommonException("请先配置Client ID");
+            throw new CommonException(UpmAccessMessage.THIRD_CLIENT_ID_REQUIRED);
         }
         if (StrUtil.isBlank(config.getClientSecret())) {
-            throw new CommonException("请先配置Client Secret");
+            throw new CommonException(UpmAccessMessage.THIRD_CLIENT_SECRET_REQUIRED);
         }
         normalizeHttpUrl(config.getRedirectUri());
     }
@@ -164,7 +166,7 @@ public class ThirdAuthConfigHandler {
             }
             return url;
         } catch (Exception exception) {
-            throw new CommonException("授权回调地址格式不正确");
+            throw new CommonException(UpmAccessMessage.THIRD_CALLBACK_INVALID);
         }
     }
 

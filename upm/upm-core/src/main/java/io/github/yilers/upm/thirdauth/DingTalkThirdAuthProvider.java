@@ -4,6 +4,7 @@ import cn.hutool.v7.core.text.StrUtil;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.github.yilers.upm.entity.ThirdAuthConfig;
 import io.github.yilers.upm.enums.ThirdAuthPlatformEnum;
+import io.github.yilers.upm.i18n.UpmAccessMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -66,7 +67,7 @@ public class DingTalkThirdAuthProvider implements ThirdAuthProvider {
                     .retrieve()
                     .body(DingTalkUserToken.class);
             if (token == null || StrUtil.isBlank(token.accessToken())) {
-                throw new CommonException("钉钉未返回用户访问凭证");
+                throw new CommonException(UpmAccessMessage.THIRD_DING_TOKEN_MISSING);
             }
             DingTalkUserProfile profile = restClient.get()
                     .uri(CURRENT_USER_URL)
@@ -74,7 +75,7 @@ public class DingTalkThirdAuthProvider implements ThirdAuthProvider {
                     .retrieve()
                     .body(DingTalkUserProfile.class);
             if (profile == null || StrUtil.isBlank(profile.openId())) {
-                throw new CommonException("钉钉未返回用户身份信息");
+                throw new CommonException(UpmAccessMessage.THIRD_DING_IDENTITY_MISSING);
             }
             return new ThirdAuthUserIdentity(profile.openId(), profile.unionId(), profile.nick(),
                     profile.avatarUrl());
@@ -82,7 +83,7 @@ public class DingTalkThirdAuthProvider implements ThirdAuthProvider {
             throw exception;
         } catch (Exception exception) {
             log.warn("钉钉用户授权失败: {}", exception.getClass().getSimpleName());
-            throw new CommonException("钉钉授权失败，请重新发起绑定");
+            throw new CommonException(UpmAccessMessage.THIRD_DING_AUTH_FAILED);
         }
     }
 

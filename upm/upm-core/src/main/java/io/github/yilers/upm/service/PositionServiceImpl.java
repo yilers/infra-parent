@@ -8,6 +8,7 @@ import io.github.yilers.core.constant.CommonConst;
 import io.github.yilers.upm.entity.Position;
 import io.github.yilers.upm.mapper.PositionMapper;
 import io.github.yilers.upm.request.PositionRequest;
+import io.github.yilers.upm.i18n.UpmExtraMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,7 +27,7 @@ public class PositionServiceImpl extends ServiceImpl<PositionMapper, Position> i
     public void savePosition(PositionRequest dto) {
         Position position = findByCode(dto.getPositionCode());
         if (position != null) {
-            throw new CommonException("职位编码已存在");
+            throw new CommonException(UpmExtraMessage.POSITION_CODE_EXISTS);
         }
         Position copy = CglibUtil.copy(dto, Position.class);
         copy.setOperable(CommonConst.YES);
@@ -39,11 +40,11 @@ public class PositionServiceImpl extends ServiceImpl<PositionMapper, Position> i
     public void updatePosition(PositionRequest dto) {
         Position position = findByCode(dto.getPositionCode());
         if (position != null && !position.getId().equals(dto.getId())) {
-            throw new CommonException("职位编码已存在");
+            throw new CommonException(UpmExtraMessage.POSITION_CODE_EXISTS);
         }
         Position copy = CglibUtil.copy(dto, Position.class);
         if (positionMapper.updateById(copy) == 0) {
-            throw new CommonException("更新失败 数据已经变更");
+            throw new CommonException(UpmExtraMessage.DATA_UPDATE_CONFLICT);
         }
     }
 
@@ -59,11 +60,11 @@ public class PositionServiceImpl extends ServiceImpl<PositionMapper, Position> i
     public void deleteById(Serializable id) {
         Position position = positionMapper.selectById(id);
         if (position == null) {
-            throw new CommonException("职位不存在");
+            throw new CommonException(UpmExtraMessage.POSITION_NOT_FOUND);
         }
         boolean exist = userService.existByPositionId(position.getId());
         if (exist) {
-            throw new CommonException("职位下存在用户");
+            throw new CommonException(UpmExtraMessage.POSITION_HAS_USERS);
         }
         positionMapper.deleteById(id);
     }

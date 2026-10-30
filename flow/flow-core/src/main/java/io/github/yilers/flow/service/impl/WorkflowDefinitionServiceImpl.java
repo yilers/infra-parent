@@ -4,6 +4,7 @@ import io.github.yilers.flow.model.WorkflowDefinitionInfo;
 import io.github.yilers.flow.model.WorkflowDefinitionPage;
 import io.github.yilers.flow.service.WorkflowDefinitionService;
 import io.github.yilers.flow.service.WorkflowIdentityProvider;
+import io.github.yilers.flow.i18n.FlowMessage;
 import io.github.yilers.web.exception.CommonException;
 import org.dromara.warm.flow.core.FlowEngine;
 import org.dromara.warm.flow.core.dto.DefJson;
@@ -34,7 +35,7 @@ public class WorkflowDefinitionServiceImpl implements WorkflowDefinitionService 
     public WorkflowDefinitionPage page(String flowCode, int pageNum, int pageSize) {
         identityProvider.currentUserId();
         if (pageNum < 1 || pageSize < 1 || pageSize > 200) {
-            throw new CommonException("页码必须大于0，且每页最多200条");
+            throw new CommonException(FlowMessage.DEFINITION_PAGE_INVALID);
         }
         Definition condition = FlowEngine.newDef();
         if (flowCode != null && !flowCode.isBlank()) {
@@ -66,7 +67,7 @@ public class WorkflowDefinitionServiceImpl implements WorkflowDefinitionService 
         identityProvider.currentUserId();
         DefJson design = parseDesign(definitionJson);
         if (design.getId() != null) {
-            throw new CommonException("新建流程定义不能指定ID");
+            throw new CommonException(FlowMessage.DEFINITION_NEW_ID);
         }
         requireText(design.getFlowCode(), "流程编码");
         requireText(design.getFlowName(), "流程名称");
@@ -83,13 +84,13 @@ public class WorkflowDefinitionServiceImpl implements WorkflowDefinitionService 
         if (!Objects.equals(definitionId, design.getId())
                 || !Objects.equals(original.getFlowCode(), design.getFlowCode())
                 || !Objects.equals(original.getVersion(), design.getVersion())) {
-            throw new CommonException("流程定义ID、编码和版本不能在编辑时变更");
+            throw new CommonException(FlowMessage.DEFINITION_IMMUTABLE);
         }
         design.setIsPublish(PublishStatus.UNPUBLISHED.getKey());
         try {
             FlowEngine.defService().saveDef(design, false);
         } catch (Exception e) {
-            throw new CommonException("保存流程定义失败：" + e.getMessage());
+            throw new CommonException(FlowMessage.DEFINITION_SAVE_FAILED, e.getMessage());
         }
     }
 
@@ -99,7 +100,7 @@ public class WorkflowDefinitionServiceImpl implements WorkflowDefinitionService 
         identityProvider.currentUserId();
         requireDefinition(definitionId);
         if (!FlowEngine.defService().copyDef(definitionId)) {
-            throw new CommonException("复制流程定义失败");
+            throw new CommonException(FlowMessage.DEFINITION_COPY_FAILED);
         }
     }
 
@@ -109,7 +110,7 @@ public class WorkflowDefinitionServiceImpl implements WorkflowDefinitionService 
         identityProvider.currentUserId();
         requireEditable(definitionId);
         if (!FlowEngine.defService().removeDef(List.of(definitionId))) {
-            throw new CommonException("删除流程定义失败");
+            throw new CommonException(FlowMessage.DEFINITION_DELETE_FAILED);
         }
     }
 
@@ -155,7 +156,7 @@ public class WorkflowDefinitionServiceImpl implements WorkflowDefinitionService 
         Definition definition = FlowEngine.defService().getById(definitionId);
         String tenantId = FlowEngine.tenantHandler().getTenantId();
         if (definition == null || !Objects.equals(tenantId, definition.getTenantId())) {
-            throw new CommonException(404, "流程定义不存在");
+            throw new CommonException(404, FlowMessage.DEFINITION_NOT_FOUND);
         }
         return definition;
     }
@@ -163,13 +164,13 @@ public class WorkflowDefinitionServiceImpl implements WorkflowDefinitionService 
     private Definition requireEditable(Long definitionId) {
         Definition definition = requireDefinition(definitionId);
         if (PublishStatus.EXPIRED.getKey().equals(definition.getIsPublish())) {
-            throw new CommonException("该流程定义版本已失效，请复制新版本后修改");
+            throw new CommonException(FlowMessage.DEFINITION_EXPIRED);
         }
         if (FlowEngine.insService().selectCount(FlowEngine.newIns().setDefinitionId(definitionId)) > 0) {
-            throw new CommonException("该版本已有流程实例，不能修改或删除");
+            throw new CommonException(FlowMessage.DEFINITION_IN_USE);
         }
         if (!PublishStatus.UNPUBLISHED.getKey().equals(definition.getIsPublish())) {
-            throw new CommonException("请先取消发布该流程定义版本");
+            throw new CommonException(FlowMessage.DEFINITION_UNPUBLISH_FIRST);
         }
         return definition;
     }
@@ -183,7 +184,7 @@ public class WorkflowDefinitionServiceImpl implements WorkflowDefinitionService 
                     design.getNodeList().forEach(node -> {
                         WorkflowCcConfig config = WorkflowCcConfig.fromExt(node.getExt());
                         if (config.enabled() && !NodeType.isBetween(node.getNodeType())) {
-                            throw new CommonException("只有审批节点可以配置自动抄送");
+                            throw new CommonException(FlowMessage.DEFINITION_CC_APPROVAL_ONLY);
                         }
                     });
                 }
@@ -192,9 +193,9 @@ public class WorkflowDefinitionServiceImpl implements WorkflowDefinitionService 
         } catch (CommonException e) {
             throw e;
         } catch (RuntimeException e) {
-            throw new CommonException("流程定义JSON格式不正确");
+            throw new CommonException(FlowMessage.DEFINITION_JSON_INVALID);
         }
-        throw new CommonException("流程定义JSON不能为空");
+        throw new CommonException(FlowMessage.DEFINITION_JSON_REQUIRED);
     }
 
     private WorkflowDefinitionInfo toInfo(Definition definition) {

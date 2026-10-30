@@ -31,10 +31,11 @@ public class GlobalExceptionHandler {
     private final LocalizedTextResolver textResolver;
 
     @ExceptionHandler
-    public Result<?> exceptionHandler(Exception e) {
+    public Result<?> exceptionHandler(Exception e, HttpServletRequest request) {
         e.printStackTrace();
         log.error("系统异常: {}", e.getMessage(), e);
-        return Result.build(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage());
+        String message = e instanceof IllegalArgumentException ? textResolver.resolve(e.getMessage(), request) : e.getMessage();
+        return Result.build(HttpStatus.INTERNAL_SERVER_ERROR.value(), message);
     }
 
     @ExceptionHandler
@@ -63,7 +64,7 @@ public class GlobalExceptionHandler {
         int status = HttpStatus.BAD_REQUEST.value();
         response.setStatus(status);
         MethodArgumentNotValidException ex = (MethodArgumentNotValidException) e;
-        return Result.build(status, textResolver.resolve(ex.getBindingResult().getFieldError().getDefaultMessage(), request));
+        return Result.build(status, textResolver.resolveValidation(ex.getBindingResult().getFieldError(), request));
     }
 
     @ExceptionHandler(value = BindException.class)
@@ -72,7 +73,7 @@ public class GlobalExceptionHandler {
         int status = HttpStatus.BAD_REQUEST.value();
         response.setStatus(status);
         BindException ex = (BindException) e;
-        return Result.build(status, textResolver.resolve(ex.getBindingResult().getFieldError().getDefaultMessage(), request));
+        return Result.build(status, textResolver.resolveValidation(ex.getBindingResult().getFieldError(), request));
     }
 
 //    @ExceptionHandler(value = RateLimitException.class)

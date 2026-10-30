@@ -11,7 +11,6 @@ public enum UpmTextMessage implements MessageCode {
 
     ACCOUNT_REQUIRED("upm.text.account-required", "账号不能为空"),
     PASSWORD_REQUIRED("upm.text.password-required", "密码不能为空"),
-    ID_REQUIRED("upm.text.id-required", "id不能为空"),
     DEPT_ID_REQUIRED("upm.text.dept-id-required", "部门id为空"),
     VERSION_REQUIRED("upm.text.version-required", "版本号不能为空"),
     USERS_REQUIRED("upm.text.users-required", "用户数据不能为空"),
@@ -64,7 +63,32 @@ public enum UpmTextMessage implements MessageCode {
     LOGIN_WINDOW_MAX("upm.text.login-window-max", "失败统计周期不能大于1440分钟"),
     LOGIN_LOCK_DURATION_REQUIRED("upm.text.login-lock-duration-required", "锁定时长不能为空"),
     LOGIN_LOCK_DURATION_MIN("upm.text.login-lock-duration-min", "锁定时长不能小于1分钟"),
-    LOGIN_LOCK_DURATION_MAX("upm.text.login-lock-duration-max", "锁定时长不能大于1440分钟");
+    LOGIN_LOCK_DURATION_MAX("upm.text.login-lock-duration-max", "锁定时长不能大于1440分钟"),
+
+    // 应用、单点登录与第三方认证参数校验
+    AUTH_PLATFORM_REQUIRED("upm.text.auth-platform-required", "认证平台不能为空"),
+    VERSION_EN_REQUIRED("upm.text.version-en-required", "version不能为空"),
+    AUTH_CONFIG_ID_REQUIRED("upm.text.auth-config-id-required", "配置id不能为空"),
+    CLIENT_ID_REQUIRED("upm.text.client-id-required", "Client ID不能为空"),
+    CLIENT_SECRET_REQUIRED("upm.text.client-secret-required", "Client Secret不能为空"),
+    AUTH_CALLBACK_REQUIRED("upm.text.auth-callback-required", "授权回调地址不能为空"),
+    AUTH_SCOPES_LIMIT("upm.text.auth-scopes-limit", "授权范围最多配置20个"),
+    TENANT_CODE_REQUIRED("upm.text.tenant-code-required", "租户编码不能为空"),
+    THIRD_PLATFORM_REQUIRED("upm.text.third-platform-required", "第三方认证平台不能为空"),
+    LOGIN_DEVICE_REQUIRED("upm.text.login-device-required", "登录设备类型不能为空"),
+    APPLICATION_NAME_REQUIRED("upm.text.application-name-required", "应用名称不能为空"),
+    APPLICATION_CODE_REQUIRED("upm.text.application-code-required", "应用编码不能为空"),
+    APPLICATION_CODE_FORMAT("upm.text.application-code-format", "应用编码须以小写字母开头，仅支持小写字母、数字、下划线和短横线"),
+    CALLBACK_LIMIT("upm.text.callback-limit", "回调地址最多配置20个"),
+    AUTH_CODE_REQUIRED("upm.text.auth-code-required", "授权码不能为空"),
+    AUTH_STATE_REQUIRED("upm.text.auth-state-required", "认证状态不能为空"),
+    STATE_REQUIRED("upm.text.state-required", "state不能为空"),
+    CLIENT_REQUIRED("upm.text.client-required", "client不能为空"),
+    CALLBACK_REQUIRED("upm.text.callback-required", "回调地址不能为空"),
+
+    // 用户数据权限参数校验
+    USER_ID_REQUIRED("upm.text.user-id-required", "用户id不能为空"),
+    USER_SCOPE_REQUIRED("upm.text.user-scope-required", "数据权限配置不能为空");
 
     private final String key;
     private final String defaultMessage;

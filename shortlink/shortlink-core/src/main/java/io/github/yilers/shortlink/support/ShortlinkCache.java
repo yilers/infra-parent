@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import io.github.yilers.shortlink.entity.ShortlinkLink;
 import io.github.yilers.shortlink.mapper.ShortlinkLinkMapper;
 import io.github.yilers.web.context.RequestContextHolder;
+import io.github.yilers.shortlink.i18n.ShortlinkMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RLock;
@@ -83,7 +84,7 @@ public class ShortlinkCache {
         boolean locked = false;
         try {
             locked = lock.tryLock(LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            if (!locked) throw new CommonException("短链正在访问，请稍后重试");
+            if (!locked) throw new CommonException(ShortlinkMessage.CACHE_BUSY);
             redis.delete(cacheKey(tenantId, link.getNamespaceId(), link.getShortCode()));
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
@@ -94,10 +95,10 @@ public class ShortlinkCache {
             locked = false;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new CommonException("短链修改被中断");
+            throw new CommonException(ShortlinkMessage.CACHE_INTERRUPTED);
         } catch (RuntimeException e) {
             if (e instanceof CommonException common) throw common;
-            throw new CommonException("短链缓存服务不可用，暂不能修改");
+            throw new CommonException(ShortlinkMessage.CACHE_UNAVAILABLE);
         } finally {
             if (locked && lock.isHeldByCurrentThread()) lock.unlock();
         }
@@ -111,7 +112,7 @@ public class ShortlinkCache {
 
     private static Long requireTenant() {
         Long tenantId = RequestContextHolder.getTenantId();
-        if (tenantId == null) throw new CommonException("缺少可信租户上下文");
+        if (tenantId == null) throw new CommonException(ShortlinkMessage.TENANT_REQUIRED);
         return tenantId;
     }
 

@@ -38,7 +38,7 @@ public class CommonException extends RuntimeException {
 
     /** 使用默认状态码和可国际化消息；日志及旧调用方仍可读取默认中文。 */
     public CommonException(MessageCode messageCode, Object... arguments) {
-        super(MessageFormat.format(messageCode.getDefaultMessage(), arguments));
+        super(formatDefault(messageCode, arguments));
         this.messageCode = messageCode;
         this.messageArguments = arguments.clone();
     }
@@ -47,6 +47,19 @@ public class CommonException extends RuntimeException {
     public CommonException(Integer code, MessageCode messageCode, Object... arguments) {
         this(messageCode, arguments);
         this.code = code;
+    }
+
+    private static String formatDefault(MessageCode messageCode, Object[] arguments) {
+        if (arguments.length == 0) {
+            return messageCode.getDefaultMessage();
+        }
+        Object[] values = arguments.clone();
+        for (int i = 0; i < values.length; i++) {
+            if (values[i] instanceof MessageCode nested) {
+                values[i] = nested.getDefaultMessage();
+            }
+        }
+        return MessageFormat.format(messageCode.getDefaultMessage(), values);
     }
 
 }

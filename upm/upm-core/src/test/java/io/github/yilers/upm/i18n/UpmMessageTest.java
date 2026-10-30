@@ -38,6 +38,12 @@ class UpmMessageTest {
                 resolver.resolve(UpmManagementMessage.ROLE_NOT_FOUND, new Object[0], english));
         assertEquals("Resource not found.",
                 resolver.resolve(UpmManagementMessage.MENU_RESOURCE_NOT_FOUND, new Object[0], english));
+        assertEquals("The callback URL is invalid.",
+                resolver.resolve(UpmAccessMessage.APP_CALLBACK_INVALID, new Object[0], english));
+        assertEquals("The application single sign-on configuration is incomplete.",
+                resolver.resolve(UpmAccessMessage.SSO_CONFIG_INCOMPLETE, new Object[0], english));
+        assertEquals("This third-party account is already linked to another user.",
+                resolver.resolve(UpmAccessMessage.THIRD_ALREADY_BOUND, new Object[0], english));
     }
 
     @Test
@@ -47,8 +53,8 @@ class UpmMessageTest {
         try (var input = getClass().getResourceAsStream("/i18n/upm-messages_en.properties")) {
             english.load(input);
         }
-        var messages = java.util.stream.Stream.concat(java.util.Arrays.stream(UpmMessage.values()),
-                java.util.Arrays.stream(UpmManagementMessage.values())).map(message -> (MessageCode) message).toList();
+        var messages = java.util.stream.Stream.of(UpmMessage.values(), UpmManagementMessage.values(), UpmAccessMessage.values(), UpmExtraMessage.values())
+                .flatMap(java.util.Arrays::stream).map(message -> (MessageCode) message).toList();
         for (MessageCode message : messages) {
             assertEquals(message.getDefaultMessage(), chinese.getString(message.getKey()));
             org.junit.jupiter.api.Assertions.assertTrue(english.keySet().contains(message.getKey()));

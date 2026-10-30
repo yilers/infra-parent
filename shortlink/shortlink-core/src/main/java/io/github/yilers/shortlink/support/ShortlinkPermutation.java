@@ -1,5 +1,6 @@
 package io.github.yilers.shortlink.support;
 
+import io.github.yilers.shortlink.i18n.ShortlinkMessage;
 import io.github.yilers.web.exception.CommonException;
 import org.bouncycastle.crypto.fpe.FPEFF1Engine;
 import org.bouncycastle.crypto.params.FPEParameters;
@@ -21,7 +22,7 @@ public class ShortlinkPermutation {
 
     public String permute(long sequence, int length, byte[] key) {
         if (key == null || key.length != KEY_BYTES) {
-            throw new CommonException("短码打散密钥长度错误");
+            throw new CommonException(ShortlinkMessage.PERMUTATION_KEY_LENGTH);
         }
         String encoded = ShortlinkRules.encode(sequence, length);
         byte[] digits = new byte[length];
@@ -39,7 +40,7 @@ public class ShortlinkPermutation {
             }
             return output.toString();
         } catch (RuntimeException e) {
-            throw new CommonException("短码打散失败");
+            throw new CommonException(ShortlinkMessage.PERMUTATION_FAILED);
         } finally {
             Arrays.fill(digits, (byte) 0);
             Arrays.fill(result, (byte) 0);

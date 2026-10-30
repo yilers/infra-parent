@@ -1,5 +1,6 @@
 package io.github.yilers.upm.sso;
 
+import io.github.yilers.upm.i18n.UpmAccessMessage;
 import io.github.yilers.web.exception.CommonException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -41,7 +42,7 @@ public class SsoSecretCipher {
         } catch (CommonException e) {
             throw e;
         } catch (Exception e) {
-            throw new CommonException("SSO客户端密钥加密失败");
+            throw new CommonException(UpmAccessMessage.SSO_SECRET_ENCRYPT);
         }
     }
 
@@ -49,7 +50,7 @@ public class SsoSecretCipher {
         try {
             byte[] value = Base64.getDecoder().decode(ciphertext);
             if (value.length <= IV_LENGTH) {
-                throw new CommonException("SSO客户端密钥格式错误");
+                throw new CommonException(UpmAccessMessage.SSO_SECRET_FORMAT);
             }
             ByteBuffer buffer = ByteBuffer.wrap(value);
             byte[] iv = new byte[IV_LENGTH];
@@ -62,22 +63,22 @@ public class SsoSecretCipher {
         } catch (CommonException e) {
             throw e;
         } catch (Exception e) {
-            throw new CommonException("SSO客户端密钥解密失败，请检查主密钥配置");
+            throw new CommonException(UpmAccessMessage.SSO_SECRET_DECRYPT);
         }
     }
 
     private SecretKeySpec key() {
         if (masterKey == null || masterKey.isBlank()) {
-            throw new CommonException("未配置UPM_SSO_SECRET_KEY，无法使用SSO客户端密钥");
+            throw new CommonException(UpmAccessMessage.SSO_MASTER_MISSING);
         }
         byte[] value;
         try {
             value = Base64.getDecoder().decode(masterKey);
         } catch (IllegalArgumentException e) {
-            throw new CommonException("UPM_SSO_SECRET_KEY必须是Base64编码");
+            throw new CommonException(UpmAccessMessage.SSO_MASTER_BASE64);
         }
         if (value.length != 32) {
-            throw new CommonException("UPM_SSO_SECRET_KEY解码后必须为32字节");
+            throw new CommonException(UpmAccessMessage.SSO_MASTER_LENGTH);
         }
         return new SecretKeySpec(value, "AES");
     }
