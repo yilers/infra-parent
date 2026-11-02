@@ -10,6 +10,8 @@ import io.github.yilers.web.context.RequestContextHolder;
 import jakarta.servlet.http.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -24,6 +26,7 @@ import java.util.Locale;
 @RequiredArgsConstructor
 public class ShortlinkRedirectController {
     private static final int ENABLED = 1;
+    private static final ClassPathResource NOT_FOUND_PAGE = new ClassPathResource("shortlink/error/404.html");
     private final ShortlinkDomainMapper domains;
     private final ShortlinkNamespaceMapper namespaces;
     private final ShortlinkConfigMapper configs;
@@ -40,7 +43,7 @@ public class ShortlinkRedirectController {
         ShortlinkDomain domain = domains.findForRedirect(request.getServerName().toLowerCase(Locale.ROOT));
         ShortlinkTenantProvider tenantProvider = tenants.getIfAvailable();
         if (domain == null || tenantProvider == null || !tenantProvider.isUsable(domain.getTenantId())) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            writeNotFound(response);
             return;
         }
         RequestContextHolder.setUserId(null);
@@ -49,21 +52,31 @@ public class ShortlinkRedirectController {
                 .eq(ShortlinkNamespace::getDomainId, domain.getId()).eq(ShortlinkNamespace::getPathCode, path)
                 .eq(ShortlinkNamespace::getUsable, ENABLED));
         if (namespace == null || code.length() != namespace.getCodeLength()) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            writeNotFound(response);
             return;
         }
         ShortlinkConfig config = configs.selectById(namespace.getConfigId());
         if (config == null || !Integer.valueOf(ENABLED).equals(config.getUsable())) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            writeNotFound(response);
             return;
         }
         ShortlinkCache.Target target = cache.find(namespace.getId(), code);
         if (target == null || !Integer.valueOf(ENABLED).equals(target.usable())
                 || target.expireTime() != null && !target.expireTime().isAfter(LocalDateTime.now())) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            writeNotFound(response);
             return;
         }
         response.setStatus(HttpServletResponse.SC_FOUND);
         response.setHeader("Location", target.url());
+    }
+
+    /** 所有不可访问的短链统一返回同一页面，避免泄露链接状态。 */
+    private void writeNotFound(HttpServletResponse response) throws IOException {
+        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        response.setContentType(MediaType.TEXT_HTML_VALUE);
+        response.setCharacterEncoding(java.nio.charset.StandardCharsets.UTF_8.name());
+        try (var input = NOT_FOUND_PAGE.getInputStream()) {
+            input.transferTo(response.getOutputStream());
+        }
     }
 }
