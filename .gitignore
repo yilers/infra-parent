@@ -43,3 +43,8 @@ build/
 /**/.flattened-pom.xml
 /.flattened-pom.xml
 .bootui/
+
+# Docker 部署本地配置；仓库只保存示例文件
+/docker/.env
+/docker/config/application-prod.yml
+/docker/config/redisson.yml

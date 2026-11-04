@@ -54,10 +54,10 @@
                     )
             </if>
             <if test="request.data.name != null and request.data.name != '' ">
-                AND u.`name` LIKE concat('%', #{request.data.name}, '%')
+                AND u.name LIKE concat('%', #{request.data.name}, '%')
             </if>
             <if test="request.data.account != null and request.data.account != '' ">
-                AND u.`account` LIKE concat('%', #{request.data.account}, '%')
+                AND u.account LIKE concat('%', #{request.data.account}, '%')
             </if>
             <if test="request.data.nickname != null and request.data.nickname != '' ">
                 AND u.nickname LIKE concat('%', #{request.data.nickname}, '%')

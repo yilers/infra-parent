@@ -1,0 +1,67 @@
+# 复制为 application-prod.yml；真实密码从容器环境变量读取。
+spring:
+  datasource:
+    dynamic:
+      enabled: true
+      primary: master
+      strict: true
+      datasource:
+        master:
+          url: ${DB_URL}
+          username: ${DB_USERNAME}
+          password: ${DB_PASSWORD}
+          driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+      database: ${REDIS_DATABASE}
+      timeout: 3s
+  redis:
+    redisson:
+      file: file:/app/config/redisson.yml
+
+# 操作日志切面需要这个线程池；不配置通知平台或密钥。
+dynamictp:
+  enabled: true
+  enabledCollect: false
+  executors:
+    - threadPoolName: commonExecutor
+      executorType: eager
+      corePoolSize: 8
+      maximumPoolSize: 20
+      queueCapacity: 200
+      queueType: VariableLinkedBlockingQueue
+      rejectedHandlerType: DiscardPolicy
+      keepAliveTime: 60
+      threadNamePrefix: customExecutor1
+      allowCoreThreadTimeOut: true
+      waitForTasksToCompleteOnShutdown: true
+      awaitTerminationSeconds: 5
+      taskWrapperNames: [ttl, mdc]
+
+logging:
+  file:
+    path: /app/log
+  level:
+    root: info
+    io.github.yilers: info
+
+# 对外环境不公开内部运行细节或接口文档；如需开启请先配置访问控制。
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+knife4j:
+  enable: false

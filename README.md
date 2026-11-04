@@ -79,7 +79,7 @@ infra-parent
 └── bin                   # 本地安装和发布脚本
 ```
 
-`infra-start` 用于将多个基础能力组合成一个大单体服务；`upm-start` 只启动 UPM，适合独立部署或后续微服务拆分。
+`infra-start` 用于将多个基础能力组合成一个大单体服务；`upm-start` 只启动 UPM，适合独立部署或后续微服务拆分。Docker 部署、外部配置及可选 MySQL/Redis 容器的使用方法见 [Docker 部署文档](docker/README.md)。
 
 前端项目独立维护在 [infra-parent-web](https://github.com/yilers/infra-parent-web)，生产构建产物会放入 `upm-core`，因此启动后端即可访问管理端页面。
 
@@ -92,7 +92,7 @@ infra-parent
 - MySQL 5.7 或 8.x
 - Redis 6.0+
 
-仓库同时维护 PostgreSQL 全量及增量脚本；使用 PostgreSQL 运行服务时，需要在启动模块中补充 PostgreSQL JDBC 驱动并调整数据源配置。
+仓库同时维护 PostgreSQL 全量及增量脚本，并提供 MySQL、PostgreSQL JDBC 驱动；使用 PostgreSQL 时需要调整数据源配置，部署前还应在目标数据库验证所需功能的兼容性。
 
 ### 1. 初始化数据库
 

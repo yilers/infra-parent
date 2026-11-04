@@ -1,0 +1,6 @@
+# 复制为 redisson.yml。Redisson 从进程环境变量解析这些占位符。
+singleServerConfig:
+  address: "redis://${REDIS_HOST}:${REDIS_PORT}"
+  password: "${REDIS_PASSWORD}"
+  database: ${REDIS_DATABASE}
+  timeout: 3000

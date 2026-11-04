@@ -1,0 +1,43 @@
+services:
+  infra:
+    image: ${INFRA_IMAGE:-infra-parent:local}
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${INFRA_BIND_ADDRESS:-127.0.0.1}:${INFRA_PORT:-9000}:9000"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_CONFIG_ADDITIONAL_LOCATION: file:/app/config/
+      TZ: Asia/Shanghai
+      DB_URL: ${DB_URL:?请设置 DB_URL}
+      DB_DRIVER: ${DB_DRIVER:-com.mysql.cj.jdbc.Driver}
+      DB_USERNAME: ${DB_USERNAME:?请设置 DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD:?请设置 DB_PASSWORD}
+      REDIS_HOST: ${REDIS_HOST:?请设置 REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_DATABASE: ${REDIS_DATABASE:-0}
+      UPM_SSO_SECRET_KEY: ${UPM_SSO_SECRET_KEY:?请设置 UPM_SSO_SECRET_KEY}
+      UPM_API_SECRET_KEY: ${UPM_API_SECRET_KEY:?请设置 UPM_API_SECRET_KEY}
+      SHORTLINK_MASTER_KEY: ${SHORTLINK_MASTER_KEY:?请设置 SHORTLINK_MASTER_KEY}
+    volumes:
+      - ./config/application-prod.yml:/app/config/application-prod.yml:ro
+      - ./config/redisson.yml:/app/config/redisson.yml:ro
+      - infra_logs:/app/log
+    stop_grace_period: 30s
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--output", "/dev/null", "http://127.0.0.1:9000/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+volumes:
+  infra_logs:

@@ -1,0 +1,11 @@
+.git
+.idea
+.vscode
+**/target
+**/.flattened-pom.xml
+**/application-dev.properties
+**/.env
+docker/config/application-prod.yml
+docker/config/redisson.yml
+log
+**/.DS_Store
