@@ -269,6 +269,14 @@ CREATE TABLE IF NOT EXISTS shortlink_sequence (
     max_allocated_id BIGINT NOT NULL DEFAULT 0,
     step INT NOT NULL DEFAULT 1000,
     update_time TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
+);
+COMMENT ON TABLE shortlink_sequence IS '短链号段高水位，不可回退或删除';
+COMMENT ON COLUMN shortlink_sequence.namespace_id IS '路径配置ID';
+COMMENT ON COLUMN shortlink_sequence.tenant_id IS '所属租户';
+COMMENT ON COLUMN shortlink_sequence.max_allocated_id IS '已分配上限，包含本号';
+COMMENT ON COLUMN shortlink_sequence.step IS '单次分配号段大小';
+COMMENT ON COLUMN shortlink_sequence.update_time IS '最后分配时间';
+
 -- ============================================
 -- PostgreSQL 初始化脚本 (UPM 用户权限管理系统)
 -- 转换说明：
