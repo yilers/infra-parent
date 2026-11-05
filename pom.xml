@@ -89,7 +89,7 @@
         <!-- https://central.sonatype.com/artifact/org.roaringbitmap/RoaringBitmap/versions -->
         <RoaringBitmap.version>1.6.29</RoaringBitmap.version>
         <!-- https://central.sonatype.com/artifact/com.julien-dubois.bootui/bootui-spring-boot-starter/versions -->
-        <bootui.version>2.2.0</bootui.version>
+        <bootui.version>2.3.0</bootui.version>
         <!-- https://central.sonatype.com/artifact/org.springframework.ai/spring-ai-starter-model-openai/versions -->
         <spring-ai.version>2.0.2</spring-ai.version>
         <!-- https://central.sonatype.com/artifact/com.alibaba.cloud.ai/spring-ai-alibaba/versions -->
