@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import io.github.yilers.upm.entity.Permission;
+import io.github.yilers.core.constant.CommonConst;
 import io.github.yilers.upm.mapper.PermissionMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,11 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
     @Override
     public List<Permission> findPermissionsByUserId(Long userId, String device, Long appId) {
         return permissionMapper.findPermissionsByUserId(userId, device, appId);
+    }
+
+    @Override
+    public List<Permission> findGrantablePermissions(Long userId, String device, Long appId) {
+        return permissionMapper.findGrantablePermissions(userId, device, appId, CommonConst.YES, CommonConst.NO);
     }
 
     @Override

@@ -25,6 +25,7 @@ class RoleApplicationPermissionTest {
         when(roles.getOne(any())).thenReturn(new Role());
         Permission menu = new Permission();
         menu.setId(100L);
+        menu.setUsable(1);
         when(permissions.findAllByDevice("web", 2L)).thenReturn(List.of(menu));
         try (var stp = mockStatic(StpUtil.class)) {
             stp.when(() -> StpUtil.hasRole("platformAdmin")).thenReturn(true);
@@ -44,7 +45,58 @@ class RoleApplicationPermissionTest {
             stp.when(() -> StpUtil.hasRole("platformAdmin")).thenReturn(true);
             assertThrows(CommonException.class, () -> handler.bindPermission(request(List.of(999L))));
         }
-        verifyNoInteractions(grants);
+        verify(grants).findPermissionListByRoleId(10L);
+        verify(grants, never()).deleteByRoleIdAndPermissionIds(any(), any());
+        verify(grants, never()).saveBatch(anyCollection());
+    }
+
+    @Test
+    void existingOutOfScopeGrantIsPreservedWithoutBeingReinserted() {
+        when(roles.getOne(any())).thenReturn(new Role());
+        Permission manageable = permission(100L, 1);
+        Permission disabled = permission(101L, 0);
+        when(permissions.findAllByDevice("web", 2L)).thenReturn(List.of(manageable, disabled));
+        when(grants.findPermissionListByRoleId(10L)).thenReturn(List.of(disabled));
+        try (var stp = mockStatic(StpUtil.class)) {
+            stp.when(() -> StpUtil.hasRole("platformAdmin")).thenReturn(true);
+            handler.bindPermission(request(List.of(101L)));
+        }
+        verify(grants).deleteByRoleIdAndPermissionIds(10L, List.of(100L));
+        verify(grants, never()).saveBatch(anyCollection());
+    }
+
+    @Test
+    void disabledPermissionCannotBeNewlyGrantedEvenByPlatformAdmin() {
+        when(roles.getOne(any())).thenReturn(new Role());
+        when(permissions.findAllByDevice("web", 2L)).thenReturn(List.of(permission(101L, 0)));
+        try (var stp = mockStatic(StpUtil.class)) {
+            stp.when(() -> StpUtil.hasRole("platformAdmin")).thenReturn(true);
+            assertThrows(CommonException.class, () -> handler.bindPermission(request(List.of(101L))));
+        }
+        verify(grants, never()).deleteByRoleIdAndPermissionIds(any(), any());
+    }
+
+    @Test
+    void ordinaryUserUsesGrantablePermissionsOnly() {
+        when(roles.getOne(any())).thenReturn(new Role());
+        when(permissions.findGrantablePermissions(20L, "web", 2L)).thenReturn(List.of(permission(100L, 1)));
+        try (var stp = mockStatic(StpUtil.class)) {
+            stp.when(() -> StpUtil.hasRole("platformAdmin")).thenReturn(false);
+            stp.when(StpUtil::getLoginIdAsLong).thenReturn(20L);
+            handler.bindPermission(request(List.of(100L)));
+        }
+        verify(permissions, never()).findPermissionsByUserId(anyLong(), anyString(), anyLong());
+        verify(grants).deleteByRoleIdAndPermissionIds(10L, List.of(100L));
+        verify(grants).saveBatch(anyCollection());
+    }
+
+    private Permission permission(Long id, int usable) {
+        Permission permission = new Permission();
+        permission.setId(id);
+        permission.setAppId(2L);
+        permission.setDevice("web");
+        permission.setUsable(usable);
+        return permission;
     }
 
     private RolePermissionRequest request(List<Long> ids) {

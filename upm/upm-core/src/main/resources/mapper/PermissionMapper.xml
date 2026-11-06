@@ -18,5 +18,18 @@
         </where>
     </select>
 
+    <select id="findGrantablePermissions" resultType="io.github.yilers.upm.entity.Permission">
+        SELECT DISTINCT p.id
+        FROM upm_user u
+        INNER JOIN upm_user_role ur ON ur.user_id = u.id AND ur.tenant_id = u.tenant_id
+        INNER JOIN upm_role r ON r.id = ur.role_id AND r.tenant_id = u.tenant_id
+        INNER JOIN upm_role_permission rp ON rp.role_id = r.id AND rp.tenant_id = u.tenant_id
+        INNER JOIN upm_permission p ON p.id = rp.permission_id AND p.tenant_id = u.tenant_id
+        WHERE u.id = #{userId} AND u.deleted = #{notDeleted}
+          AND r.deleted = #{notDeleted} AND r.usable = #{usable}
+          AND p.deleted = #{notDeleted} AND p.usable = #{usable}
+          AND p.device = #{device} AND p.app_id = #{appId}
+    </select>
+
 
 </mapper>

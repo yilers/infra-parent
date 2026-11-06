@@ -158,17 +158,34 @@ public class RoleHandler {
         }
         applicationHandler.findById(dto.getAppId());
         List<Permission> scope = platformAdmin
-                ? permissionService.findAllByDevice(device, dto.getAppId())
-                : permissionService.findPermissionsByUserId(StpUtil.getLoginIdAsLong(), device, dto.getAppId());
+                ? permissionService.findAllByDevice(device, dto.getAppId()).stream()
+                    .filter(permission -> CommonConst.YES.equals(permission.getUsable())).toList()
+                : permissionService.findGrantablePermissions(StpUtil.getLoginIdAsLong(), device, dto.getAppId());
         List<Long> scopeIds = scope.stream().map(Permission::getId).toList();
-        if (permissionIdList == null || !new HashSet<>(scopeIds).containsAll(permissionIdList)) {
+        if (permissionIdList == null) {
             throw new CommonException(UpmManagementMessage.ROLE_PERMISSION_OUTSIDE_SCOPE);
+        }
+        Set<Long> manageableIds = new HashSet<>(scopeIds);
+        Set<Long> outsideIds = new HashSet<>(permissionIdList);
+        outsideIds.removeAll(manageableIds);
+        if (!outsideIds.isEmpty()) {
+            // 允许表单回传目标角色已有的范围外权限，但不允许新增或修改这些权限。
+            Set<Long> existingIds = rolePermissionService.findPermissionListByRoleId(roleId).stream()
+                    .filter(permission -> Objects.equals(permission.getAppId(), dto.getAppId()))
+                    .filter(permission -> Objects.equals(permission.getDevice(), device))
+                    .map(Permission::getId).collect(Collectors.toSet());
+            if (!existingIds.containsAll(outsideIds)) {
+                throw new CommonException(UpmManagementMessage.ROLE_PERMISSION_OUTSIDE_SCOPE);
+            }
         }
         // 仅替换明确提交且可管理的范围，其余应用和设备端的授权保持不变。
         rolePermissionService.deleteByRoleIdAndPermissionIds(roleId, scopeIds);
         // 新增新的
         Set<RolePermission> rolePermissionSet = new LinkedHashSet<>();
         for (Long permissionId : new LinkedHashSet<>(permissionIdList)) {
+            if (!manageableIds.contains(permissionId)) {
+                continue;
+            }
             RolePermission rolePermission = new RolePermission();
             rolePermission.setPermissionId(permissionId);
             rolePermission.setRoleId(roleId);
