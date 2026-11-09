@@ -4,15 +4,15 @@
 
 ## 准备
 
-在服务器安装 Docker、Docker Compose 插件和 Git，拉取项目源码，并在仓库根目录执行以下命令：
+在服务器安装 Docker、Docker Compose 插件和 Git，拉取项目源码，并在仓库根目录执行：
 
 ```bash
-cd docker
-cp .env.example .env
-cp config/application-prod.yml.example config/application-prod.yml
-cp config/redisson.yml.example config/redisson.yml
-chmod 600 .env
+./docker/deploy.sh init
 ```
+
+脚本只创建缺失的配置，不覆盖已有 `.env` 和 YAML；会提示选择已有外部依赖、Compose 自建 MySQL/Redis，或现有 Redis 的自定义网络。选择结果保存在本机 `docker/.deployment-mode`，不会提交到 Git。已有部署也可执行 `init`，选择与当前环境一致的方式。
+
+如果要使用已有的 `docker/compose.redis.yaml`（例如将应用加入现有 Redis 的 `infra-shared` 网络），先确认文件和网络已存在，执行 `init` 时选择 3。脚本不会创建 Docker 网络，也不会更改现有 Redis 容器；网络与服务名由管理员确认。后续切换部署方式时，先备份现有配置，在 `docker/.deployment-mode` 中将唯一一行改为 `external`、`dependencies` 或 `redis-network`，并核对相应配置；不要在不同模式间直接切换数据卷。
 
 编辑 `.env`，配置数据库、Redis 和主密钥。`.env` 中的 `DB_URL` 和 `REDIS_HOST` 是**从应用容器内部访问**的地址，不能直接写服务器的 `127.0.0.1`。默认的 `mysql` 和 `redis` 是下文可选容器的服务名，使用已有服务时要改成实际可访问的地址。
 
@@ -34,10 +34,10 @@ openssl rand -base64 32
 
 1. 在 `.env` 中填写容器可访问的 `DB_URL`、`DB_USERNAME`、`DB_PASSWORD`、`REDIS_HOST`、`REDIS_PORT`、`REDIS_PASSWORD` 和 `REDIS_DATABASE`。默认示例分别让 Spring Data Redis 和 Redisson 使用相同地址及数据库；如使用主从或集群，按实际架构分别配置两者，确认 JetCache、Sa-Token 等组件连接符合预期。
 2. 新建空数据库时，先阅读 [`sql/README.md`](../sql/README.md)，使用数据库客户端手动导入与数据库类型对应的全量脚本。已有数据库不要执行全量脚本，应按 [`sql/migration/README.md`](../sql/migration/README.md) 检查并执行尚未应用的增量脚本。
-3. 在 `docker` 目录构建并启动：
+3. 在仓库根目录构建并启动：
 
    ```bash
-   docker compose -f compose.yaml up -d --build
+   ./docker/deploy.sh start
    ```
 
 外部 Redis 如未设置密码，可以将 `.env` 的 `REDIS_PASSWORD` 留空，并将 `config/redisson.yml` 中的 `password` 改为 `null`；生产环境应保证 Redis 仅在可信网络可访问并做好访问控制。
@@ -52,12 +52,11 @@ Supabase 等已有数据库可能承载其他应用，应先备份，并确认�
 
 本方式适合没有现成依赖的环境。MySQL 和 Redis 使用独立的 Docker 数据卷，不对宿主机发布端口。`.env` 中保留 `DB_URL` 的主机名 `mysql`、数据库名 `infra` 以及 `REDIS_HOST=redis`，设置全部密码和主密钥后，先启动依赖：
 
-```bash
-docker compose -f compose.yaml -f compose.dependencies.yaml up -d mysql redis
-docker compose -f compose.yaml -f compose.dependencies.yaml ps
-```
+在仓库根目录运行 `./docker/deploy.sh dependencies`，脚本会启动并显示依赖容器；这不会导入 SQL。
 
 确认 MySQL 健康检查通过后，**仅在首次创建的空数据库中**手动导入全量脚本：
+
+在 `docker` 目录执行：
 
 ```bash
 docker compose -f compose.yaml -f compose.dependencies.yaml exec -T mysql \
@@ -66,27 +65,30 @@ docker compose -f compose.yaml -f compose.dependencies.yaml exec -T mysql \
 
 再启动应用：
 
-```bash
-docker compose -f compose.yaml -f compose.dependencies.yaml up -d --build infra
-```
+回到仓库根目录，执行 `./docker/deploy.sh start`。
 
 MySQL 容器的建库和账号环境变量仅在**首次初始化空数据卷**时生效。之后修改 `.env` 不会自动修改已有数据库的密码；应先在数据库中完成相应变更，再同步更新配置。已有数据时不要重新导入全量脚本，升级请先备份并按增量脚本操作。
 
 ## 查看、更新和停止
 
-两个模式中，以下命令里的 `-f` 参数应与启动时一致；下例以使用可选依赖为例：
+以下命令从仓库根目录执行，脚本会读取 `init` 时选择的部署方式：
 
 ```bash
-docker compose -f compose.yaml -f compose.dependencies.yaml ps
-docker compose -f compose.yaml -f compose.dependencies.yaml logs -f infra
+./docker/deploy.sh status
+./docker/deploy.sh stop
+./docker/deploy.sh start
+./docker/deploy.sh update
 curl -fsS http://127.0.0.1:9000/actuator/health
-docker compose -f compose.yaml -f compose.dependencies.yaml restart infra
 ```
+
+`update` 检查已跟踪文件是否有本地改动，然后只允许快进拉取当前分支的上游；拉取后提示确认数据库准备情况，确认才构建并启动。服务器存在本地改动、无上游或不能快进时会停止，不会强制覆盖。未跟踪文件也可能导致 Git 拒绝拉取，需要自行核查。脚本的 `start` 和 `update` 只更新 `infra`，不会自动启动或重建依赖容器；自建依赖需先执行 `dependencies`。
+
+首次使用脚本管理已有部署时，如果已经有外部 Redis 网络配置，应在 `init` 中选择 3；不要选择自建数据库模式。`stop` 只停止应用，不删除容器或数据卷。需要持续查看日志时，可以按原来的 Compose 文件组合执行 `docker compose ... logs -f infra`。
 
 默认仅监听宿主机 `127.0.0.1:9000`，可通过 `.env` 的 `INFRA_BIND_ADDRESS` 和 `INFRA_PORT` 修改。通常由 Nginx 等反向代理对外提供 HTTPS，并限制 `/actuator/` 的外部访问。SSO、钉钉回调和短链域名需配置为实际对外域名，反向代理应正确转发 Host 和协议等信息。
 
 应用健康检查访问 `/actuator/health`；健康检查失败不会让 Docker 自动重启容器，应结合日志排查数据库、Redis 或应用故障。日志同时输出到容器日志和 `infra_logs` 数据卷；容器日志设置了大小及数量限制，文件日志仍需根据实际情况管理和监控磁盘。
 
-更新源码后，先备份数据库和主密钥、按版本说明执行必要的增量 SQL，再使用与原来相同的 Compose 文件执行 `up -d --build infra`。停止服务可使用 `docker compose ... stop`；不要随意使用带 `-v` 的删除命令，否则可能删除数据库、Redis 和日志数据卷。
+更新前先备份数据库和主密钥、查阅版本说明并按需执行增量 SQL。如果 SQL 要求停写，应先执行 `./docker/deploy.sh stop`，完成备份和迁移后再更新；脚本不自动运行 SQL。不要随意使用带 `-v` 的删除命令，否则可能删除数据库、Redis 和日志数据卷。
 
 构建镜像需要访问基础镜像仓库和 Maven 依赖仓库；部署机器无法联网时，需要预先准备镜像及依赖，或在能联网的环境构建并安全分发镜像。

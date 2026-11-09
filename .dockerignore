@@ -7,5 +7,7 @@
 **/.env
 docker/config/application-prod.yml
 docker/config/redisson.yml
+docker/.deployment-mode
+docker/compose.redis.yaml
 log
 **/.DS_Store
