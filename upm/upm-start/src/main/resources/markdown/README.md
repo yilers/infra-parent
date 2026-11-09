@@ -147,7 +147,7 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 
 ```java
 @InterceptorIgnore(tenantLine = "true", dataPermission = "false")
-@DataPermission(tableName = "upm_log", deptField = "dept_id", userField = "operator")
+@DataPermission(tableName = "upm_log", deptField = "dept_id", userField = "create_id")
 Page<LogInfoResponse> findByPage(@Param("page") Page<?> p,
                                  @Param("request") BasePageRequest<Log> request);
 ```

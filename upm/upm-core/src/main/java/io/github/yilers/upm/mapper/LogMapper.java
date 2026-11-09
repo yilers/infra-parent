@@ -12,7 +12,7 @@ import org.apache.ibatis.annotations.Param;
 public interface LogMapper extends CustomMapper<Log> {
 
     @InterceptorIgnore(tenantLine = "true", dataPermission = "false")
-    @DataPermission(tableName = "upm_log", deptField = "dept_id", userField = "operator")
+    @DataPermission(tableName = "upm_log", deptField = "dept_id", userField = "create_id")
     Page<LogInfoResponse> findByPage(@Param("page") Page<?> p,
                                      @Param("request") BasePageRequest<Log> request);
 

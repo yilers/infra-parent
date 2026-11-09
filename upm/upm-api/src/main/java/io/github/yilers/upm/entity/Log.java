@@ -2,6 +2,7 @@ package io.github.yilers.upm.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.spring.activerecord.Model;
@@ -42,10 +43,15 @@ public class Log extends Model<Log> {
      */
     private Integer success;
 
-    /**
-     * 操作人
-     */
+    /** 操作人姓名搜索条件，兼容原有日志查询接口，不写入数据库。 */
+    @TableField(exist = false)
     private String operator;
+
+    /** 操作用户 ID；无已确认用户时为空。 */
+    private Long createId;
+
+    /** 操作发生时的用户姓名快照。 */
+    private String createName;
 
     /**
      * 请求方法

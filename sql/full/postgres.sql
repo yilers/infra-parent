@@ -787,7 +787,8 @@ CREATE TABLE upm_log (
     module VARCHAR(50),
     action VARCHAR(50),
     success SMALLINT,
-    operator VARCHAR(50),
+    create_id BIGINT,
+    create_name VARCHAR(50),
     method VARCHAR(255),
     params TEXT,
     ip VARCHAR(20),
@@ -806,7 +807,8 @@ COMMENT ON COLUMN upm_log.id IS '主键ID';
 COMMENT ON COLUMN upm_log.module IS '模块';
 COMMENT ON COLUMN upm_log.action IS '动作 增删改';
 COMMENT ON COLUMN upm_log.success IS '是否成功 1-是 0-否';
-COMMENT ON COLUMN upm_log.operator IS '操作人';
+COMMENT ON COLUMN upm_log.create_id IS '操作人用户ID';
+COMMENT ON COLUMN upm_log.create_name IS '操作人姓名快照';
 COMMENT ON COLUMN upm_log.method IS '请求方法';
 COMMENT ON COLUMN upm_log.params IS '请求参数';
 COMMENT ON COLUMN upm_log.ip IS '请求ip';

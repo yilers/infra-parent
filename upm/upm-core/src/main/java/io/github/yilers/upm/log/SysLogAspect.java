@@ -107,8 +107,9 @@ public class SysLogAspect {
                 String userId = StpUtil.getLoginIdAsString();
                 UserService userService = SpringUtil.getBean(UserService.class);
                 User user = userService.findById(Long.parseLong(userId));
-                saveLog.setOperator(userId);
+                saveLog.setCreateId(Long.parseLong(userId));
                 if (user != null) {
+                    saveLog.setCreateName(user.getName());
                     saveLog.setDeptId(user.getDeptId());
                     saveLog.setTenantId(user.getTenantId());
                 }
@@ -122,7 +123,8 @@ public class SysLogAspect {
                     UserService userService = SpringUtil.getBean(UserService.class);
                     User user = userService.findByAccount(account);
                     if (user != null) {
-                        saveLog.setOperator(user.getId().toString());
+                        saveLog.setCreateId(user.getId());
+                        saveLog.setCreateName(user.getName());
                         saveLog.setDeptId(user.getDeptId());
                         saveLog.setTenantId(user.getTenantId());
                     }
@@ -156,14 +158,15 @@ public class SysLogAspect {
      * 登录接口执行前可能尚未建立登录态，执行完成后再次补充用户和租户信息。
      */
     private void fillCurrentUser(Log saveLog) {
-        if (saveLog.getTenantId() != null && saveLog.getOperator() != null) {
+        if (saveLog.getTenantId() != null && saveLog.getCreateId() != null && saveLog.getCreateName() != null) {
             return;
         }
         try {
             String userId = StpUtil.getLoginIdAsString();
             User user = SpringUtil.getBean(UserService.class).findById(Long.parseLong(userId));
-            saveLog.setOperator(userId);
+            saveLog.setCreateId(Long.parseLong(userId));
             if (user != null) {
+                saveLog.setCreateName(user.getName());
                 saveLog.setDeptId(user.getDeptId());
                 saveLog.setTenantId(user.getTenantId());
             }

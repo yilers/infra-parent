@@ -5,10 +5,9 @@
 
     <select id="findByPage" resultType="io.github.yilers.upm.response.LogInfoResponse">
         SELECT
-            l.id,l.module,l.action,l.success,l.operator,u.name AS operatorName,l.method,l.params,l.ip,l.duration,
+            l.id,l.module,l.action,l.success,l.create_id,l.create_name,l.create_name AS operatorName,l.method,l.params,l.ip,l.duration,
             l.stack_trace,l.create_time,l.tenant_id,t.name AS tenantName,l.region
         FROM upm_log l
-        LEFT JOIN upm_user u ON l.operator = u.id
         LEFT JOIN upm_tenant t ON l.tenant_id = t.id
         <where>
             <if test="request.data.success != null ">
@@ -18,7 +17,7 @@
                 AND l.action = #{request.data.action}
             </if>
             <if test="request.data.operator != null and request.data.operator != '' ">
-                AND u.name LIKE concat('%', #{request.data.operator}, '%')
+                AND l.create_name LIKE concat('%', #{request.data.operator}, '%')
             </if>
             <if test="request.data.module != null and request.data.module != '' ">
                 AND l.module = #{request.data.module}
