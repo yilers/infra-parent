@@ -31,8 +31,9 @@ public @interface SysLog {
     boolean recordParams() default true;
 
     /**
-     * 隐藏字段
-     * eg:{"password"}
+     * 按字段名隐藏对象、Map、数组内的同名字段（递归处理）。
+     * 独立参数支持 RequestParam 的 name/value；未显式命名时依赖编译保留的方法参数名。
+     * 例如 {"password"}，字段名区分大小写。
      */
     String[] hideFieldList() default {};
 

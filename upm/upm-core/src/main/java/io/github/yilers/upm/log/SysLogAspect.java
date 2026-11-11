@@ -3,9 +3,6 @@ package io.github.yilers.upm.log;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.v7.extra.spring.SpringUtil;
 import cn.hutool.v7.http.server.servlet.ServletUtil;
-import cn.hutool.v7.json.JSONArray;
-import cn.hutool.v7.json.JSONObject;
-import cn.hutool.v7.json.JSONUtil;
 import io.github.yilers.core.constant.CommonConst;
 import io.github.yilers.upm.controller.AuthController;
 import io.github.yilers.upm.entity.Log;
@@ -25,6 +22,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
+import org.springframework.aop.support.AopUtils;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -74,7 +72,16 @@ public class SysLogAspect {
             String className = joinPoint.getTarget().getClass().getName();
             String methodName = signature.getName();
             Object[] args = joinPoint.getArgs();
-            String params = sysLog.recordParams() ? JSONUtil.toJsonStr(args) : "[]";
+            String params = "[]";
+            if (sysLog.recordParams()) {
+                try {
+                    var method = AopUtils.getMostSpecificMethod(signature.getMethod(), joinPoint.getTarget().getClass());
+                    params = LogParameterSanitizer.sanitize(method, args, sysLog.hideFieldList());
+                } catch (Exception ignored) {
+                    // 脱敏或序列化失败时跳过全部参数，异常消息本身也可能含有敏感值。
+                    log.warn("日志参数处理失败，已跳过参数记录");
+                }
+            }
 
 //            Method method = signature.getMethod();
 //            SysLog syslog = SYS_LOG_CACHE.computeIfAbsent(method,
@@ -84,12 +91,6 @@ public class SysLogAspect {
 //            }
             String action = sysLog.value();
             String module = sysLog.module();
-            String[] hideFieldList = sysLog.hideFieldList();
-
-            // 如果需要隐藏指定字段
-            if (hideFieldList.length > 0) {
-                params = hideJsonFields(params, hideFieldList);
-            }
             RequestAttributes requestAttributes = org.springframework.web.context.request.RequestContextHolder
                     .getRequestAttributes();
             HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
@@ -196,36 +197,6 @@ public class SysLogAspect {
                 RequestContextHolder.clear();
             } else {
                 RequestContextHolder.setTenantId(previousTenantId);
-            }
-        }
-    }
-
-    private String hideJsonFields(String json, String[] hideFieldList) {
-        try {
-            if (JSONUtil.isTypeJSON(json)) {
-                Object jsonObj = JSONUtil.parse(json);
-                if (jsonObj instanceof JSONArray) {
-                    // 是数组，逐个处理
-                    JSONArray array = (JSONArray) jsonObj;
-                    for (int i = 0; i < array.size(); i++) {
-                        hideFieldsInJsonObject(array.getJSONObject(i), hideFieldList);
-                    }
-                } else if (jsonObj instanceof JSONObject) {
-                    hideFieldsInJsonObject((JSONObject) jsonObj, hideFieldList);
-                }
-                return jsonObj.toString();
-            }
-            return json;
-        } catch (Exception e) {
-            log.warn("参数脱敏失败", e);
-            return json;
-        }
-    }
-
-    private void hideFieldsInJsonObject(JSONObject jsonObject, String[] fieldNames) {
-        for (String field : fieldNames) {
-            if (jsonObject.containsKey(field)) {
-                jsonObject.putValue(field, "***");
             }
         }
     }

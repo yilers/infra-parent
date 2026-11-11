@@ -58,7 +58,7 @@ public class UserController {
 
     @PostMapping("/addUser")
     @Operation(summary = "添加用户")
-    @SysLog(module = "用户模块", value = "添加用户")
+    @SysLog(module = "用户模块", value = "添加用户", hideFieldList = {"password", "idCard"})
     @SaCheckPermission("system:user:add")
     public Result<Long> addUser(@Validated @RequestBody UserRequest request) {
         return Result.ok(userHandler.addUser(request));
@@ -124,7 +124,7 @@ public class UserController {
 
     @PostMapping("/updatePwd")
     @Operation(summary = "修改密码")
-    @SysLog(module = "用户模块", value = "修改密码")
+    @SysLog(module = "用户模块", value = "修改密码", hideFieldList = {"oldPwd", "newPwd"})
     public Result<?> updatePwd(@Validated @RequestBody UserUpdatePwdRequest request) {
         long userId = StpUtil.getLoginIdAsLong();
         request.setUserId(userId);
