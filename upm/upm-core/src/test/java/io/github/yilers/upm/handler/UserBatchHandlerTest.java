@@ -41,8 +41,9 @@ class UserBatchHandlerTest {
     private final PositionService positionService = mock(PositionService.class);
     private final RoleService roleService = mock(RoleService.class);
     private final CommonHandler commonHandler = mock(CommonHandler.class);
+    private final RoleAssignmentHandler roleAssignmentHandler = mock(RoleAssignmentHandler.class);
     private final UserBatchHandler handler = new UserBatchHandler(userService, userRoleService, deptService,
-            positionService, roleService, commonHandler);
+            positionService, roleService, commonHandler, roleAssignmentHandler);
 
     @Test
     void shouldOnlySaveRowsThatPassAllValidations() {
@@ -60,6 +61,7 @@ class UserBatchHandlerTest {
         when(deptService.listByIds(anyCollection())).thenReturn(List.of(dept(10L), dept(30L)));
         when(positionService.listByIds(anyCollection())).thenReturn(List.of(position(20L)));
         when(roleService.listByIds(anyCollection())).thenReturn(List.of(role(100L)));
+        when(roleAssignmentHandler.canAssign(org.mockito.ArgumentMatchers.any())).thenReturn(true);
         when(commonHandler.findDataScopeByUserId(999L, null)).thenReturn(List.of(10L));
         when(userService.saveBatch(anyList(), eq(100))).thenAnswer(invocation -> {
             List<User> users = invocation.getArgument(0);
@@ -93,6 +95,24 @@ class UserBatchHandlerTest {
         verify(userRoleService).saveBatch(relationCaptor.capture(), eq(200));
         assertEquals(1000L, relationCaptor.getValue().getFirst().getUserId());
         assertEquals(100L, relationCaptor.getValue().getFirst().getRoleId());
+    }
+
+    @Test
+    void rejectsRoleOutsideAssignmentScopeBeforeBatchSave() {
+        UserBatchRowRequest row = row("row-1", "new@yilers.com", "新用户", 10L);
+        row.setRoleIdList(List.of(100L));
+        UserBatchAddRequest request = new UserBatchAddRequest();
+        request.setUsers(List.of(row));
+        when(deptService.listByIds(anyCollection())).thenReturn(List.of(dept(10L)));
+        when(roleService.listByIds(anyCollection())).thenReturn(List.of(role(100L)));
+        when(roleAssignmentHandler.canAssign(org.mockito.ArgumentMatchers.any())).thenReturn(false);
+        try (var stp = mockStatic(StpUtil.class)) {
+            UserBatchAddResponse response = handler.add(request);
+            assertEquals(0, response.getSuccessCount());
+            assertTrue(response.getRows().getFirst().getMessages().contains("无权分配该角色"));
+        }
+        verify(userService, never()).saveBatch(anyList(), eq(100));
+        verify(userRoleService, never()).saveBatch(anyList(), eq(200));
     }
 
     @Test

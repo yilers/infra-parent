@@ -63,6 +63,7 @@ public class UserBatchHandler {
     private final PositionService positionService;
     private final RoleService roleService;
     private final CommonHandler commonHandler;
+    private final RoleAssignmentHandler roleAssignmentHandler;
 
     /**
      * 校验并新增批量用户。业务校验失败的行不会入库，其他有效行在同一事务中写入。
@@ -213,6 +214,8 @@ public class UserBatchHandler {
                 row.addError("角色不存在");
             } else if (!CommonConst.YES.equals(role.getUsable())) {
                 row.addError("角色已停用");
+            } else if (!roleAssignmentHandler.canAssign(role)) {
+                row.addError("无权分配该角色");
             }
         }
     }

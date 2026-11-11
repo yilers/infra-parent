@@ -24,7 +24,7 @@ class UserLoginUnlockTest {
     private final UserHandler handler = new UserHandler(userService, mock(UserRoleService.class),
             mock(RolePermissionService.class), commonHandler, mock(AuthHandler.class),
             mock(ApplicationAccessHandler.class), loginRiskHandler,
-            mock(DeptLeaderHandler.class), mock(DeptLeaderService.class));
+            mock(DeptLeaderHandler.class), mock(DeptLeaderService.class), mock(RoleAssignmentHandler.class));
 
     @Test
     void clearsLoginRiskStateForVisibleUser() {

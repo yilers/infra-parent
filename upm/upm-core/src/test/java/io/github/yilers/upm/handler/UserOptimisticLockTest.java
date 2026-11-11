@@ -37,7 +37,7 @@ class UserOptimisticLockTest {
     private final UserHandler handler = new UserHandler(userService, userRoleService,
             mock(RolePermissionService.class), commonHandler, authHandler,
             mock(ApplicationAccessHandler.class), mock(LoginRiskHandler.class),
-            mock(DeptLeaderHandler.class), mock(DeptLeaderService.class));
+            mock(DeptLeaderHandler.class), mock(DeptLeaderService.class), mock(RoleAssignmentHandler.class));
 
     @Test
     void profileUpdateOnlyWritesCurrentUsersPersonalFields() {

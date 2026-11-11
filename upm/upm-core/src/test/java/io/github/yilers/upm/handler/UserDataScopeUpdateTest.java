@@ -21,10 +21,11 @@ class UserDataScopeUpdateTest {
     private final UserService userService = mock(UserService.class);
     private final UserRoleService userRoleService = mock(UserRoleService.class);
     private final CommonHandler commonHandler = mock(CommonHandler.class);
+    private final RoleAssignmentHandler roleAssignmentHandler = mock(RoleAssignmentHandler.class);
     private final UserHandler handler = new UserHandler(userService, userRoleService,
             mock(RolePermissionService.class), commonHandler, mock(AuthHandler.class),
             mock(ApplicationAccessHandler.class), mock(LoginRiskHandler.class),
-            mock(DeptLeaderHandler.class), mock(DeptLeaderService.class));
+            mock(DeptLeaderHandler.class), mock(DeptLeaderService.class), roleAssignmentHandler);
 
     private User existingUser() {
         User user = new User();
@@ -98,6 +99,7 @@ class UserDataScopeUpdateTest {
 
     @Test
     void allowsTransferAfterCheckingBothDepartments() {
+        when(roleAssignmentHandler.rolesForUser(10L, List.of(1L))).thenReturn(List.of(1L));
         User user = existingUser();
         when(userService.updateById(user)).thenReturn(true);
 

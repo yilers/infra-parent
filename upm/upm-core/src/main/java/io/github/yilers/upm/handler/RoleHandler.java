@@ -45,6 +45,7 @@ public class RoleHandler {
     private final RoleDeptService roleDeptService;
     private final PermissionService permissionService;
     private final ApplicationHandler applicationHandler;
+    private final RoleAssignmentHandler roleAssignmentHandler;
 
     @Transactional(rollbackFor = Exception.class)
     public void save(RoleRequest roleRequest) {
@@ -293,9 +294,11 @@ public class RoleHandler {
     @Transactional(rollbackFor = Exception.class)
     public void bindUser(RoleUserRequest request) {
         Long roleId = request.getRoleId();
-        List<Long> userIdList = request.getUserIdList();
+        Role role = roleService.getOne(Wrappers.<Role>lambdaQuery().eq(Role::getId, roleId).last("FOR UPDATE"));
+        roleAssignmentHandler.checkRole(role);
         Set<Long> affectedUserIds = new HashSet<>();
         List<Long> oldUserIdList = userRoleService.findUserIdListByRoleId(roleId);
+        List<Long> userIdList = roleAssignmentHandler.usersForRole(request.getUserIdList(), oldUserIdList);
         if (CollUtil.isNotEmpty(oldUserIdList)) {
             affectedUserIds.addAll(oldUserIdList);
         }

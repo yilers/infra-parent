@@ -61,6 +61,7 @@ public enum UpmManagementMessage implements MessageCode {
     ROLE_CODE_EXISTS("upm.management.role-code-exists", "角色编码已存在"),
     ROLE_HAS_USERS("upm.management.role-has-users", "该角色下有用户，请先删除用户"),
     ROLE_NOT_FOUND("upm.management.role-not-found", "角色不存在"),
+    ROLE_ASSIGNMENT_FORBIDDEN("upm.management.role-assignment-forbidden", "角色不存在、已停用或无权分配该角色"),
     ROLE_PERMISSION_OUTSIDE_SCOPE("upm.management.role-permission-outside-scope", "权限不属于当前应用、设备端或超出可授权范围"),
     ROLE_SCOPE_INVALID("upm.management.role-scope-invalid", "角色或权限范围不正确"),
     // 菜单和按钮权限

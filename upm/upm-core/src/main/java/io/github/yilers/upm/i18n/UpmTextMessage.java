@@ -35,6 +35,7 @@ public enum UpmTextMessage implements MessageCode {
     BATCH_POSITION_DISABLED("upm.text.batch-position-disabled", "职位已停用"),
     BATCH_ROLE_MISSING("upm.text.batch-role-missing", "角色不存在"),
     BATCH_ROLE_DISABLED("upm.text.batch-role-disabled", "角色已停用"),
+    BATCH_ROLE_FORBIDDEN("upm.text.batch-role-forbidden", "无权分配该角色"),
 
     // 租户、部门、角色、菜单及登录策略参数校验
     ROLE_ID_REQUIRED("upm.text.role-id-required", "角色id不能为空"),

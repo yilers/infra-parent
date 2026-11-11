@@ -55,6 +55,7 @@ public class UserHandler {
     private final LoginRiskHandler loginRiskHandler;
     private final DeptLeaderHandler deptLeaderHandler;
     private final DeptLeaderService deptLeaderService;
+    private final RoleAssignmentHandler roleAssignmentHandler;
 
     public UserInfoResponse currentInfo() {
         long userId = StpUtil.getLoginIdAsLong();
@@ -127,6 +128,7 @@ public class UserHandler {
             throw new CommonException(UpmMessage.USER_ACCOUNT_EXISTS);
         }
         commonHandler.checkDataScope(StpUtil.getLoginIdAsLong(), request.getDeptId());
+        List<Long> roleIds = roleAssignmentHandler.rolesForUser(null, request.getRoleIdList());
         User addUser = CglibUtil.copy(request, User.class);
         addUser.setUserType(UserTypeEnum.ADMIN.getCode());
         // md5的数据
@@ -137,7 +139,7 @@ public class UserHandler {
         addUser.setVersion(1);
         boolean save = userService.save(addUser);
         if (save) {
-            userRoleService.saveUserRoleRelation(addUser.getId(), request.getRoleIdList());
+            userRoleService.saveUserRoleRelation(addUser.getId(), roleIds);
         }
         return addUser.getId();
     }
@@ -163,6 +165,7 @@ public class UserHandler {
         if (ObjUtil.isNotEmpty(user) && !user.getId().equals(id)) {
             throw new CommonException(UpmMessage.USER_ACCOUNT_EXISTS);
         }
+        List<Long> roleIds = roleAssignmentHandler.rolesForUser(id, request.getRoleIdList());
         CglibUtil.copy(request, oldUser);
         if (StrUtil.isNotBlank(request.getPassword())) {
             // md5的数据
@@ -176,7 +179,7 @@ public class UserHandler {
             throw new CommonException(CommonMessage.UPDATE_CONFLICT);
         }
         userRoleService.deleteByUserId(id);
-        userRoleService.saveUserRoleRelation(id, request.getRoleIdList());
+        userRoleService.saveUserRoleRelation(id, roleIds);
         // 清理当前人缓存
         userService.cleanCache(id);
     }

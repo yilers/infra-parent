@@ -22,9 +22,10 @@ import static org.mockito.Mockito.when;
 class RoleCacheInvalidationTest {
     private final RoleService roleService = mock(RoleService.class);
     private final UserRoleService userRoleService = mock(UserRoleService.class);
+    private final RoleAssignmentHandler assignmentHandler = mock(RoleAssignmentHandler.class);
     private final RoleHandler handler = new RoleHandler(roleService, userRoleService,
             mock(RolePermissionService.class), mock(RoleDeptService.class), mock(PermissionService.class),
-            mock(ApplicationHandler.class));
+            mock(ApplicationHandler.class), assignmentHandler);
 
     @Test
     void changingRoleStatusClearsAllRelatedUserRoleCaches() {
@@ -49,6 +50,8 @@ class RoleCacheInvalidationTest {
 
     @Test
     void rebindingRoleClearsRemovedAndAddedUserCaches() {
+        when(assignmentHandler.usersForRole(List.of(200L, 300L), List.of(100L, 200L)))
+                .thenReturn(List.of(200L, 300L));
         when(userRoleService.findUserIdListByRoleId(10L)).thenReturn(List.of(100L, 200L));
         RoleUserRequest request = new RoleUserRequest();
         request.setRoleId(10L);

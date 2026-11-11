@@ -18,7 +18,7 @@ class RoleApplicationPermissionTest {
     private final RolePermissionService grants = mock(RolePermissionService.class);
     private final PermissionService permissions = mock(PermissionService.class);
     private final RoleHandler handler = new RoleHandler(roles, mock(UserRoleService.class), grants,
-            mock(RoleDeptService.class), permissions, mock(ApplicationHandler.class));
+            mock(RoleDeptService.class), permissions, mock(ApplicationHandler.class), mock(RoleAssignmentHandler.class));
 
     @Test
     void clearingOneScopeDoesNotDeleteOtherScopes() {
