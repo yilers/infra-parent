@@ -37,7 +37,7 @@ class TenantApplicationCopyTest {
         TenantLoginPolicyHandler loginPolicyHandler = mock(TenantLoginPolicyHandler.class);
         CommonHandler handler = new CommonHandler(users, departments, mock(RoleDeptService.class),
                 mock(UserRoleService.class), mock(UserDataScopeService.class), permissions, tenants,
-                roles, devices, grants, applications, thirdAuthConfigs, loginPolicyHandler);
+                roles, devices, grants, applications, thirdAuthConfigs, loginPolicyHandler, mock(TenantAccessHandler.class));
         AtomicLong sequence = new AtomicLong(1000);
         when(tenants.save(any())).thenAnswer(invocation -> {
             ((Tenant) invocation.getArgument(0)).setId(20L);

@@ -27,6 +27,7 @@ public class TenantLoginPolicyHandler {
 
     private final TenantLoginPolicyService tenantLoginPolicyService;
     private final TenantService tenantService;
+    private final TenantAccessHandler tenantAccessHandler;
 
     public TenantLoginPolicy find(Long tenantId) {
         checkTenant(tenantId);
@@ -91,6 +92,7 @@ public class TenantLoginPolicyHandler {
     }
 
     private void checkTenant(Long tenantId) {
+        tenantAccessHandler.checkTenant(tenantId);
         Tenant tenant = tenantId == null ? null : tenantService.getById(tenantId);
         if (tenant == null) {
             throw new CommonException(UpmManagementMessage.TENANT_NOT_FOUND);

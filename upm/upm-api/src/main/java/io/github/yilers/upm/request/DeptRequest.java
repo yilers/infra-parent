@@ -34,7 +34,7 @@ public class DeptRequest {
     private String deptDesc;
 
     @NotNull(message = "层级不能为空", groups = Add.class)
-    @Schema(description = "层级/深度")
+    @Schema(description = "父部门层级，兼容旧客户端；实际保存深度由后端根据父部门计算")
     private Integer parentDeptDeep;
 
     @NotNull(message = "版本号不能为空", groups = Update.class)

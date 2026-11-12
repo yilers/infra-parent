@@ -1,6 +1,9 @@
 package io.github.yilers.upm.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.dev33.satoken.annotation.SaMode;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import io.github.yilers.upm.handler.TenantAccessHandler;
 import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.github.yilers.core.util.Result;
 import io.github.yilers.upm.entity.Tenant;
@@ -23,7 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.Serializable;
 import java.util.List;
 
 @Slf4j
@@ -38,12 +40,15 @@ public class TenantController {
     private final TenantHandler tenantHandler;
     private final TenantPermissionSyncHandler tenantPermissionSyncHandler;
     private final TenantLoginPolicyHandler tenantLoginPolicyHandler;
+    private final TenantAccessHandler tenantAccessHandler;
 
     @Operation(summary = "查询所有租户(没有删除的)")
     @GetMapping("/findAll")
-    @SaCheckPermission("system:tenant:list")
+    @SaCheckPermission(value = {"system:tenant:list", "system:log:list"}, mode = SaMode.OR)
     public Result<List<Tenant>> findAll() {
-        return Result.ok(tenantService.list());
+        Long tenantId = tenantAccessHandler.currentTenantId();
+        return Result.ok(tenantService.list(Wrappers.<Tenant>lambdaQuery()
+                .eq(!tenantAccessHandler.isPlatformAdministrator(), Tenant::getId, tenantId)));
     }
 
     @Operation(summary = "添加租户")
@@ -66,7 +71,9 @@ public class TenantController {
 
     @Operation(summary = "通过id查询租户")
     @GetMapping("/findById/{id}")
-    public Result<Tenant> findById(@PathVariable Serializable id) {
+    @SaCheckPermission(value = {"system:tenant:list", "system:tenant:edit", "system:log:list"}, mode = SaMode.OR)
+    public Result<Tenant> findById(@PathVariable Long id) {
+        tenantAccessHandler.checkTenant(id);
         return Result.ok(tenantService.getById(id));
     }
 

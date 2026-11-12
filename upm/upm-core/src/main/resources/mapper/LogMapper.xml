@@ -29,24 +29,10 @@
                 AND l.tenant_id = #{request.data.tenantId}
             </if>
             AND l.deleted = 0
-            <!-- 动态 ORDER BY -->
-            <choose>
-                <!-- 如果用户有传排序字段 -->
-                <when test="request.sortFieldList != null and request.sortFieldList.size() > 0">
-                    ORDER BY
-                    <foreach item="field" index="index" collection="request.sortFieldList" separator=",">
-                        <!-- 拼接字段名 + 对应排序方式 -->
-                        ${field}
-                        <if test="request.sortOrderList != null and request.sortOrderList.size() > index">
-                            ${request.sortOrderList[index]}
-                        </if>
-                    </foreach>
-                </when>
-                <!-- 如果用户没有传排序字段，使用默认排序 -->
-                <otherwise>
-                    ORDER BY l.create_time DESC, l.id ASC
-                </otherwise>
-            </choose>
+            <!-- 自定义排序由Service白名单转换后交给分页插件，不拼接客户端SQL。 -->
+            <if test="request.sortFieldList == null or request.sortFieldList.size() == 0">
+                ORDER BY l.create_time DESC, l.id ASC
+            </if>
         </where>
 
     </select>

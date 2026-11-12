@@ -19,11 +19,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
+    private static final Map<String, String> SORT_COLUMNS = Map.ofEntries(
+            Map.entry("id", "u.id"), Map.entry("account", "u.account"), Map.entry("name", "u.name"),
+            Map.entry("nickname", "u.nickname"), Map.entry("create_time", "u.create_time"),
+            Map.entry("update_time", "u.update_time"), Map.entry("usable", "u.usable"),
+            Map.entry("dept_name", "d.dept_name"), Map.entry("position_name", "p.position_name"),
+            Map.entry("phone", "u.phone"), Map.entry("email", "u.email"), Map.entry("gender", "u.gender"));
     private final UserMapper userMapper;
 
     @Override
@@ -67,6 +74,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public Page<UserInfoResponse> findByPage(Page<?> p, BasePageRequest<UserPageRequest> request) {
+        PageSortHelper.apply(p, request, SORT_COLUMNS);
         return userMapper.findByPage(p, request);
     }
 

@@ -49,6 +49,7 @@ public class RoleHandler {
 
     @Transactional(rollbackFor = Exception.class)
     public void save(RoleRequest roleRequest) {
+        checkRoleCode(null, roleRequest.getRoleCode());
         // 验证角色名称或角色编码不能重复
         Role r = roleService.findByRoleCode(roleRequest.getRoleCode());
         if (r != null) {
@@ -83,6 +84,10 @@ public class RoleHandler {
     public void updateById(RoleRequest roleRequest) {
         // 查询角色
         Role r = roleService.getById(roleRequest.getId());
+        if (r == null) {
+            throw new CommonException(UpmManagementMessage.ROLE_NOT_FOUND);
+        }
+        checkRoleCode(r.getRoleCode(), roleRequest.getRoleCode());
         if (!StpUtil.hasRole(CommonConst.PLATFORM_ADMIN_ROLE_CODE)) {
             if (CommonConst.NO.equals(r.getOperable())) {
                 throw new CommonException(UpmManagementMessage.ROLE_NOT_OPERABLE);
@@ -214,6 +219,11 @@ public class RoleHandler {
 
     public RoleInfoResponse findById(Long roleId) {
         Role role = roleService.getById(roleId);
+        // 详情与列表保持同样的特殊角色边界，不能通过猜测ID访问列表中隐藏的角色。
+        if (role == null || CommonConst.PLATFORM_ADMIN_ROLE_CODE.equals(role.getRoleCode())
+                && !StpUtil.hasRole(CommonConst.PLATFORM_ADMIN_ROLE_CODE)) {
+            throw new CommonException(UpmManagementMessage.ROLE_NOT_FOUND);
+        }
         RoleInfoResponse roleInfoResponse = new RoleInfoResponse();
         CglibUtil.copy(role, roleInfoResponse);
         List<Permission> permissionList = rolePermissionService.findPermissionListByRoleId(roleId);
@@ -323,6 +333,20 @@ public class RoleHandler {
         List<Long> userIdList = userRoleService.findUserIdListByRoleId(roleId);
         if (CollUtil.isNotEmpty(userIdList)) {
             userIdList.forEach(userRoleService::cleanCache);
+        }
+    }
+
+    /** 内置编码由系统初始化维护，禁止通过新建或重命名普通角色获得特殊身份。 */
+    private void checkRoleCode(String oldCode, String newCode) {
+        if (newCode == null || newCode.isBlank()) {
+            throw new CommonException(UpmManagementMessage.ROLE_CODE_REQUIRED);
+        }
+        Set<String> reserved = Set.of(CommonConst.PLATFORM_ADMIN_ROLE_CODE,
+                CommonConst.TENANT_ADMIN_ROLE_CODE, CommonConst.DEPT_ADMIN_ROLE_CODE);
+        boolean builtIn = reserved.stream().anyMatch(code -> code.equalsIgnoreCase(newCode.trim())
+                || oldCode != null && code.equalsIgnoreCase(oldCode.trim()));
+        if (builtIn && !Objects.equals(oldCode, newCode)) {
+            throw new CommonException(UpmManagementMessage.ROLE_CODE_RESERVED);
         }
     }
 }

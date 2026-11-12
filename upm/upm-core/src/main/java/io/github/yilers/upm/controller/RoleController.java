@@ -1,6 +1,7 @@
 package io.github.yilers.upm.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.dev33.satoken.annotation.SaMode;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
 import com.github.xiaoymin.knife4j.annotations.ApiSupport;
@@ -96,6 +97,7 @@ public class RoleController {
     }
 
     @GetMapping("/findById/{roleId}")
+    @SaCheckPermission(value = {"system:role:list", "system:role:edit", "system:role:permission", "system:role:bindUser"}, mode = SaMode.OR)
     @Operation(summary = "通过id查询角色信息")
     @ApiOperationSupport(order = 7)
     public Result<RoleInfoResponse> findById(@PathVariable("roleId") @Parameter(description = "角色id") @NotNull Long roleId) {
@@ -105,7 +107,9 @@ public class RoleController {
 
     @PostMapping("/page")
     @Operation(summary = "分页查询角色")
-//    @SaCheckPermission("system:role:list")
+    // 用户新增、编辑和批量录入共用此接口选择角色，不能只要求角色管理菜单权限。
+    @SaCheckPermission(value = {"system:role:list", "system:role:edit", "system:role:permission",
+            "system:role:bindUser", "system:user:add", "system:user:edit", "system:user:batch:add"}, mode = SaMode.OR)
     public Result<Page<RoleInfoResponse>> page(@RequestBody BasePageRequest<RoleRequest> request) {
         Page<RoleInfoResponse> p = roleHandler.page(request);
         return Result.ok(p);

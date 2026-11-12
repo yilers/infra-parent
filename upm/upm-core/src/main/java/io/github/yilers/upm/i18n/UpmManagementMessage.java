@@ -15,6 +15,7 @@ public enum UpmManagementMessage implements MessageCode {
     TENANT_NOT_OPERABLE("upm.management.tenant-not-operable", "该租户不可操作"),
     TENANT_DELETE_CONFLICT("upm.management.tenant-delete-conflict", "租户删除失败，数据已经变更"),
     TENANT_DELETE_FORBIDDEN("upm.management.tenant-delete-forbidden", "只有平台管理员可以删除租户"),
+    TENANT_ACCESS_FORBIDDEN("upm.management.tenant-access-forbidden", "无权管理该租户"),
     TENANT_CODE_EXISTS("upm.management.tenant-code-exists", "租户编码已存在"),
     TENANT_CREATE_FAILED("upm.management.tenant-create-failed", "租户创建失败"),
     TENANT_TEMPLATE_APP_MISSING("upm.management.tenant-template-app-missing", "模板菜单所属应用不存在"),
@@ -54,11 +55,15 @@ public enum UpmManagementMessage implements MessageCode {
     DEPT_LEADER_UNAVAILABLE("upm.management.dept-leader-unavailable", "主管用户不存在或已停用"),
     DEPT_LEADER_UPDATE_FAILED("upm.management.dept-leader-update-failed", "主管任职更新失败"),
     DEPT_LEADER_SAVE_FAILED("upm.management.dept-leader-save-failed", "主管任职保存失败"),
+    DEPT_PARENT_INVALID("upm.management.dept-parent-invalid", "父部门不存在或层级不合法"),
+    DEPT_PARENT_CYCLE("upm.management.dept-parent-cycle", "不能将部门移动到自身或下级部门，部门层级不能形成循环"),
     // 角色管理
     ROLE_CODE_DUPLICATE("upm.management.role-code-duplicate", "角色编号重复"),
     ROLE_DEPT_REQUIRED("upm.management.role-dept-required", "必须选择部门"),
     ROLE_NOT_OPERABLE("upm.management.role-not-operable", "该角色不可操作"),
     ROLE_CODE_EXISTS("upm.management.role-code-exists", "角色编码已存在"),
+    ROLE_CODE_REQUIRED("upm.management.role-code-required", "角色编码不能为空"),
+    ROLE_CODE_RESERVED("upm.management.role-code-reserved", "内置角色编码不可新建或修改"),
     ROLE_HAS_USERS("upm.management.role-has-users", "该角色下有用户，请先删除用户"),
     ROLE_NOT_FOUND("upm.management.role-not-found", "角色不存在"),
     ROLE_ASSIGNMENT_FORBIDDEN("upm.management.role-assignment-forbidden", "角色不存在、已停用或无权分配该角色"),
@@ -85,7 +90,8 @@ public enum UpmManagementMessage implements MessageCode {
     DATA_UPDATE_CONFLICT("upm.management.data-update-conflict", "更新失败 数据已经变更"),
     DATA_NOT_FOUND("upm.management.data-not-found", "数据不存在"),
     DATA_ID_NOT_FOUND("upm.management.data-id-not-found", "id不存在"),
-    DATA_SORT_CONFLICT("upm.management.data-sort-conflict", "排序失败 数据已经变更");
+    DATA_SORT_CONFLICT("upm.management.data-sort-conflict", "排序失败 数据已经变更"),
+    PAGE_SORT_INVALID("upm.management.page-sort-invalid", "排序字段或排序方向不合法");
 
     private final String key;
     private final String defaultMessage;

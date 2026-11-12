@@ -216,9 +216,9 @@ public class UserHandler {
     public Page<UserInfoResponse> page(BasePageRequest<UserPageRequest> request) {
         // 判断当前人有没有平台角色 没有则不能看到平台用户
         List<String> roleList = StpUtil.getRoleList(StpUtil.getLoginId());
-        if (CollUtil.contains(roleList, CommonConst.PLATFORM_ADMIN_ROLE_CODE)) {
-            request.getData().setLookPlatformUser(CommonConst.YES);
-        }
+        // 每次覆盖客户端值，隐藏文档字段并不等于禁止客户端提交。
+        request.getData().setLookPlatformUser(CollUtil.contains(roleList, CommonConst.PLATFORM_ADMIN_ROLE_CODE)
+                ? CommonConst.YES : CommonConst.NO);
         Page<?> p = new Page<>(request.getCurrent(), request.getSize());
         Page<UserInfoResponse> page = userService.findByPage(p, request);
         List<UserInfoResponse> records = page.getRecords();

@@ -51,6 +51,7 @@ public class CommonHandler {
     private final ApplicationService applicationService;
     private final ThirdAuthConfigService thirdAuthConfigService;
     private final TenantLoginPolicyHandler tenantLoginPolicyHandler;
+    private final TenantAccessHandler tenantAccessHandler;
 
     public List<Dept> currentDept() {
         long userId = StpUtil.getLoginIdAsLong();
@@ -174,6 +175,7 @@ public class CommonHandler {
 
     @Transactional(rollbackFor = Exception.class)
     public void addTenant(TenantRequest dto) {
+        tenantAccessHandler.checkPlatformAdministrator();
         log.info("添加租户:{}", JSONUtil.toJsonStr(dto));
         Tenant tenant = tenantService.findByCode(dto.getCode());
         if (tenant != null) {

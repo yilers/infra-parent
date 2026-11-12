@@ -7,6 +7,10 @@ import io.github.yilers.upm.service.DeptLeaderService;
 import io.github.yilers.upm.service.UserService;
 import io.github.yilers.web.exception.CommonException;
 import org.junit.jupiter.api.Test;
+import cn.dev33.satoken.stp.StpUtil;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
+import org.mockito.MockedStatic;
 
 import java.util.List;
 
@@ -17,6 +21,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class DeptOptimisticLockTest {
+    private MockedStatic<StpUtil> login;
+
+    @BeforeEach
+    void login() {
+        login = org.mockito.Mockito.mockStatic(StpUtil.class);
+    }
+
+    @AfterEach
+    void closeLogin() {
+        login.close();
+    }
     private final DeptService service = mock(DeptService.class);
     private final DeptHandler handler = new DeptHandler(service, mock(DeptLeaderService.class),
             mock(UserService.class), mock(CommonHandler.class));
