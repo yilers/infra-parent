@@ -55,7 +55,7 @@
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>
         <!-- https://central.sonatype.com/artifact/org.springframework.boot/spring-boot-starter/versions -->
-        <spring-boot.version>4.1.2</spring-boot.version>
+        <spring-boot.version>4.2.0</spring-boot.version>
         <!-- https://central.sonatype.com/artifact/cn.hutool.v7/hutool-all/versions -->
         <hutool-v7.version>7.0.0-M8</hutool-v7.version>
         <!-- https://central.sonatype.com/artifact/com.dtflys.forest/forest-spring-boot-starter/versions -->
@@ -63,15 +63,15 @@
         <!-- https://central.sonatype.com/artifact/org.redisson/redisson-spring-boot-starter/versions -->
         <redisson.version>4.8.0</redisson.version>
         <!-- https://central.sonatype.com/artifact/cn.dev33/sa-token-spring-boot-starter/versions -->
-        <sa-token.version>1.45.0</sa-token.version>
+        <sa-token.version>1.46.0</sa-token.version>
         <!-- https://central.sonatype.com/artifact/org.dromara.dynamictp/dynamic-tp-spring-boot-starter-common/versions -->
         <dynamic-tp.version>1.2.2</dynamic-tp.version>
         <!-- https://central.sonatype.com/artifact/com.baomidou/mybatis-plus/versions -->
-        <mybatis-plus.version>3.5.18</mybatis-plus.version>
+        <mybatis-plus.version>3.5.18.1</mybatis-plus.version>
         <!-- https://central.sonatype.com/artifact/org.dromara.warm/warm-flow-mybatis-plus-sb4-starter/versions -->
         <warm-flow.version>1.8.9</warm-flow.version>
         <!-- https://central.sonatype.com/artifact/com.baizhukui/knife4j-openapi3-boot4-spring-boot-starter/versions -->
-        <knife4j-next.version>5.8.1</knife4j-next.version>
+        <knife4j-next.version>5.8.3</knife4j-next.version>
         <!-- 与knife4j-next使用的 Swagger 注解版本保持一致 https://central.sonatype.com/artifact/com.baizhukui/knife4j-openapi3-boot4-spring-boot-starter/dependencies -->
         <swagger-annotations.version>2.2.55</swagger-annotations.version>
         <!-- https://central.sonatype.com/artifact/com.baomidou/dynamic-datasource-spring-boot-starter/versions -->
@@ -83,13 +83,13 @@
         <!-- https://central.sonatype.com/artifact/com.alicp.jetcache/jetcache-starter-redisson/versions -->
         <jetcache.version>2.8.0.RC</jetcache.version>
         <!-- https://central.sonatype.com/artifact/org.lionsoul/ip2region/versions -->
-        <ip2region.version>3.3.7</ip2region.version>
+        <ip2region.version>3.3.8</ip2region.version>
         <!-- https://central.sonatype.com/artifact/org.projectlombok/lombok/versions -->
         <lombok.version>1.18.48</lombok.version>
         <!-- https://central.sonatype.com/artifact/org.roaringbitmap/RoaringBitmap/versions -->
         <RoaringBitmap.version>1.6.29</RoaringBitmap.version>
         <!-- https://central.sonatype.com/artifact/com.julien-dubois.bootui/bootui-spring-boot-starter/versions -->
-        <bootui.version>2.3.0</bootui.version>
+        <bootui.version>2.5.0</bootui.version>
         <!-- https://central.sonatype.com/artifact/org.springframework.ai/spring-ai-starter-model-openai/versions -->
         <spring-ai.version>2.0.2</spring-ai.version>
         <!-- https://central.sonatype.com/artifact/com.alibaba.cloud.ai/spring-ai-alibaba/versions -->
@@ -111,7 +111,7 @@
         <!-- https://central.sonatype.com/artifact/org.apache.maven.plugins/maven-deploy-plugin/versions -->
         <maven-deploy-plugin.version>3.2.0</maven-deploy-plugin.version>
         <!-- https://central.sonatype.com/artifact/org.codehaus.mojo/flatten-maven-plugin/versions -->
-        <flatten-maven-plugin.version>1.8.0</flatten-maven-plugin.version>
+        <flatten-maven-plugin.version>1.9.0</flatten-maven-plugin.version>
     </properties>
 
     <!-- ✅ 统一依赖版本管理 -->

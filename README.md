@@ -2,7 +2,7 @@
 
 infra-parent 是一套基于 Spring Boot 4 的多租户基础服务，核心提供 UPM（User Permission Management）用户权限中心。它既可以作为统一认证与权限中心独立部署，也可以通过 Maven 模块直接集成到业务系统。
 
-项目当前已经覆盖租户、应用、组织、RBAC、数据权限、SSO 和第三方账号登录等基础能力。1.2.0开发版已接入工作流定义设计和个人审批中心；文件、通知仍是预留模块，具体业务流程后续按需接入。
+项目当前已经覆盖租户、应用、组织、RBAC、数据权限、SSO 和第三方账号登录等基础能力。1.2.0 新增工作流定义设计、个人审批中心和短链服务；文件、通知仍是预留模块，具体业务流程后续按需接入。
 
 ## 核心能力
 
@@ -14,8 +14,8 @@ infra-parent 是一套基于 Spring Boot 4 的多租户基础服务，核心提�
 - 租户权限同步：租户 1 作为平台模板，可将应用和菜单按钮增量同步到其他租户。
 - SSO：基于 Sa-Token SSO 模式三实现统一登录，不要求 UPM 与业务系统共享 Redis。
 - 第三方登录：当前支持钉钉配置、账号绑定、解绑及已绑定账号直接登录 UPM。
-- 工作流（1.2.0开发中）：流程定义设计、版本与发布，个人待办/已办/我发起的、运行图和审批记录，支持本人任务通过与退回；新增独立的[请假业务示例](doc/modules/flow-leave.md)，支持草稿、首次提交自动完成申请节点、退回修改、原实例重新提交和授权业务详情；支持申请人、部门副主管及上级主管等[动态办理人规则](doc/modules/flow-assignees.md)。
-- 短链（1.2.0开发中）：多租户域名、路径配置、自动号段或自定义短码，支持本地调用、系统签名调用和公开跳转。
+- 工作流：流程定义设计、版本与发布，个人待办/已办/我发起的、运行图和审批记录，支持本人任务通过与退回；新增独立的[请假业务示例](doc/modules/flow-leave.md)，支持草稿、首次提交自动完成申请节点、退回修改、原实例重新提交和授权业务详情；支持申请人、部门副主管及上级主管等[动态办理人规则](doc/modules/flow-assignees.md)。
+- 短链：多租户域名、路径配置、自动号段或自定义短码，支持本地调用、系统签名调用和公开跳转。
 - 基础能力：统一响应、异常处理、日志、缓存、分布式锁、限流和 API 文档。[分布式锁与限流用法](doc/DISTRIBUTED_CONTROL.md)包含统一SpEL规则、身份上下文和旧写法迁移说明。
 
 ## 权限模型
@@ -44,11 +44,11 @@ infra-parent 是一套基于 Spring Boot 4 的多租户基础服务，核心提�
 | 类型 | 技术 |
 | --- | --- |
 | 构建 JDK | JDK 25（产物目标版本为 Java 21） |
-| Web 框架 | Spring Boot 4.1.2 |
-| ORM | MyBatis Plus 3.5.18 |
+| Web 框架 | Spring Boot 4.2.0 |
+| ORM | MyBatis Plus 3.5.18.1 |
 | 数据库 | MySQL 5.7 / 8.x（同时提供 PostgreSQL SQL 脚本） |
 | 缓存 | Redis、Redisson、JetCache |
-| 认证授权 | Sa-Token 1.45.0 |
+| 认证授权 | Sa-Token 1.46.0 |
 | API 文档 | Knife4j-next |
 | 工具库 | Hutool 7 |
 | 动态线程池 | Dynamic-TP |
@@ -91,6 +91,10 @@ infra-parent
 - Maven 3.9+
 - MySQL 5.7 或 8.x
 - Redis 6.0+
+
+Sa-Token 1.46.0 的 Redis 适配使用 `SET KEEPTTL`，运行环境必须支持 Redis 6.0+；Redis 5.x 及更早版本可能报 `ERR syntax error`。参见 [Sa-Token 官方兼容说明](https://sa-token.com/more/common-questions.html)。仓库和发布产物统一使用根 POM 中的 Sa-Token 版本，不内置旧 Redis 兼容实现。
+
+仅本地开发仍使用旧 Redis 时，可以临时将根 `pom.xml` 的 `sa-token.version` 改为 `1.45.0`，并重新加载 Maven，使 starter、核心、SSO 和 Redis 适配依赖保持同版本。该改动仅用于本机调试，不要提交；发布前必须恢复仓库版本，并在 Redis 6.0+ 环境验证账号登录、会话更新及 SSO 登录和注销。本地降级不代表发布产物支持旧 Redis。
 
 仓库同时维护 PostgreSQL 全量及增量脚本，并提供 MySQL、PostgreSQL JDBC 驱动；使用 PostgreSQL 时需要调整数据源配置，部署前还应在目标数据库验证所需功能的兼容性。
 
@@ -257,13 +261,13 @@ https://upm.example.com/third-auth-callback.html
 <dependency>
     <groupId>io.github.yilers</groupId>
     <artifactId>upm-core</artifactId>
-    <version>1.1.1</version>
+    <version>1.2.0</version>
 </dependency>
 ```
 
 只需要实体、请求响应对象或服务契约时，可以依赖 `upm-api`。建议业务模块同样采用 `api + core + start` 分层。
 
-上面的依赖版本使用**上一正式发布版**，不是当前源码的 `1.2.0` 开发版本；`1.2.0` 完成并发布后再更新该示例。源码构建版本由父 POM 的 `revision` 决定，无需在每条 Maven 命令中重复指定。
+上面的依赖版本对应 `1.2.0` 发布版本；后续开发期间示例保持最近一次正式发布版本。源码构建版本由父 POM 的 `revision` 决定，无需在每条 Maven 命令中重复指定。
 
 模块集成与独立 SSO 是两种不同部署方式：业务系统已经集成本地 `upm-core` 和 UPM 数据表时，通常直接使用本地登录，不再连接另一套独立 UPM。
 

@@ -2,6 +2,8 @@
 
 本目录提供 `infra-start` 的容器部署示例，包含 UPM、Flow 和 Shortlink，并使用后端内嵌的前端资源。默认连接已有的 MySQL 或 PostgreSQL 及 Redis；也可以叠加配置，由 Compose 启动 MySQL 和 Redis。示例不会自动执行 SQL 或修改已有数据库。
 
+Redis 服务要求 **6.0及以上**：Sa-Token 1.46.0 使用 `SET KEEPTTL` 保留会话过期时间，旧 Redis 可能返回 `ERR syntax error`。接入已有 Redis 时请先执行 `redis-cli INFO server` 核对 `redis_version`；部署平台也需支持该命令。仅本机开发临时降级 Sa-Token 的说明见[项目环境要求](../README.md#环境要求)，不要使用本地降级配置构建发布镜像。
+
 ## 准备
 
 在服务器安装 Docker、Docker Compose 插件和 Git，拉取项目源码，并在仓库根目录执行：
