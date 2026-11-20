@@ -14,7 +14,8 @@ public class LockMetadataCache {
             if (annotation == null) {
                 return null;
             }
-            return new LockDefinition(annotation.key(), annotation.leaseTime(), annotation.waitTime());
+            return new LockDefinition(annotation.key(), annotation.lockTime(), annotation.lockTimeUnit(),
+                    annotation.waitTimeout(), annotation.waitTimeoutUnit());
         });
     }
 }
