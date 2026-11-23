@@ -94,7 +94,9 @@ infra-parent
 
 Sa-Token 1.46.0 的 Redis 适配使用 `SET KEEPTTL`，运行环境必须支持 Redis 6.0+；Redis 5.x 及更早版本可能报 `ERR syntax error`。参见 [Sa-Token 官方兼容说明](https://sa-token.com/more/common-questions.html)。仓库和发布产物统一使用根 POM 中的 Sa-Token 版本，不内置旧 Redis 兼容实现。
 
-仅本地开发仍使用旧 Redis 时，可以临时将根 `pom.xml` 的 `sa-token.version` 改为 `1.45.0`，并重新加载 Maven，使 starter、核心、SSO 和 Redis 适配依赖保持同版本。该改动仅用于本机调试，不要提交；发布前必须恢复仓库版本，并在 Redis 6.0+ 环境验证账号登录、会话更新及 SSO 登录和注销。本地降级不代表发布产物支持旧 Redis。
+仅本地开发仍使用旧 Redis 时，可在 IDEA 的 Maven Profiles 中启用 `infra-start` 的 `dev-redis-legacy` 并重新加载 Maven。该 Profile 加载现有 `dev` 环境配置，并通过 Sa-Token BOM 将统一启动模块的运行依赖切换为 `1.45.0`，不修改根 POM，也不改变 `upm-core` 等业务模块的发布依赖。命令行可使用 `mvn -pl infra-start -am package -Pdev-redis-legacy`。
+
+`dev-redis-legacy` 默认不激活，仅用于本机调试；正式构建及发布时不要启用，IDEA 中也应取消勾选，并在 Redis 6.0+ 环境验证账号登录、会话更新及 SSO 登录和注销。本地兼容模式不代表发布产物支持旧 Redis，也不作用于 `upm-start` 独立启动器。业务模块仍按正式版本编译，使用新增的 Sa-Token API 后需重新确认本地兼容模式是否适用。
 
 仓库同时维护 PostgreSQL 全量及增量脚本，并提供 MySQL、PostgreSQL JDBC 驱动；使用 PostgreSQL 时需要调整数据源配置，部署前还应在目标数据库验证所需功能的兼容性。
 

@@ -71,6 +71,34 @@
     </build>
 
     <profiles>
+        <!-- 仅供本机旧Redis调试；需显式启用，不与dev默认绑定，发布和部署时不要启用。 -->
+        <profile>
+            <id>dev-redis-legacy</id>
+            <properties>
+                <!-- 显式启用本Profile后，默认dev不再激活，仍需使用开发环境配置。 -->
+                <profiles.active>dev</profiles.active>
+            </properties>
+            <dependencyManagement>
+                <dependencies>
+                    <!-- 统一覆盖启动模块的Sa-Token传递依赖，避免新旧组件混用。
+                         不影响upm-core等业务模块的编译及发布依赖版本。 -->
+                    <dependency>
+                        <groupId>cn.dev33</groupId>
+                        <artifactId>sa-token-bom</artifactId>
+                        <version>1.45.0</version>
+                        <type>pom</type>
+                        <scope>import</scope>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
+            <dependencies>
+                <dependency>
+                    <groupId>com.julien-dubois.bootui</groupId>
+                    <artifactId>bootui-spring-boot-starter</artifactId>
+                    <version>${bootui.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
         <profile>
             <id>dev</id>
             <activation>
