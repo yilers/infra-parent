@@ -183,11 +183,15 @@
 ### 依赖与构建
 
 1. 项目源码版本由 `1.2.0` 升级至 `1.2.1`，README 中的依赖示例继续使用最近正式发布版 `1.2.0`。
-2. Knife4j Next 由 `5.8.3` 升级至 `5.8.4`，Swagger 注解由 `2.2.55` 升级至 `2.2.56`。
+2. Knife4j Next 由 `5.8.3` 升级至 `5.8.5`，Swagger 注解由 `2.2.55` 升级至 `2.2.56`。
 3. Spring AI 由 `2.0.2` 升级至 `2.1.0`，Spring AI Agent Utils 由 `0.13.0` 升级至 `0.14.0`。
 4. `infra-start` 新增默认不激活的 `dev-redis-legacy` Maven Profile，加载开发环境配置，仅本机旧 Redis 调试时将启动模块的 Sa-Token 依赖切换为 `1.45.0`；业务模块及默认发布构建保持正式版本。
 
 以上依赖升级已完成本地验证。
+
+### 优化
+
+1. 请求上下文的 `traceId` 关联Micrometer当前链路，提供 `RequestContextHolder.getTraceId()` 便于业务读取；未配置Tracer或无活动Span时返回空，请求结束及异常退出均清理上下文，不额外生成链路标识。
 
 ### 文档
 

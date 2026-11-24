@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration debug="false" scan="false">
 
-    <!-- spring属性 -->
+    <!-- Spring 属性 -->
     <springProperty scope="context" name="spring.application.name" source="spring.application.name" defaultValue=""/>
     <springProperty scope="context" name="spring.profiles.active" source="spring.profiles.active" defaultValue=""/>
     <springProperty scope="context" name="logging.file.path" source="logging.file.path" defaultValue="./log"/>
     <springProperty scope="context" name="logging.level.root" source="logging.level.root" defaultValue=""/>
 
-
     <property name="log.path" value="${logging.file.path}/${spring.application.name}/${spring.profiles.active}"/>
 
-    <!-- 彩色日志格式 -->
+    <!-- 彩色日志格式：增加 TraceId、SpanId -->
     <property name="CONSOLE_LOG_PATTERN"
-              value="${CONSOLE_LOG_PATTERN:-%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
+              value="${CONSOLE_LOG_PATTERN:-%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr([%X{traceId:-},%X{spanId:-}]){yellow} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
+
     <!-- 彩色日志依赖的渲染类 -->
     <conversionRule conversionWord="clr"
                     class="org.springframework.boot.logging.logback.ColorConverter"/>
@@ -45,16 +45,17 @@
         </encoder>
     </appender>
 
+    <!-- App 日志 -->
     <appender name="appFile" class="ch.qos.logback.core.FileAppender">
         <file>${log.path}/app.log</file>
-        <append>true</append> <!-- 确保是追加，不清空 -->
+        <append>true</append>
         <encoder>
             <pattern>${CONSOLE_LOG_PATTERN}</pattern>
             <charset>UTF-8</charset>
         </encoder>
     </appender>
 
-    <!-- Error日志文件滚动输出 -->
+    <!-- Error 日志文件滚动输出 -->
     <appender name="error" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>${log.path}/%d{yyyy-MM}/error.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
@@ -70,7 +71,7 @@
         </encoder>
     </appender>
 
-    <!-- Error级别 HTML 日志 -->
+    <!-- Error 级别 HTML 日志 -->
     <appender name="errorHtml" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>${log.path}/%d{yyyy-MM}/error.%d{yyyy-MM-dd}.%i.html.gz</fileNamePattern>
@@ -88,7 +89,7 @@
         </encoder>
     </appender>
 
-    <!-- Info级别 HTML 日志 -->
+    <!-- Info 级别 HTML 日志 -->
     <appender name="infoHtml" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>${log.path}/%d{yyyy-MM}/info.%d{yyyy-MM-dd}.%i.html.gz</fileNamePattern>
@@ -108,7 +109,7 @@
         </encoder>
     </appender>
 
-    <!-- 异步包装器，避免日志阻塞 -->
+    <!-- 异步包装器 -->
     <appender name="asyncFile" class="ch.qos.logback.classic.AsyncAppender">
         <appender-ref ref="file"/>
         <queueSize>8192</queueSize>
@@ -142,16 +143,16 @@
         <queueSize>8192</queueSize>
     </appender>
 
-    <!-- MyBatis等日志调试 -->
-    <logger name="com.apache.ibatis" level="TRACE" />
-    <logger name="java.sql.Connection" level="DEBUG" />
-    <logger name="java.sql.Statement" level="DEBUG" />
-    <logger name="java.sql.PreparedStatement" level="DEBUG" />
+    <!-- MyBatis 等日志调试 -->
+    <logger name="com.apache.ibatis" level="TRACE"/>
+    <logger name="java.sql.Connection" level="DEBUG"/>
+    <logger name="java.sql.Statement" level="DEBUG"/>
+    <logger name="java.sql.PreparedStatement" level="DEBUG"/>
 
-    <!-- 不显示Spring Kafka的日志 -->
+    <!-- 不显示 Spring Kafka 的日志 -->
     <logger name="org.springframework.kafka" level="OFF"/>
 
-    <!-- 多环境配置 按照active profile选择分支 -->
+    <!-- 多环境配置 -->
     <springProfile name="dev|local">
         <root level="${logging.level.root:-INFO}">
             <appender-ref ref="console"/>
@@ -159,7 +160,7 @@
             <appender-ref ref="asyncError"/>
             <appender-ref ref="asyncErrorHtml"/>
             <appender-ref ref="asyncInfoHtml"/>
-             <appender-ref ref="asyncAppFile"/>
+            <appender-ref ref="asyncAppFile"/>
         </root>
     </springProfile>
 
@@ -168,7 +169,7 @@
             <appender-ref ref="console"/>
             <appender-ref ref="asyncFile"/>
             <appender-ref ref="asyncError"/>
-             <appender-ref ref="asyncAppFile"/>
+            <appender-ref ref="asyncAppFile"/>
         </root>
     </springProfile>
 

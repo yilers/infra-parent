@@ -15,6 +15,7 @@ public class RequestContext {
      */
     private String deviceType;
 
+    /** 当前请求的Micrometer链路标识，与日志中的traceId一致；无链路时为空。 */
     private String traceId;
 
     private Long userId;

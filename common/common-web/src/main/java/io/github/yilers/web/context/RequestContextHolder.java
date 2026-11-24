@@ -20,6 +20,17 @@ public class RequestContextHolder {
         CONTEXT.remove();
     }
 
+    /** 保存已建立链路的标识，不负责生成Trace ID或传播Span上下文。 */
+    public void setTraceId(String traceId) {
+        getOrCreate().setTraceId(traceId);
+    }
+
+    /** 获取请求入口保存的Trace ID；未建立请求上下文时返回null。 */
+    public String getTraceId() {
+        RequestContext context = CONTEXT.get();
+        return context != null ? context.getTraceId() : null;
+    }
+
     public void setTenantId(Long tenantId) {
         getOrCreate().setTenantId(tenantId);
     }
