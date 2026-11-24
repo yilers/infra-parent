@@ -25,7 +25,7 @@ import java.util.TimeZone;
 @RequestMapping("/upm")
 @Tag(name = "测试")
 @ApiSupport(order = 10, author = "张辉")
-public class HomeController {
+public class UpmHomeController {
 
     @SaIgnore
     @GetMapping("/")

@@ -1,19 +1,22 @@
 package io.github.yilers.upm.controller;
 
 
+import cn.dev33.satoken.annotation.SaIgnore;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.v7.http.server.servlet.ServletUtil;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
 import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.github.yilers.core.util.Result;
 import io.github.yilers.web.permission.DataPermissionResource;
+import io.github.yilers.web.util.Ip2RegionUtil;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.condition.PathPatternsRequestCondition;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
@@ -66,4 +69,17 @@ public class CommonController {
                         && !api.contains("/swagger")).collect(Collectors.toList()));
         return Result.ok(list);
     }
+
+    /** 查询IP归属地；未指定地址时使用当前请求的客户端IP，允许未登录访问。 */
+    @SaIgnore
+    @ApiOperationSupport(order = 2)
+    @Operation(summary = "查询IP归属地", description = "支持IPv4和IPv6；ip未传或为空白时查询当前请求的客户端IP。返回IP数据库中的原始归属地字符串，查询失败返回未知。")
+    @GetMapping("/ip")
+    public Result<String> ipRegion(
+            @Parameter(description = "待查询的IPv4或IPv6地址，例如11.11.11.11；不传或为空白时使用当前请求的客户端IP")
+            @RequestParam(value = "ip", required = false) String ip, HttpServletRequest request) {
+        String queryIp = StrUtil.isBlank(ip) ? ServletUtil.getClientIP(request) : ip.trim();
+        return Result.ok(Ip2RegionUtil.region(queryIp));
+    }
+
 }

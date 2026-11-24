@@ -8,41 +8,73 @@ import org.lionsoul.ip2region.service.Config;
 import org.lionsoul.ip2region.service.Ip2Region;
 
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @UtilityClass
 public class Ip2RegionUtil {
-    Config v4Config;
-    Config v6Config;
-    Ip2Region ip2Region;
-    static {
-        try {
-            InputStream stream4 = ResourceUtil.getStream("ip2region_v4.xdb");
-            InputStream stream6 = ResourceUtil.getStream("ip2region_v6.xdb");
-            v4Config = Config.custom()
-                    .setCachePolicy(Config.BufferCache)     // 指定缓存策略:  NoCache / VIndexCache / BufferCache
-                    .setSearchers(15)                       // 设置初始化的查询器数量
-                    .setXdbInputStream(stream4)      // 设置 v4 xdb 文件的 inputstream 对象
-                    // .setXdbFile(File)                    // 设置 v4 xdb File 对象
-//            .setXdbPath("ip2region v4 xdb path")    // 设置 v4 xdb 文件的路径
-                    .asV4();    // 指定为 v4 配置
+    /** 文件查询器数量固定，全部借出时由官方查询池等待可用查询器。 */
+    private static final int IPV6_SEARCHERS = 15;
 
-            v6Config = Config.custom()
-                    .setCachePolicy(Config.BufferCache)     // 指定缓存策略: NoCache / VIndexCache / BufferCache
-                    .setSearchers(15)                       // 设置初始化的查询器数量
-                     .setXdbInputStream(stream6)      // 设置 v6 xdb 文件的 inputstream 对象
-                    // .setXdbFile(File)                    // 设置 v6 xdb File 对象
-//                    .setXdbPath("ip2region v6 xdb path")    // 设置 v6 xdb 文件的路径
-                    .asV6();    // 指定为 v6 配置
-            ip2Region = Ip2Region.create(v4Config, v6Config);
+    private static final Ip2Region ip2Region = initialize();
+
+    /**
+     * IPv4全内存查询，IPv6不缓存数据库和向量索引。
+     * JAR内资源不能直接进行随机文件读取，因此IPv6以流式复制方式落到进程独享的临时文件。
+     * 两个输入流加载完即关闭，IPv6文件句柄在JVM正常退出时统一关闭，再删除临时文件。
+     */
+    private Ip2Region initialize() {
+        Path ipv6File = null;
+        Ip2Region service = null;
+        try (InputStream stream4 = ResourceUtil.getStream("ip2region_v4.xdb");
+             InputStream stream6 = ResourceUtil.getStream("ip2region_v6.xdb")) {
+            Config v4Config = Config.custom()
+                    .setCachePolicy(Config.BufferCache)
+                    .setXdbInputStream(stream4)
+                    .asV4();
+
+            ipv6File = Files.createTempFile("infra-ip2region-v6-", ".xdb");
+            Files.copy(stream6, ipv6File, StandardCopyOption.REPLACE_EXISTING);
+            Config v6Config = Config.custom()
+                    .setCachePolicy(Config.NoCache)
+                    .setSearchers(IPV6_SEARCHERS)
+                    .setXdbFile(ipv6File.toFile())
+                    .asV6();
+            service = Ip2Region.create(v4Config, v6Config);
+
+            Ip2Region initializedService = service;
+            Path initializedFile = ipv6File;
+            Runtime.getRuntime().addShutdownHook(new Thread(
+                    () -> closeResources(initializedService, initializedFile), "ip2region-shutdown"));
+            return service;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            // 初始化失败也不遗留已经打开的服务和已复制的临时文件。
+            closeResources(service, ipv6File);
+            throw new IllegalStateException("IP归属地数据库初始化失败", e);
         }
     }
 
-    // 备注：Xdb 三种初始化输入的优先级：XdbInputStream -> XdbFile -> XdbPath
-    // setXdbInputStream 仅方便使用者从 jar 包中加载 xdb 文件内容，这时 cachePolicy 只能设置为 Config.BufferCache
+    /** 关闭查询池后再删除临时数据库，避免文件仍被查询器持有。 */
+    private void closeResources(Ip2Region service, Path ipv6File) {
+        if (service != null) {
+            try {
+                service.close();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.warn("关闭IP归属地查询服务时被中断", e);
+            }
+        }
+        if (ipv6File != null) {
+            try {
+                Files.deleteIfExists(ipv6File);
+            } catch (Exception e) {
+                log.warn("清理IPv6临时数据库失败：{}", ipv6File, e);
+            }
+        }
+    }
 
     @SneakyThrows
     public String region(String ip) {
