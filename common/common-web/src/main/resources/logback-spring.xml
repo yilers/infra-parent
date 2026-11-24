@@ -109,38 +109,39 @@
         </encoder>
     </appender>
 
-    <!-- 异步包装器 -->
+    <!-- 异步包装器：当前格式不输出源码调用位置，统一关闭调用栈采集，避免配置冲突及额外开销。 -->
     <appender name="asyncFile" class="ch.qos.logback.classic.AsyncAppender">
         <appender-ref ref="file"/>
         <queueSize>8192</queueSize>
         <discardingThreshold>0</discardingThreshold>
-        <includeCallerData>true</includeCallerData>
+        <includeCallerData>false</includeCallerData>
     </appender>
 
     <appender name="asyncError" class="ch.qos.logback.classic.AsyncAppender">
         <appender-ref ref="error"/>
         <queueSize>8192</queueSize>
         <discardingThreshold>0</discardingThreshold>
-        <includeCallerData>true</includeCallerData>
+        <includeCallerData>false</includeCallerData>
     </appender>
 
     <appender name="asyncErrorHtml" class="ch.qos.logback.classic.AsyncAppender">
         <appender-ref ref="errorHtml"/>
         <queueSize>8192</queueSize>
         <discardingThreshold>0</discardingThreshold>
-        <includeCallerData>true</includeCallerData>
+        <includeCallerData>false</includeCallerData>
     </appender>
 
     <appender name="asyncInfoHtml" class="ch.qos.logback.classic.AsyncAppender">
         <appender-ref ref="infoHtml"/>
         <queueSize>8192</queueSize>
         <discardingThreshold>0</discardingThreshold>
-        <includeCallerData>true</includeCallerData>
+        <includeCallerData>false</includeCallerData>
     </appender>
 
     <appender name="asyncAppFile" class="ch.qos.logback.classic.AsyncAppender">
         <appender-ref ref="appFile"/>
         <queueSize>8192</queueSize>
+        <includeCallerData>false</includeCallerData>
     </appender>
 
     <!-- MyBatis 等日志调试 -->
