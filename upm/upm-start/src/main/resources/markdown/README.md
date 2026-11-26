@@ -152,11 +152,7 @@ Page<LogInfoResponse> findByPage(@Param("page") Page<?> p,
                                  @Param("request") BasePageRequest<Log> request);
 ```
 
-需要列权限处理的表可在配置中声明：
-
-```properties
-permission.column.table=upm_log,upm_user
-```
+字段权限在响应VO上声明，支持隐藏、脱敏、完整显示和独立修改权限，角色管理中按业务资源配置。旧的SQL列删除配置已移除；业务接入、两套数据库迁移和授权规则见项目仓库的 `doc/FIELD_PERMISSION.md`。
 
 ## 常用命令
 

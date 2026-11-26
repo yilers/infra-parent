@@ -14,6 +14,9 @@ import io.github.yilers.upm.request.UserRequest;
 import io.github.yilers.upm.request.UserUpdatePwdRequest;
 import io.github.yilers.upm.response.UserBatchAddResponse;
 import io.github.yilers.upm.response.UserInfoResponse;
+import io.github.yilers.upm.response.UserManagementResponse;
+import cn.hutool.v7.extra.spring.cglib.CglibUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.github.yilers.api.base.BaseOperateRequest;
 import io.github.yilers.api.base.BasePageRequest;
 import io.github.yilers.web.log.SysLog;
@@ -99,9 +102,9 @@ public class UserController {
     @Operation(summary = "分页查询用户")
     @DataPermissionResource(name = "用户列表")
     @SaCheckPermission("system:user:list")
-    public Result<Page<UserInfoResponse>> page(@RequestBody BasePageRequest<UserPageRequest> request) {
+    public Result<IPage<UserManagementResponse>> page(@RequestBody BasePageRequest<UserPageRequest> request) {
         Page<UserInfoResponse> p = userHandler.page(request);
-        return Result.ok(p);
+        return Result.ok(p.convert(user -> CglibUtil.copy(user, UserManagementResponse.class)));
     }
 
     @PostMapping("/delete/{userId}")

@@ -17,6 +17,7 @@ import io.github.yilers.upm.request.TenantRequest;
 import io.github.yilers.upm.service.*;
 import io.github.yilers.upm.i18n.UpmManagementMessage;
 import io.github.yilers.web.exception.CommonException;
+import io.github.yilers.web.i18n.CommonMessage;
 import io.github.yilers.web.permission.DataPermissionResourceResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +53,7 @@ public class CommonHandler {
     private final ThirdAuthConfigService thirdAuthConfigService;
     private final TenantLoginPolicyHandler tenantLoginPolicyHandler;
     private final TenantAccessHandler tenantAccessHandler;
+    private final FieldService fieldService;
 
     public List<Dept> currentDept() {
         long userId = StpUtil.getLoginIdAsLong();
@@ -199,6 +201,24 @@ public class CommonHandler {
             Map<Long, Long> applicationIdMap = initApplication(tenantId);
             initThirdAuthConfig(tenantId);
             initTenantAdmin(tenantId, copy, dept, applicationIdMap);
+            // 新租户记录由当前事务新建并持有行锁，外部同步需等待提交，不会与复制并发插入。
+            // 模板必须保持资源字段唯一；发现重复时回滚创建，避免把错误目录带入新租户。
+            Set<String> fieldKeys = new HashSet<>();
+            for (var source : fieldService.list()) {
+                if (!fieldKeys.add(source.getResourceCode() + ":" + source.getFieldCode())) {
+                    throw new CommonException(CommonMessage.FIELD_CONFIG_INVALID);
+                }
+                var field = BeanUtil.copyProperties(source, io.github.yilers.upm.entity.Field.class);
+                field.setId(null);
+                field.setTenantId(tenantId);
+                field.setVersion(1);
+                field.setCreateId(null);
+                field.setCreateTime(null);
+                field.setUpdateTime(null);
+                if (!fieldService.save(field)) {
+                    throw new CommonException(CommonMessage.SAVE_FAILED);
+                }
+            }
         } finally {
             RequestContextHolder.setTenantId(previousTenantId);
         }

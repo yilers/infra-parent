@@ -25,8 +25,8 @@ class ApplicationMigrationTest {
                 org.junit.jupiter.api.Assertions.assertFalse(sql.contains("ALTER TABLE upm_permission ADD"));
                 // 顺序执行关联表、种子和临时表语句；H2不支持的引擎选项和内联注释不参与此测试。
                 var statements = java.util.regex.Pattern.compile(
-                        "(?s)(?:(?:CREATE TABLE|INSERT INTO) `?(?:upm_application|upm_permission|upm_role|upm_role_permission|upm_tenant)`?\\s*\\([^;]+;"
-                                + "|CREATE TEMPORARY TABLE migration_[a-z_]+ AS\\s+[^;]+;|DROP TABLE migration_[a-z_]+;)")
+                        "(?s)(?:(?:CREATE TABLE(?: IF NOT EXISTS)?|INSERT INTO) `?(?:upm_application|upm_permission|upm_role|upm_role_permission|upm_tenant|upm_field|upm_role_field)`?\\s*\\([^;]+;"
+                                + "|SET @field[a-z_]*=[^;]+;|CREATE TEMPORARY TABLE migration_[a-z_]+ AS\\s+[^;]+;|DROP TABLE migration_[a-z_]+;)")
                         .matcher(sql);
                 while (statements.find()) {
                     String statement = statements.group().replaceAll("(?s)\\) ENGINE=[^;]+;", ");");
@@ -35,6 +35,11 @@ class ApplicationMigrationTest {
                     }
                     RunScript.execute(connection, new StringReader(statement));
                 }
+                String migration = Files.readString(Path.of("../../sql/migration/20261126_field_permission_" + dialect + ".sql"));
+                RunScript.execute(connection, new StringReader(migration));
+                RunScript.execute(connection, new StringReader(migration));
+                assertEquals(2, count(connection, "SELECT COUNT(*) FROM upm_field WHERE resource_code='system:user'"));
+                assertEquals(1, count(connection, "SELECT COUNT(*) FROM upm_permission WHERE permission_code='system:role:field' AND operable=1"));
                 assertEquals(1, count(connection, "SELECT COUNT(*) FROM upm_application WHERE code='infra' AND operable=0"));
                 org.junit.jupiter.api.Assertions.assertTrue(count(connection, "SELECT COUNT(*) FROM upm_permission") >= 59);
                 assertEquals(0, count(connection, "SELECT COUNT(*) FROM upm_permission WHERE app_id<>1 OR app_id IS NULL"));
@@ -48,6 +53,15 @@ class ApplicationMigrationTest {
                 assertEquals(14, count(connection, "SELECT COUNT(*) FROM upm_role_permission WHERE role_id IN (10, 20) AND permission_id BETWEEN 197 AND 203"));
                 assertEquals(1, count(connection, "SELECT COUNT(*) FROM upm_role_permission WHERE role_id=10 AND permission_id=195"));
                 assertEquals(10, count(connection, "SELECT COUNT(*) FROM upm_role_permission rp JOIN upm_permission p ON p.id=rp.permission_id WHERE p.component='system/application/index' OR p.permission_code LIKE 'system:application:%'"));
+                // 普通索引允许保留删除历史；重新登记生成新ID，原授权不会关联到新字段。
+                int originalFieldId = count(connection, "SELECT id FROM upm_field WHERE tenant_id=1 AND resource_code='system:user' AND field_code='phone' AND deleted=0");
+                RunScript.execute(connection, new StringReader("INSERT INTO upm_role_field (tenant_id,role_id,field_id,view_mode,editable) VALUES (1,10," + originalFieldId + ",'FULL',TRUE);"
+                        + "UPDATE upm_field SET deleted=1 WHERE id=" + originalFieldId + ";"));
+                RunScript.execute(connection, new StringReader(migration));
+                RunScript.execute(connection, new StringReader(migration));
+                assertEquals(1, count(connection, "SELECT COUNT(*) FROM upm_field WHERE tenant_id=1 AND field_code='phone' AND deleted=0"));
+                assertEquals(1, count(connection, "SELECT COUNT(*) FROM upm_field WHERE tenant_id=1 AND field_code='phone' AND deleted=1"));
+                assertEquals(0, count(connection, "SELECT COUNT(*) FROM upm_role_field rf JOIN upm_field f ON f.id=rf.field_id WHERE f.field_code='phone' AND f.deleted=0"));
             }
         }
     }

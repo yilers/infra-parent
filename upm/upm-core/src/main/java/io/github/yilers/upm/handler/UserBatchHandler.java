@@ -50,6 +50,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserBatchHandler {
 
+    @jakarta.annotation.Resource
+    private io.github.yilers.web.field.FieldPermissionService fieldPermissions;
+
     private static final int MAX_ACCOUNT_LENGTH = 50;
     private static final int MAX_NAME_LENGTH = 50;
     private static final int MAX_EMAIL_LENGTH = 30;
@@ -225,6 +228,8 @@ public class UserBatchHandler {
         String password = BCrypt.hashpw(SecureUtil.md5(CommonConst.INIT_PWD));
         List<User> users = new ArrayList<>(validRows.size());
         for (BatchRow row : validRows) {
+            if (hasText(row.phone())) fieldPermissions.checkUpdate("system:user:phone", "手机号", true, null, row.phone());
+            if (hasText(row.email())) fieldPermissions.checkUpdate("system:user:email", "邮箱", true, null, row.email());
             User user = new User();
             user.setUserType(UserTypeEnum.ADMIN.getCode());
             user.setAccount(row.account());

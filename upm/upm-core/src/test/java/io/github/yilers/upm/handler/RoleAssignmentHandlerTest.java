@@ -6,6 +6,7 @@ import io.github.yilers.core.constant.CommonConst;
 import io.github.yilers.upm.entity.Role;
 import io.github.yilers.upm.entity.User;
 import io.github.yilers.upm.entity.UserRole;
+import io.github.yilers.upm.service.RoleFieldService;
 import io.github.yilers.upm.service.RoleService;
 import io.github.yilers.upm.service.UserRoleService;
 import io.github.yilers.upm.service.UserService;
@@ -110,7 +111,7 @@ class RoleAssignmentHandlerTest {
         when(roles.getOne(any())).thenReturn(role(10L, CommonConst.PLATFORM_ADMIN_ROLE_CODE));
         RoleHandler endpoint = new RoleHandler(roles, relations,
                 mock(RolePermissionService.class), mock(RoleDeptService.class),
-                mock(PermissionService.class), mock(ApplicationHandler.class), handler);
+                mock(PermissionService.class), mock(ApplicationHandler.class), handler, mock(RoleFieldService.class));
         var request = new RoleUserRequest();
         request.setRoleId(10L);
         request.setUserIdList(List.of(100L));

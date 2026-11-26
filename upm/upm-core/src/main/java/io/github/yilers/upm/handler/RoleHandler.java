@@ -19,6 +19,7 @@ import io.github.yilers.upm.request.RoleRequest;
 import io.github.yilers.upm.request.RoleUserRequest;
 import io.github.yilers.upm.response.RoleInfoResponse;
 import io.github.yilers.upm.service.RoleDeptService;
+import io.github.yilers.upm.service.RoleFieldService;
 import io.github.yilers.upm.service.RolePermissionService;
 import io.github.yilers.upm.service.RoleService;
 import io.github.yilers.upm.service.UserRoleService;
@@ -46,6 +47,7 @@ public class RoleHandler {
     private final PermissionService permissionService;
     private final ApplicationHandler applicationHandler;
     private final RoleAssignmentHandler roleAssignmentHandler;
+    private final RoleFieldService roleFieldService;
 
     @Transactional(rollbackFor = Exception.class)
     public void save(RoleRequest roleRequest) {
@@ -146,6 +148,8 @@ public class RoleHandler {
         roleService.removeById(roleId);
 
         roleDeptService.deleteByRoleId(roleId);
+        // 字段授权是关联记录，删除角色时一并物理清理。
+        roleFieldService.remove(Wrappers.<RoleField>lambdaQuery().eq(RoleField::getRoleId, roleId));
     }
 
     @Transactional(rollbackFor = Exception.class)

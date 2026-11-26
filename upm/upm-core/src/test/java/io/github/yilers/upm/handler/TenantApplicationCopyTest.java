@@ -35,9 +35,15 @@ class TenantApplicationCopyTest {
         ApplicationService applications = mock(ApplicationService.class);
         ThirdAuthConfigService thirdAuthConfigs = mock(ThirdAuthConfigService.class);
         TenantLoginPolicyHandler loginPolicyHandler = mock(TenantLoginPolicyHandler.class);
+        FieldService fields = mock(FieldService.class);
+        Field templateField = new Field();
+        templateField.setId(999L);
+        templateField.setTenantId(1L);
+        when(fields.list()).thenReturn(List.of(templateField));
+        when(fields.save(any(Field.class))).thenReturn(true);
         CommonHandler handler = new CommonHandler(users, departments, mock(RoleDeptService.class),
                 mock(UserRoleService.class), mock(UserDataScopeService.class), permissions, tenants,
-                roles, devices, grants, applications, thirdAuthConfigs, loginPolicyHandler, mock(TenantAccessHandler.class));
+                roles, devices, grants, applications, thirdAuthConfigs, loginPolicyHandler, mock(TenantAccessHandler.class), fields);
         AtomicLong sequence = new AtomicLong(1000);
         when(tenants.save(any())).thenAnswer(invocation -> {
             ((Tenant) invocation.getArgument(0)).setId(20L);
@@ -124,6 +130,11 @@ class TenantApplicationCopyTest {
         handler.addTenant(request);
 
         assertEquals(88L, RequestContextHolder.getTenantId());
+        var fieldCaptor = org.mockito.ArgumentCaptor.forClass(Field.class);
+        verify(fields).save(fieldCaptor.capture());
+        assertEquals(20L, fieldCaptor.getValue().getTenantId());
+        assertNull(fieldCaptor.getValue().getId());
+        assertEquals(999L, templateField.getId());
         assertEquals(2, copiedApplications.size());
         assertEquals(0, copiedApplications.getFirst().getOperable());
         assertEquals(0, copiedApplications.get(1).getUsable());

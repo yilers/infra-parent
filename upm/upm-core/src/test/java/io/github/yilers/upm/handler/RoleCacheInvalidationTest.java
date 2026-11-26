@@ -4,6 +4,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import io.github.yilers.api.base.BaseOperateRequest;
 import io.github.yilers.upm.entity.Role;
 import io.github.yilers.upm.request.RoleUserRequest;
+import io.github.yilers.upm.service.RoleFieldService;
 import io.github.yilers.upm.service.PermissionService;
 import io.github.yilers.upm.service.RoleDeptService;
 import io.github.yilers.upm.service.RolePermissionService;
@@ -25,7 +26,7 @@ class RoleCacheInvalidationTest {
     private final RoleAssignmentHandler assignmentHandler = mock(RoleAssignmentHandler.class);
     private final RoleHandler handler = new RoleHandler(roleService, userRoleService,
             mock(RolePermissionService.class), mock(RoleDeptService.class), mock(PermissionService.class),
-            mock(ApplicationHandler.class), assignmentHandler);
+            mock(ApplicationHandler.class), assignmentHandler, mock(RoleFieldService.class));
 
     @Test
     void changingRoleStatusClearsAllRelatedUserRoleCaches() {

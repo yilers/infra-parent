@@ -2,6 +2,7 @@ package io.github.yilers.upm.handler;
 
 import cn.dev33.satoken.stp.StpUtil;
 import io.github.yilers.upm.entity.Role;
+import io.github.yilers.upm.service.RoleFieldService;
 import io.github.yilers.upm.service.*;
 import io.github.yilers.web.exception.CommonException;
 import org.junit.jupiter.api.Test;
@@ -16,7 +17,7 @@ class RoleDetailAccessTest {
         UserRoleService users = mock(UserRoleService.class);
         RolePermissionService permissions = mock(RolePermissionService.class);
         RoleHandler handler = new RoleHandler(roles, users, permissions, mock(RoleDeptService.class),
-                mock(PermissionService.class), mock(ApplicationHandler.class), mock(RoleAssignmentHandler.class));
+                mock(PermissionService.class), mock(ApplicationHandler.class), mock(RoleAssignmentHandler.class), mock(RoleFieldService.class));
         Role platform = new Role();
         platform.setId(10L);
         platform.setRoleCode("platformAdmin");

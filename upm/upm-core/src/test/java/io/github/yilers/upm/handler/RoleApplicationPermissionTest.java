@@ -4,6 +4,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import io.github.yilers.upm.entity.Permission;
 import io.github.yilers.upm.entity.Role;
 import io.github.yilers.upm.request.RolePermissionRequest;
+import io.github.yilers.upm.service.RoleFieldService;
 import io.github.yilers.upm.service.*;
 import io.github.yilers.web.exception.CommonException;
 import org.junit.jupiter.api.Test;
@@ -18,7 +19,7 @@ class RoleApplicationPermissionTest {
     private final RolePermissionService grants = mock(RolePermissionService.class);
     private final PermissionService permissions = mock(PermissionService.class);
     private final RoleHandler handler = new RoleHandler(roles, mock(UserRoleService.class), grants,
-            mock(RoleDeptService.class), permissions, mock(ApplicationHandler.class), mock(RoleAssignmentHandler.class));
+            mock(RoleDeptService.class), permissions, mock(ApplicationHandler.class), mock(RoleAssignmentHandler.class), mock(RoleFieldService.class));
 
     @Test
     void clearingOneScopeDoesNotDeleteOtherScopes() {

@@ -33,9 +33,6 @@ public class MybatisPlusConfig {
     public MybatisPlusInterceptor mybatisPlusInterceptor(
             ObjectProvider<TenantLineInnerInterceptor> additionalTenantInterceptors) {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
-        // 列数据权限
-//        CustomResultInterceptor customResultInterceptor = new CustomResultInterceptor();
-//        interceptor.addInnerInterceptor(customResultInterceptor);
         // 多租户插件
         TenantLineInnerInterceptor tenantInterceptor = new TenantLineInnerInterceptor();
         tenantInterceptor.setTenantLineHandler(new CustomTenantHandler());

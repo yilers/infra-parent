@@ -30,6 +30,8 @@ import io.github.yilers.api.base.BaseOperateRequest;
 import io.github.yilers.api.base.BasePageRequest;
 import io.github.yilers.web.exception.CommonException;
 import io.github.yilers.web.i18n.CommonMessage;
+import io.github.yilers.web.field.FieldPermissionService;
+import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -56,6 +58,8 @@ public class UserHandler {
     private final DeptLeaderHandler deptLeaderHandler;
     private final DeptLeaderService deptLeaderService;
     private final RoleAssignmentHandler roleAssignmentHandler;
+    @Resource
+    private FieldPermissionService fieldPermissions;
 
     public UserInfoResponse currentInfo() {
         long userId = StpUtil.getLoginIdAsLong();
@@ -122,6 +126,7 @@ public class UserHandler {
      */
     @Transactional(rollbackFor = Exception.class)
     public Long addUser(UserRequest request) {
+        checkContactFields(request, null);
         String account = request.getAccount();
         User user = userService.findByAccount(account);
         if (ObjUtil.isNotEmpty(user)) {
@@ -160,13 +165,19 @@ public class UserHandler {
         if (!Objects.equals(oldUser.getDeptId(), request.getDeptId())) {
             commonHandler.checkDataScope(currentUserId, request.getDeptId());
         }
+        checkContactFields(request, oldUser);
         String account = request.getAccount();
         User user = userService.findByAccount(account);
         if (ObjUtil.isNotEmpty(user) && !user.getId().equals(id)) {
             throw new CommonException(UpmMessage.USER_ACCOUNT_EXISTS);
         }
         List<Long> roleIds = roleAssignmentHandler.rolesForUser(id, request.getRoleIdList());
+        String originalPhone = oldUser.getPhone();
+        String originalEmail = oldUser.getEmail();
         CglibUtil.copy(request, oldUser);
+        // 原有表单仍可提交完整对象，但省略受保护字段必须保留数据库原值。
+        if (!request.isPhoneProvided()) oldUser.setPhone(originalPhone);
+        if (!request.isEmailProvided()) oldUser.setEmail(originalEmail);
         if (StrUtil.isNotBlank(request.getPassword())) {
             // md5的数据
             String password = request.getPassword();
@@ -174,7 +185,13 @@ public class UserHandler {
             oldUser.setPassword(pwd);
             oldUser.setExpand(UserExpandHelper.setInitPwd(oldUser.getExpand(), true));
         }
-        boolean b = userService.updateById(oldUser);
+        // MP默认忽略null更新；显式清空联系方式时使用set，省略字段仍保留原值。
+        boolean clearPhone = request.isPhoneProvided() && request.getPhone() == null;
+        boolean clearEmail = request.isEmailProvided() && request.getEmail() == null;
+        boolean b = clearPhone || clearEmail
+                ? userService.update(oldUser, com.baomidou.mybatisplus.core.toolkit.Wrappers.<User>lambdaUpdate()
+                        .eq(User::getId, id).set(clearPhone, User::getPhone, null).set(clearEmail, User::getEmail, null))
+                : userService.updateById(oldUser);
         if (!b) {
             throw new CommonException(CommonMessage.UPDATE_CONFLICT);
         }
@@ -182,6 +199,17 @@ public class UserHandler {
         userRoleService.saveUserRoleRelation(id, roleIds);
         // 清理当前人缓存
         userService.cleanCache(id);
+    }
+
+    private void checkContactFields(UserRequest request, User original) {
+        if (request.isPhoneProvided()) {
+            fieldPermissions.checkUpdate("system:user:phone", "手机号", true,
+                    original == null ? null : original.getPhone(), request.getPhone());
+        }
+        if (request.isEmailProvided()) {
+            fieldPermissions.checkUpdate("system:user:email", "邮箱", true,
+                    original == null ? null : original.getEmail(), request.getEmail());
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -214,6 +242,19 @@ public class UserHandler {
     }
 
     public Page<UserInfoResponse> page(BasePageRequest<UserPageRequest> request) {
+        UserPageRequest query = request.getData();
+        if (query == null) {
+            query = new UserPageRequest();
+            request.setData(query);
+        }
+        // 禁止通过隐藏字段筛选或排序推测原值，前端隐藏搜索项不能替代此校验。
+        List<String> sorts = request.getSortFieldList() == null ? List.of() : request.getSortFieldList();
+        if (StrUtil.isNotBlank(query.getPhone()) || sorts.contains("phone")) {
+            fieldPermissions.checkQuery("system:user:phone", "手机号");
+        }
+        if (StrUtil.isNotBlank(query.getEmail()) || sorts.contains("email")) {
+            fieldPermissions.checkQuery("system:user:email", "邮箱");
+        }
         // 判断当前人有没有平台角色 没有则不能看到平台用户
         List<String> roleList = StpUtil.getRoleList(StpUtil.getLoginId());
         // 每次覆盖客户端值，隐藏文档字段并不等于禁止客户端提交。

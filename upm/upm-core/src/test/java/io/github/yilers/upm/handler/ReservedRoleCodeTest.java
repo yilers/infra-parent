@@ -3,6 +3,7 @@ package io.github.yilers.upm.handler;
 import io.github.yilers.core.constant.CommonConst;
 import io.github.yilers.upm.entity.Role;
 import io.github.yilers.upm.request.RoleRequest;
+import io.github.yilers.upm.service.RoleFieldService;
 import io.github.yilers.upm.service.*;
 import io.github.yilers.web.exception.CommonException;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,7 @@ class ReservedRoleCodeTest {
     private final RoleService roles = mock(RoleService.class);
     private final RoleHandler handler = new RoleHandler(roles, mock(UserRoleService.class),
             mock(RolePermissionService.class), mock(RoleDeptService.class), mock(PermissionService.class),
-            mock(ApplicationHandler.class), mock(RoleAssignmentHandler.class));
+            mock(ApplicationHandler.class), mock(RoleAssignmentHandler.class), mock(RoleFieldService.class));
 
     @Test
     void rejectsReservedCodesOnCreationIncludingCaseAndWhitespaceVariants() {
