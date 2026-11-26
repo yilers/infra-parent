@@ -1,6 +1,10 @@
 package io.github.yilers.upm.handler;
 
 import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.v7.core.text.StrUtil;
+import cn.hutool.v7.json.JSONUtil;
+import io.github.yilers.upm.response.TenantCurrentResponse;
+import io.github.yilers.upm.i18n.UpmMessage;
 import io.github.yilers.core.constant.CommonConst;
 import io.github.yilers.upm.entity.Tenant;
 import io.github.yilers.upm.entity.User;
@@ -25,6 +29,36 @@ public class TenantHandler {
     private final TenantService tenantService;
     private final UserService userService;
     private final AuthHandler authHandler;
+
+    /** 只使用服务端可信租户上下文，普通登录用户无需租户管理权限即可读取展示信息。 */
+    public TenantCurrentResponse currentInfo() {
+        Long tenantId = RequestContextHolder.getTenantId();
+        if (tenantId == null) {
+            throw new CommonException(UpmManagementMessage.TENANT_ACCESS_FORBIDDEN);
+        }
+        Tenant tenant = tenantService.getById(tenantId);
+        if (tenant == null) {
+            throw new CommonException(UpmManagementMessage.TENANT_NOT_FOUND);
+        }
+        if (!CommonConst.YES.equals(tenant.getUsable())) {
+            throw new CommonException(UpmMessage.LOGIN_TENANT_DISABLED);
+        }
+        String title = tenant.getName();
+        String logo = null;
+        if (StrUtil.isNotBlank(tenant.getExpand())) {
+            try {
+                var expand = JSONUtil.parseObj(tenant.getExpand());
+                String configuredTitle = expand.getStr("name");
+                if (StrUtil.isNotBlank(configuredTitle)) {
+                    title = configuredTitle;
+                }
+                logo = expand.getStr("logo");
+            } catch (Exception ignored) {
+                // 历史扩展格式异常时使用默认展示，不让Logo配置影响普通用户进入系统。
+            }
+        }
+        return new TenantCurrentResponse(tenant.getId(), tenant.getName(), tenant.getCode(), title, logo);
+    }
 
     /**
      * 逻辑删除业务租户，并注销该租户下仍然有效的登录会话。

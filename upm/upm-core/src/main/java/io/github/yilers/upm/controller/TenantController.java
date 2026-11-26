@@ -1,6 +1,8 @@
 package io.github.yilers.upm.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.dev33.satoken.annotation.SaCheckLogin;
+import io.github.yilers.upm.response.TenantCurrentResponse;
 import cn.dev33.satoken.annotation.SaMode;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import io.github.yilers.upm.handler.TenantAccessHandler;
@@ -41,6 +43,13 @@ public class TenantController {
     private final TenantPermissionSyncHandler tenantPermissionSyncHandler;
     private final TenantLoginPolicyHandler tenantLoginPolicyHandler;
     private final TenantAccessHandler tenantAccessHandler;
+
+    @Operation(summary = "查询当前租户展示信息", description = "仅需登录，租户由服务端登录态确定，不接受目标租户ID，仅返回页面初始化所需信息。")
+    @GetMapping("/current")
+    @SaCheckLogin
+    public Result<TenantCurrentResponse> current() {
+        return Result.ok(tenantHandler.currentInfo());
+    }
 
     @Operation(summary = "查询所有租户(没有删除的)")
     @GetMapping("/findAll")
