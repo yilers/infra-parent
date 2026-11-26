@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 多spel表达式
+ * 多条行数据权限规则，按各自真实表名匹配，以AND组合匹配到的条件。
  * @author zhanghui
  * @since 2023/12/12 14:06
  */

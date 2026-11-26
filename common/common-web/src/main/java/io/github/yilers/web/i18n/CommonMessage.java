@@ -10,6 +10,7 @@ public enum CommonMessage implements MessageCode {
 
     /** 通用服务异常；是否用于未知异常由调用方决定。 */
     SERVICE_UNAVAILABLE("common.service.unavailable", "服务异常，请稍后重试"),
+    DATA_PERMISSION_INVALID("common.data-permission.invalid", "数据权限配置无效，请联系管理员"),
     SAVE_FAILED("common.save.failed", "保存失败"),
     UPDATE_CONFLICT("common.update.conflict", "更新失败 数据已经变更"),
     ID_REQUIRED("common.validation.id-required", "id不能为空"),

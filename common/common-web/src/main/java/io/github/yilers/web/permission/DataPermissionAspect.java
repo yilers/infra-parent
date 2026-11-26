@@ -1,95 +1,91 @@
 package io.github.yilers.web.permission;
 
 import cn.hutool.v7.core.text.StrUtil;
-import lombok.extern.slf4j.Slf4j;
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Pointcut;
-import org.aspectj.lang.reflect.MethodSignature;
-import org.springframework.expression.EvaluationContext;
-import org.springframework.expression.ExpressionParser;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.expression.spel.support.StandardEvaluationContext;
+import org.aopalliance.intercept.MethodInterceptor;
+import org.aopalliance.intercept.MethodInvocation;
+import org.springframework.aop.support.AopUtils;
+import org.springframework.aop.support.StaticMethodMatcherPointcutAdvisor;
+import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
-@Aspect
+/**
+ * 数据权限上下文拦截器。
+ * 使用静态方法匹配的Advisor识别实现类及接口方法上的注解，避免仅使用@annotation切点遗漏接口声明。
+ * SpEL统一返回ID集合，SQL条件由数据权限Handler结合表名和别名生成。
+ */
 @Component
-@Slf4j
-public class DataPermissionAspect {
+public class DataPermissionAspect extends StaticMethodMatcherPointcutAdvisor {
 
-    private static final ExpressionParser PARSER = new SpelExpressionParser();
-    private static final ConcurrentMap<MethodSignature, Method> METHOD_SIGNATURE_CACHE = new ConcurrentHashMap<>();
+    public DataPermissionAspect() {
+        setAdvice((MethodInterceptor) this::around);
+    }
 
-    @Pointcut("@annotation(io.github.yilers.web.permission.DataPermission) || @annotation(io.github.yilers.web.permission.DataScope)")
-    public void pointcut() {}
+    @Override
+    public boolean matches(Method method, Class<?> targetClass) {
+        Method specificMethod = AopUtils.getMostSpecificMethod(method, targetClass);
+        return permission(specificMethod, method) != null || scope(specificMethod, method) != null;
+    }
 
-    @Around("pointcut()")
-    public Object around(ProceedingJoinPoint point) throws Throwable {
-        Method method = getMethod(point);
+    private Object around(MethodInvocation invocation) throws Throwable {
+        Method declaredMethod = invocation.getMethod();
+        Method method = AopUtils.getMostSpecificMethod(declaredMethod, invocation.getThis().getClass());
+        Method evaluationMethod = method.getAnnotation(DataPermission.class) != null
+                || method.getAnnotation(DataScope.class) != null ? method : declaredMethod;
 
         List<DataPermissionContext> ctxList = new ArrayList<>();
 
-        DataPermission dataPermission = method.getAnnotation(DataPermission.class);
-        if (dataPermission == null) {
-            dataPermission = method.getDeclaringClass().getAnnotation(DataPermission.class);
-        }
+        DataPermission dataPermission = permission(method, declaredMethod);
         if (dataPermission != null) {
-            addPermissionContext(dataPermission, method, ctxList);
+            addPermissionContext(dataPermission, evaluationMethod, invocation.getArguments(), ctxList);
         }
 
-        DataScope dataScope = method.getAnnotation(DataScope.class);
-        if (dataScope == null) {
-            dataScope = method.getDeclaringClass().getAnnotation(DataScope.class);
-        }
+        DataScope dataScope = scope(method, declaredMethod);
         if (dataScope != null) {
             for (DataPermission permission : dataScope.value()) {
-                addPermissionContext(permission, method, ctxList);
+                addPermissionContext(permission, evaluationMethod, invocation.getArguments(), ctxList);
             }
         }
 
+        List<DataPermissionContext> previous = DataPermissionContextHolder.get();
         try {
             DataPermissionContextHolder.set(ctxList);
-            return point.proceed();
+            return invocation.proceed();
         } finally {
-            DataPermissionContextHolder.clear();
+            // 内层方法退出后恢复外层范围；由最外层调用负责最终清理。
+            if (previous == null) {
+                DataPermissionContextHolder.clear();
+            } else {
+                DataPermissionContextHolder.set(previous);
+            }
         }
     }
 
-    private void addPermissionContext(DataPermission permission, Method method, List<DataPermissionContext> ctxList) {
+    private DataPermission permission(Method method, Method declaredMethod) {
+        DataPermission annotation = AnnotatedElementUtils.findMergedAnnotation(method, DataPermission.class);
+        return annotation != null ? annotation : AnnotatedElementUtils.findMergedAnnotation(declaredMethod, DataPermission.class);
+    }
+
+    private DataScope scope(Method method, Method declaredMethod) {
+        DataScope annotation = AnnotatedElementUtils.findMergedAnnotation(method, DataScope.class);
+        return annotation != null ? annotation : AnnotatedElementUtils.findMergedAnnotation(declaredMethod, DataScope.class);
+    }
+
+    private void addPermissionContext(DataPermission permission, Method method, Object[] arguments,
+                                      List<DataPermissionContext> ctxList) {
         DataPermissionContext context = new DataPermissionContext();
         context.setTableName(permission.tableName());
         context.setColumnName(permission.columnName());
-        context.setColumnValue(parseValue(permission.columnValue(), method));
+        context.setColumnValue(permission.columnValue());
+        if (StrUtil.isNotBlank(permission.columnValue())) {
+            context.setColumnValues(DataPermissionSpelResolver.resolve(permission.columnValue(), method, arguments));
+        }
         context.setDeptField(permission.deptField());
         context.setUserField(permission.userField());
         ctxList.add(context);
     }
 
-    private String parseValue(String spel, Method method) {
-        EvaluationContext context = new StandardEvaluationContext();
-        if (StrUtil.isNotBlank(spel)) {
-            return PARSER.parseExpression(spel).getValue(context, String.class);
-        } else {
-            return "";
-        }
-    }
-
-    private Method getMethod(ProceedingJoinPoint joinPoint) {
-        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-        return METHOD_SIGNATURE_CACHE.computeIfAbsent(signature, sig -> {
-            try {
-                return joinPoint.getTarget().getClass()
-                        .getMethod(sig.getName(), sig.getParameterTypes());
-            } catch (NoSuchMethodException e) {
-                throw new RuntimeException(e);
-            }
-        });
-    }
 }

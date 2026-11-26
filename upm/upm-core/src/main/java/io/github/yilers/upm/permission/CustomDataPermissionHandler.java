@@ -8,9 +8,11 @@ import com.baomidou.mybatisplus.extension.plugins.handler.MultiDataPermissionHan
 import io.github.yilers.upm.handler.UserHandler;
 import io.github.yilers.upm.i18n.UpmExtraMessage;
 import io.github.yilers.web.exception.CommonException;
+import io.github.yilers.web.i18n.CommonMessage;
 import io.github.yilers.web.permission.DataPermission;
 import io.github.yilers.web.permission.DataPermissionContext;
 import io.github.yilers.web.permission.DataPermissionContextHolder;
+import io.github.yilers.web.permission.DataPermissionSpelResolver;
 import io.github.yilers.web.permission.DataScope;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -19,17 +21,10 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.schema.Table;
-import org.springframework.context.expression.BeanFactoryResolver;
-import org.springframework.core.DefaultParameterNameDiscoverer;
-import org.springframework.expression.BeanResolver;
-import org.springframework.expression.ExpressionParser;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.http.HttpStatus;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,10 +33,6 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class CustomDataPermissionHandler implements MultiDataPermissionHandler {
-
-    private static final ExpressionParser SPEL_PARSER = new SpelExpressionParser();
-    private static final DefaultParameterNameDiscoverer PARAM_DISCOVERER = new DefaultParameterNameDiscoverer();
-    private BeanResolver beanResolver;
 
     private static final ConcurrentMap<String, Class<?>> CLASS_CACHE = new ConcurrentHashMap<>();
     private static final ConcurrentMap<String, Method> MAPPED_STATEMENT_ID_METHOD_CACHE = new ConcurrentHashMap<>();
@@ -54,7 +45,6 @@ public class CustomDataPermissionHandler implements MultiDataPermissionHandler {
         List<DataPermissionContext> ctxList = DataPermissionContextHolder.get();
         if (CollUtil.isNotEmpty(ctxList)) {
             log.debug("Using ThreadLocal DataPermissionContext for {}", table.getName());
-//            DataPermissionContextHolder.clear();
             return buildExpressionFromContextList(ctxList, table);
         }
         Method method = getMethodFromMappedStatement(mappedStatementId);
@@ -105,11 +95,10 @@ public class CustomDataPermissionHandler implements MultiDataPermissionHandler {
             if (StrUtil.isNotBlank(tableName) && !tableName.equals(table.getName())) {
                 continue;
             }
-            DataPermissionContextHolder.clear();
-
             if (StrUtil.isNotBlank(columnValue)) {
-                // 有 columnValue，直接拼接
-                expressions.add(CCJSqlParserUtil.parseCondExpression(columnValue));
+                // 自定义范围与默认部门权限互斥，统一按ID集合构造条件并保留当前SQL别名。
+                String condition = buildCustomPermissionSql(alias, column, ctx.getColumnValues());
+                expressions.add(CCJSqlParserUtil.parseCondExpression(condition));
             } else {
                 // 没有 columnValue，走默认逻辑
                 String condition = buildDefaultPermissionSql(alias, deptField, userField);
@@ -187,8 +176,8 @@ public class CustomDataPermissionHandler implements MultiDataPermissionHandler {
             return "";
         }
 
-        // 优先判断是否有 column + SpEL
-        if (StrUtil.isNotBlank(column) && StrUtil.isNotBlank(spel)) {
+        // 配置了SpEL就必须使用自定义范围，字段遗漏或解析失败不能回退成默认权限。
+        if (StrUtil.isNotBlank(spel)) {
             return buildSpelPermissionSql(alias, column, spel, method);
         }
 
@@ -197,9 +186,18 @@ public class CustomDataPermissionHandler implements MultiDataPermissionHandler {
     }
 
     private String buildSpelPermissionSql(String alias, String column, String spel, Method method) {
-        List<Long> values = parseSpelValues(spel, method);
-        if (CollUtil.isEmpty(values)) {
-            return ""; // SpEL 结果为空就不拼接
+        // 没有切面上下文时只能使用Bean、静态调用等不依赖方法参数的表达式。
+        List<Long> values = DataPermissionSpelResolver.resolve(spel, method, null);
+        return buildCustomPermissionSql(alias, column, values);
+    }
+
+    private String buildCustomPermissionSql(String alias, String column, List<Long> values) {
+        if (StrUtil.isBlank(column) || !column.matches("[A-Za-z_][A-Za-z0-9_]*") || values == null) {
+            throw new CommonException(CommonMessage.DATA_PERMISSION_INVALID);
+        }
+        if (values.isEmpty()) {
+            // 明确没有可管理数据，不省略条件，也不回退默认部门范围。
+            return "1 = 0";
         }
         String prefix = buildAliasPrefix(alias);
         return prefix + column + " in (" + values.stream().map(String::valueOf).collect(Collectors.joining(",")) + ")";
@@ -220,20 +218,6 @@ public class CustomDataPermissionHandler implements MultiDataPermissionHandler {
             throw new CommonException(HttpStatus.UNAUTHORIZED.value(), UpmExtraMessage.NO_PERMISSION);
         }
         return prefix + deptField + " in (" + dataScope.stream().map(String::valueOf).collect(Collectors.joining(",")) + ")";
-    }
-
-    private List parseSpelValues(String spel, Method method) {
-        StandardEvaluationContext context = new StandardEvaluationContext();
-        if (beanResolver == null) {
-            beanResolver = new BeanFactoryResolver(SpringUtil.getApplicationContext());
-        }
-        context.setBeanResolver(beanResolver);
-
-        String[] paramNames = PARAM_DISCOVERER.getParameterNames(method);
-        for (String name : paramNames) {
-            context.setVariable(name, null); // 若需真实参数，应从 AOP 拦截器传入 ThreadLocal 提供
-        }
-        return Optional.ofNullable(SPEL_PARSER.parseExpression(spel).getValue(context, List.class)).orElse(Collections.emptyList());
     }
 
     private String buildAliasPrefix(String alias) {

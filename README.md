@@ -304,6 +304,27 @@ Page<LogInfoResponse> findByPage(@Param("page") Page<?> page,
                                  @Param("request") BasePageRequest<Log> request);
 ```
 
+未配置 `columnValue` 时，继续使用默认部门/本人范围：`null` 表示全部、空集合表示无权限、`[-1]` 表示仅本人，其他ID按部门过滤。SQL有别名时使用当前表别名，例如 `l.dept_id IN (...)` 或 `l.create_id = 当前用户ID`。
+
+特殊业务可通过 `columnName + columnValue` 覆盖默认范围，例如项目管理权限：
+
+```java
+@DataPermission(
+    tableName = "biz_order",
+    columnName = "project_id",
+    columnValue = "@projectScope.getCurrentProjectIds()"
+)
+List<OrderInfo> findOrders();
+```
+
+`@projectScope` 是Spring Bean名称，方法应返回允许访问的ID集合；表达式不额外包SpEL单引号。自定义集合为空时生成 `1 = 0`，返回null、非集合、非法ID或表达式执行失败时拒绝执行，不回退默认范围。查询 `biz_order o` 时自动生成 `o.project_id IN (...)`，`columnName` 填字段名，不手工填写别名。自定义范围不把 `-1` 当作“全部”或“仅本人”，它只是一个普通ID。
+
+表达式可以使用真实方法参数、MyBatis `@Param` 名称及 `#arg0/#p0/#a0` 位置别名，也可使用 `T(...)` 静态调用；例如 `{T(cn.dev33.satoken.stp.StpUtil).getLoginIdAsLong()}` 返回只包含当前用户的集合。方法参数仅在注解经Spring切面建立上下文时可用；SQL Handler直接解析Mapper注解的回退路径没有真实参数，参数表达式无法解析时会拒绝执行。权限ID应从服务端可信授权查询中取得，不能将客户端提交的筛选ID集合直接当作授权范围。
+
+自定义表达式统一返回ID集合，不再把结果当作原始SQL片段。一个受注解保护的方法执行多条SQL时，上下文持续有效；联表按声明的真实表名匹配并使用各自别名。嵌套方法退出后恢复外层范围，最外层方法结束后清理线程上下文。
+
+联表过滤仍受MyBatis Plus解析器支持范围约束：本次回归覆盖普通 `INNER JOIN`、`LEFT JOIN` 和同表多别名；无ON条件的 `CROSS JOIN` 在当前插件中可能漏处理部分关联表，不应直接用于受保护查询，需改用经过验证的关联写法或单独补充权限条件并验证。
+
 需要列权限处理的表可在配置中声明：
 
 ```properties
