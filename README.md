@@ -14,7 +14,7 @@ infra-parent 是一套基于 Spring Boot 4 的多租户基础服务，核心提�
 - 租户权限同步：租户 1 作为平台模板，可将应用和菜单按钮增量同步到其他租户。
 - SSO：基于 Sa-Token SSO 模式三实现统一登录，不要求 UPM 与业务系统共享 Redis。
 - 第三方登录：当前支持钉钉配置、账号绑定、解绑及已绑定账号直接登录 UPM。
-- 工作流：流程定义设计、版本与发布，个人待办/已办/我发起的、运行图和审批记录，支持本人任务通过与退回；新增独立的[请假业务示例](doc/modules/flow-leave.md)，支持草稿、首次提交自动完成申请节点、退回修改、原实例重新提交和授权业务详情；支持申请人、部门副主管及上级主管等[动态办理人规则](doc/modules/flow-assignees.md)。
+- 工作流：流程定义设计、版本与发布，个人待办/已办/我发起的、运行图和审批记录，支持本人任务通过与退回；新增独立的[请假业务示例](doc/flow/flow-leave.md)，支持草稿、首次提交自动完成申请节点、退回修改、原实例重新提交和授权业务详情；支持申请人、部门副主管及上级主管等[动态办理人规则](doc/flow/flow-assignees.md)。
 - 短链：多租户域名、路径配置、自动号段或自定义短码，支持本地调用、系统签名调用和公开跳转。
 - 基础能力：统一响应、异常处理、日志、缓存、分布式锁、限流和 API 文档。[分布式锁与限流用法](doc/DISTRIBUTED_CONTROL.md)包含统一SpEL规则、身份上下文和旧写法迁移说明。
 
@@ -70,7 +70,7 @@ infra-parent
 │   └── upm-start         # UPM 独立部署入口
 ├── file                  # 文件服务预留模块（规划中）
 ├── shortlink             # 短链 API 契约与实现
-├── notice                # 通知服务预留模块（规划中）
+├── notice                # 站内消息、邮件与模板服务
 ├── flow                  # Warm-Flow 1.8.9 工作流底座、流程定义与个人审批中心
 ├── ai                    # AI 能力预留模块
 ├── infra-start           # 基础能力统一部署入口
@@ -197,7 +197,7 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 
 目标租户可以继续创建自己的应用和菜单。租户自建菜单不会被平台同步覆盖。
 
-详细规则见 [租户应用菜单同步](doc/TENANT_PERMISSION_SYNC.md)。
+详细规则见 [租户应用菜单同步](doc/upm/TENANT_PERMISSION_SYNC.md)。
 
 ## SSO 单点登录
 
@@ -226,9 +226,9 @@ yilers.com:oa
 
 UPM 与业务系统不需要共享 Redis，客户端密钥只允许保存在业务后端。UPM token、业务 token 和一次性 ticket 的职责彼此独立。
 
-完整协议、安全边界和接口示例见 [SSO 接入文档](doc/SSO.md)。
+完整协议、安全边界和接口示例见 [SSO 接入文档](doc/upm/SSO.md)。
 
-新业务应用的配置步骤、后端及前端代码示例、联调排查见 [SSO Client 接入指南](doc/SSO_CLIENT.md)。
+新业务应用的配置步骤、后端及前端代码示例、联调排查见 [SSO Client 接入指南](doc/upm/SSO_CLIENT.md)。
 
 ## 钉钉第三方登录
 
@@ -249,7 +249,7 @@ UPM 与业务系统不需要共享 Redis，客户端密钥只允许保存在业�
 https://upm.example.com/third-auth-callback.html
 ```
 
-完整配置、绑定及登录流程见 [第三方认证文档](doc/THIRD_AUTH.md)。
+完整配置、绑定及登录流程见 [第三方认证文档](doc/upm/THIRD_AUTH.md)。
 
 ## 接入方式
 
@@ -329,16 +329,23 @@ List<OrderInfo> findOrders();
 
 联表过滤仍受MyBatis Plus解析器支持范围约束：本次回归覆盖普通 `INNER JOIN`、`LEFT JOIN` 和同表多别名；无ON条件的 `CROSS JOIN` 在当前插件中可能漏处理部分关联表，不应直接用于受保护查询，需改用经过验证的关联写法或单独补充权限条件并验证。
 
-字段权限按响应VO声明的业务字段配置，支持隐藏、脱敏、完整显示及独立修改权限；不再通过SQL移除数据库列。详见[字段权限接入说明](doc/FIELD_PERMISSION.md)。
+字段权限按响应VO声明的业务字段配置，支持隐藏、脱敏、完整显示及独立修改权限；不再通过SQL移除数据库列。详见[字段权限接入说明](doc/upm/FIELD_PERMISSION.md)。
+
+## 通知服务（Notice）
+
+支持多租户站内公告/定向消息、个人消息中心与铃铛分类未读统计，以及租户SMTP配置、HTML/纯文本/Markdown邮件模板、异步发送和失败重试。通知模块通过Provider获取宿主基础数据，不直接依赖UPM实现。已有库须先执行Notice增量SQL，再启用任务扫描；使用邮件还需配置独立加密主密钥与SMTP账号。详见 [Notice接入说明](doc/notice/README.md)。
 
 ## 文档
 
-- [UPM 模块说明](doc/UPM.md)
-- [SSO 接入设计](doc/SSO.md)
-- [第三方认证设计](doc/THIRD_AUTH.md)
-- [短链与系统调用接入](doc/SHORTLINK.md)
-- [租户应用菜单同步](doc/TENANT_PERMISSION_SYNC.md)
-- [基础能力模块规划](doc/modules/README.md)
+- [文档总览与模块边界](doc/README.md)
+- [UPM 模块说明](doc/upm/README.md)
+- [SSO 接入设计](doc/upm/SSO.md)
+- [第三方认证设计](doc/upm/THIRD_AUTH.md)
+- [短链与系统调用接入](doc/shortlink/README.md)
+- [租户应用菜单同步](doc/upm/TENANT_PERMISSION_SYNC.md)
+- [工作流说明](doc/flow/README.md)
+- [通知服务接入](doc/notice/README.md)
+- [文件服务规划](doc/file/README.md)
 - [SQL 执行说明](sql/README.md)
 
 ## 常用命令

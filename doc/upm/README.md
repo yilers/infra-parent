@@ -21,7 +21,7 @@ UPM 支持两种互斥的接入方式：
 
 新租户以租户 1 为模板复制应用、菜单和租户管理员授权关系，只创建租户管理员。平台管理员只存在于租户 1。应用的 SSO 密钥、回调地址、推送地址和启用状态不会复制，新租户必须自行完成客户端配置。
 
-平台管理员可以预览并同步租户 1 后续发生的应用菜单变化，具体规则见 [TENANT_PERMISSION_SYNC.md](./TENANT_PERMISSION_SYNC.md)。
+平台管理员可以预览并同步租户 1 后续发生的应用菜单变化，具体规则见 [TENANT_PERMISSION_SYNC.md](TENANT_PERMISSION_SYNC.md)。
 
 ## 部门主管
 
@@ -47,6 +47,6 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 - `upm-core`：UPM 业务实现、控制器和 SSO Server。
 - `upm-start`：独立部署入口。
 
-具体 SSO 接入约定见 [SSO.md](./SSO.md)。
+具体 SSO 接入约定见 [SSO.md](SSO.md)。
 
-第三方登录平台的配置模型和后续接入顺序见 [THIRD_AUTH.md](./THIRD_AUTH.md)。
+第三方登录平台的配置模型和后续接入顺序见 [THIRD_AUTH.md](THIRD_AUTH.md)。

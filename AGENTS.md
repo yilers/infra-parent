@@ -7,7 +7,7 @@
 - `common/` 提供公共 API、认证、Web、Redis 和基础工具能力。
 - `upm/upm-api` 放 UPM 契约和模型；`upm/upm-core` 放业务实现、HTTP 接口、SSO Server 及内嵌前端；`upm/upm-start` 是 UPM 独立启动入口。
 - `flow/flow-api` 放工作流契约；`flow/flow-core` 放流程引擎和业务无关的流程逻辑。工作流所需的用户、部门、角色数据通过 Provider 接口获取。单体适配实现位于 `infra-start`，不要让 `flow-core` 直接依赖 `upm-core`。
-- `file/`、`notice/` 是预留模块，新增功能前先看 `doc/modules/` 中的规划。`ai/` 是独立的 AI 相关模块。
+- `notice/` 提供站内消息、邮件模板与持久化发送任务，通过 Provider 查询宿主基础数据，不直接依赖 `upm-core`。`file/` 是预留模块，新增功能前先看 `doc/file/README.md` 中的规划。`ai/` 是独立的 AI 相关模块。
 - `infra-start` 组合基础模块统一启动；需要只部署 UPM 时使用 `upm-start`。新增模块时检查 API、core、启动器之间的依赖方向。
 
 前端源码在独立仓库 `infra-parent-web`，不在本仓库修改前端源码。需要更新后端内嵌页面时，先在前端仓库执行 `pnpm --filter @vben/infra-web build`，再用 `apps/infra-web/dist/` 更新 `upm/upm-core/src/main/resources/static/`，清理旧的带哈希文件。前端开发服务与后端内嵌页面使用不同的构建方式，涉及样式时检查生产构建结果。
@@ -24,7 +24,7 @@
 
 - 空库执行 `sql/full/` 中对应数据库的全量脚本；已有库按 `sql/migration/README.md` 执行尚未应用的增量脚本。两者不要叠加执行。
 - 修改表结构或初始菜单、按钮时，同时更新 MySQL、PostgreSQL 全量脚本，并提供对应的增量脚本；已有库的迁移要考虑重复执行和部分失败后的核验方式。SQL 由人工执行，服务启动不会自动迁移。
-- 业务设计和接入说明放在 `doc/`；面向使用者的安装、功能和版本信息放在 `README.md`、`CHANGELOG.md`。不要在本文件写固定账号、密钥或容易过期的依赖版本。
+- 业务设计和接入说明按模块放在 `doc/upm/`、`doc/flow/`、`doc/shortlink/`、`doc/notice/`、`doc/file/`，入口见 `doc/README.md`；公共能力说明放在 `doc/` 根目录；面向使用者的安装、功能和版本信息放在 `README.md`、`CHANGELOG.md`。不要在本文件写固定账号、密钥或容易过期的依赖版本。
 
 ## 修改与验证
 

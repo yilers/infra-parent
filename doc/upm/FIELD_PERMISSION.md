@@ -30,10 +30,10 @@
 
 已有库停写并备份后，选择执行一个增量脚本：
 
-- MySQL：[`20261126_field_permission_mysql.sql`](../sql/migration/20261126_field_permission_mysql.sql)
-- PostgreSQL：[`20261126_field_permission_postgres.sql`](../sql/migration/20261126_field_permission_postgres.sql)
+- MySQL：[`20261126_field_permission_mysql.sql`](../../sql/migration/20261126_field_permission_mysql.sql)
+- PostgreSQL：[`20261126_field_permission_postgres.sql`](../../sql/migration/20261126_field_permission_postgres.sql)
 
-空库只执行 [`sql/full/`](../sql/full/) 中对应的全量脚本。脚本创建两张表，为各有效租户的 `system:user` 资源登记手机号、邮箱，并增加角色管理的“字段权限”按钮，默认授权内置管理员。旧 `upm_role_column` 表属于未启用的 SQL 列删除方案，本次删除，不自动转换成新的业务字段授权。
+空库只执行 [`sql/full/`](../../sql/full) 中对应的全量脚本。脚本创建两张表，为各有效租户的 `system:user` 资源登记手机号、邮箱，并增加角色管理的“字段权限”按钮，默认授权内置管理员。旧 `upm_role_column` 表属于未启用的 SQL 列删除方案，本次删除，不自动转换成新的业务字段授权。
 
 迁移使用现有最大 ID 之后的区间，执行期间必须停止写入。可重复执行：已存在的目录、菜单及管理员菜单关联不会重复插入；`CREATE TABLE IF NOT EXISTS` 不会修复人工更改过的表结构。MySQL DDL 隐式提交，部分失败后需核验两表结构、目录、按钮及授权，再继续执行。核验示例：
 
