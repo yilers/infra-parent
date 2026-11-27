@@ -78,6 +78,8 @@
         <dynamic-datasource.version>4.6.0</dynamic-datasource.version>
         <!-- https://central.sonatype.com/artifact/tech.powerjob/powerjob-worker-spring-boot-starter/versions -->
         <powerjob.version>5.1.7</powerjob.version>
+        <!-- 邮件Markdown模板渲染，版本由根POM统一维护。 -->
+        <commonmark.version>0.32.0</commonmark.version>
         <!-- https://central.sonatype.com/artifact/org.dromara.sms4j/sms4j-spring-boot-starter/versions -->
         <sms4j.version>3.3.5</sms4j.version>
         <!-- https://central.sonatype.com/artifact/com.alicp.jetcache/jetcache-starter-redisson/versions -->
