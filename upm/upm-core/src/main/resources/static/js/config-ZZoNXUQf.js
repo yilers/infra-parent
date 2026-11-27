@@ -1,0 +1,1 @@
+import{J as e,N as t,O as n,b as r}from"./vue.runtime.esm-bundler-D9lAnbr7.js";import{t as i}from"./mail-settings-GbA34ndJ.js";t();var a=n({__name:`index`,setup(t){return(t,n)=>(e(),r(i,{kind:`mail-config`}))}});export{a as default};
