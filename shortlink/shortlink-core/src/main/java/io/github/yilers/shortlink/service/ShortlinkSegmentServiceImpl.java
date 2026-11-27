@@ -2,7 +2,6 @@ package io.github.yilers.shortlink.service;
 
 import io.github.yilers.shortlink.mapper.ShortlinkSequenceMapper;
 import io.github.yilers.shortlink.support.ShortlinkRules;
-import io.github.yilers.web.context.RequestContextHolder;
 import io.github.yilers.shortlink.i18n.ShortlinkMessage;
 import io.github.yilers.web.exception.CommonException;
 import lombok.RequiredArgsConstructor;
@@ -13,16 +12,14 @@ import org.springframework.transaction.annotation.Transactional;
 /** 独立事务分配号段，业务创建失败只浪费号码，不回退高水位。 */
 @Service
 @RequiredArgsConstructor
-public class ShortlinkSegmentService {
+public class ShortlinkSegmentServiceImpl implements ShortlinkSegmentService {
+    /** 短码序号高水位的行锁读取与更新。 */
     private final ShortlinkSequenceMapper mapper;
 
-    public record Segment(long first, long last) {
-    }
-
+    @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
     public Segment allocate(Long namespaceId, int length) {
-        Long tenantId = RequestContextHolder.getTenantId();
-        if (tenantId == null) throw new CommonException(ShortlinkMessage.TENANT_REQUIRED);
+        Long tenantId = ShortlinkRules.tenant();
         Long high = mapper.lockHighWatermark(namespaceId, tenantId);
         if (high == null) throw new CommonException(ShortlinkMessage.SEGMENT_UNINITIALIZED);
         long maximum = ShortlinkRules.capacity(length) - 1;

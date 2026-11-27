@@ -10,7 +10,6 @@ import io.github.yilers.shortlink.response.ShortlinkResponse;
 import io.github.yilers.shortlink.support.ShortlinkCodeGenerator;
 import io.github.yilers.shortlink.support.ShortlinkCache;
 import io.github.yilers.shortlink.support.ShortlinkRules;
-import io.github.yilers.web.context.RequestContextHolder;
 import io.github.yilers.shortlink.i18n.ShortlinkMessage;
 import io.github.yilers.web.exception.CommonException;
 import jakarta.validation.Validator;
@@ -238,7 +237,7 @@ public class ShortlinkServiceImpl implements ShortlinkService {
         if (links.markDeleted(id, tenant(), version) != 1) throw new CommonException(ShortlinkMessage.DATA_CONFLICT_RETRY);
     }
 
-    public ShortlinkConfig config(Long id) {
+    private ShortlinkConfig config(Long id) {
         tenant();
         ShortlinkConfig value = configs.selectById(id);
         if (value == null || !Integer.valueOf(ENABLED).equals(value.getUsable())) throw new CommonException(ShortlinkMessage.CONFIG_UNAVAILABLE);
@@ -317,11 +316,5 @@ public class ShortlinkServiceImpl implements ShortlinkService {
 
     private void validate(Object request) {
         if (request == null || !validator.validate(request).isEmpty()) throw new CommonException(ShortlinkMessage.REQUEST_VALIDATION_FAILED);
-    }
-
-    public static Long tenant() {
-        Long id = RequestContextHolder.getTenantId();
-        if (id == null) throw new CommonException(ShortlinkMessage.TENANT_REQUIRED);
-        return id;
     }
 }

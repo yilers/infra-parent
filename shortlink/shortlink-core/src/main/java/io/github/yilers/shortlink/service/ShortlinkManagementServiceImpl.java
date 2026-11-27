@@ -22,7 +22,7 @@ import static io.github.yilers.shortlink.support.ShortlinkRules.*;
 /** 管理配置不接受客户端审计字段，固定标识不可编辑，旧短链永远使用生成时目标快照。 */
 @Service
 @RequiredArgsConstructor
-public class ShortlinkManagementService {
+public class ShortlinkManagementServiceImpl implements ShortlinkManagementService {
     private static final Set<String> RESERVED_PATHS = Set.of("auth", "system", "public", "api", "sso", "error", "actuator", "shortlink", "flow");
     private final ShortlinkConfigMapper configs;
     private final ShortlinkDomainMapper domains;
@@ -32,25 +32,29 @@ public class ShortlinkManagementService {
     private final ObjectProvider<ApiCredentialProvider> credentials;
     private final NamespaceKeyCipher namespaceKeys;
 
+    @Override
     public List<ShortlinkConfig> configs() {
-        ShortlinkServiceImpl.tenant();
+        tenant();
         return configs.selectList(new LambdaQueryWrapper<ShortlinkConfig>().orderByDesc(ShortlinkConfig::getId));
     }
 
+    @Override
     public List<ShortlinkDomain> domains() {
-        ShortlinkServiceImpl.tenant();
+        tenant();
         return domains.selectList(new LambdaQueryWrapper<ShortlinkDomain>().orderByDesc(ShortlinkDomain::getId));
     }
 
+    @Override
     public List<ShortlinkNamespace> namespaces(Long configId) {
-        ShortlinkServiceImpl.tenant();
+        tenant();
         return namespaces.selectList(new LambdaQueryWrapper<ShortlinkNamespace>()
                 .eq(ShortlinkNamespace::getConfigId, configId).orderByAsc(ShortlinkNamespace::getId));
     }
 
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public Long saveConfig(ShortlinkConfigRequest request) {
-        ShortlinkServiceImpl.tenant();
+        tenant();
         if (TEMPLATE.equals(request.getTargetType())) {
             if (request.getUrlTemplate() == null || !request.getUrlTemplate().contains("{code}")) throw new CommonException(ShortlinkMessage.TEMPLATE_CODE_REQUIRED);
             validateUrl(request.getUrlTemplate().replace("{code}", "example"));
@@ -74,7 +78,7 @@ public class ShortlinkManagementService {
         if (request.getId() == null) {
             initialize(value);
             configs.insert(value);
-        } else if (configs.updateConfiguration(value.getId(), ShortlinkServiceImpl.tenant(), request.getVersion(),
+        } else if (configs.updateConfiguration(value.getId(), tenant(), request.getVersion(),
                 value.getName(), value.getUrlTemplate(), value.getDefaultValidSeconds(), value.getUsable()) != 1) {
             throw new CommonException(ShortlinkMessage.DATA_CONFLICT);
         }
@@ -82,8 +86,9 @@ public class ShortlinkManagementService {
     }
 
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public Long saveDomain(ShortlinkDomainRequest request) {
-        ShortlinkServiceImpl.tenant();
+        tenant();
         String host;
         try {
             host = IDN.toASCII(request.getHost().trim()).toLowerCase(Locale.ROOT);
@@ -114,8 +119,9 @@ public class ShortlinkManagementService {
     }
 
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public Long saveNamespace(ShortlinkNamespaceRequest request) {
-        Long tenant = ShortlinkServiceImpl.tenant();
+        Long tenant = tenant();
         capacity(request.getCodeLength());
         if (RESERVED_PATHS.contains(request.getPathCode())) throw new CommonException(ShortlinkMessage.PATH_RESERVED);
         if (configs.selectById(request.getConfigId()) == null || domains.selectById(request.getDomainId()) == null) {
@@ -149,16 +155,18 @@ public class ShortlinkManagementService {
         return value.getId();
     }
 
+    @Override
     public List<Long> grants(Long configId) {
-        ShortlinkServiceImpl.tenant();
+        tenant();
         if (configs.selectById(configId) == null) throw new CommonException(ShortlinkMessage.SHORTLINK_CONFIG_NOT_FOUND);
         return grants.selectList(new LambdaQueryWrapper<ShortlinkConfigGrant>().eq(ShortlinkConfigGrant::getConfigId, configId))
                 .stream().map(ShortlinkConfigGrant::getCredentialId).toList();
     }
 
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public void grant(Long configId, Integer version, Set<Long> credentialIds) {
-        Long tenant = ShortlinkServiceImpl.tenant();
+        Long tenant = tenant();
         ShortlinkConfig config = configs.selectById(configId);
         if (config == null) throw new CommonException(ShortlinkMessage.SHORTLINK_CONFIG_NOT_FOUND);
         checkVersion(config, version);

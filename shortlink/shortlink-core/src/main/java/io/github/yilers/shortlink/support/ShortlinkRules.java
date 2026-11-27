@@ -1,6 +1,7 @@
 package io.github.yilers.shortlink.support;
 
 import io.github.yilers.shortlink.i18n.ShortlinkMessage;
+import io.github.yilers.web.context.RequestContextHolder;
 import io.github.yilers.web.exception.CommonException;
 import java.net.URI;
 
@@ -21,6 +22,13 @@ public final class ShortlinkRules {
     private static final String ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
     private ShortlinkRules() {
+    }
+
+    /** 读取服务端建立的租户上下文，缺失时拒绝执行。 */
+    public static Long tenant() {
+        Long id = RequestContextHolder.getTenantId();
+        if (id == null) throw new CommonException(ShortlinkMessage.TENANT_REQUIRED);
+        return id;
     }
 
     public static long capacity(int length) {

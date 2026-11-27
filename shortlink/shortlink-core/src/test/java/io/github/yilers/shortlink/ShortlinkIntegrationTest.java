@@ -213,8 +213,8 @@ class ShortlinkIntegrationTest {
     @Configuration
     @EnableTransactionManagement
     @MapperScan("io.github.yilers.shortlink.mapper")
-    @Import({ShortlinkServiceImpl.class, ShortlinkSegmentService.class, ShortlinkCodeGenerator.class,
-            ShortlinkManagementService.class, ShortlinkPermutation.class})
+    @Import({ShortlinkServiceImpl.class, ShortlinkSegmentServiceImpl.class, ShortlinkCodeGenerator.class,
+            ShortlinkManagementServiceImpl.class, ShortlinkPermutation.class})
     static class Config {
         @Bean DataSource dataSource() {
             return new EmbeddedDatabaseBuilder().setType(EmbeddedDatabaseType.H2)

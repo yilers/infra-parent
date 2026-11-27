@@ -9,6 +9,7 @@ import io.github.yilers.shortlink.mapper.ShortlinkLinkMapper;
 import io.github.yilers.shortlink.request.*;
 import io.github.yilers.shortlink.response.ShortlinkResponse;
 import io.github.yilers.shortlink.service.*;
+import io.github.yilers.shortlink.support.ShortlinkRules;
 import io.github.yilers.web.log.SysLog;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -91,7 +92,7 @@ public class ShortlinkManagementController {
                                           @RequestParam(required = false) Long configId,
                                           @RequestParam(required = false) @Size(max = 128) String batchId,
                                           @RequestParam(required = false) String keyword) {
-        ShortlinkServiceImpl.tenant();
+        ShortlinkRules.tenant();
         Page<ShortlinkLink> page = new Page<>(Math.max(1, current), Math.min(100, Math.max(1, size)));
         var query = new LambdaQueryWrapper<ShortlinkLink>().eq(configId != null, ShortlinkLink::getConfigId, configId)
                 .eq(batchId != null && !batchId.isBlank(), ShortlinkLink::getBatchId, batchId)
