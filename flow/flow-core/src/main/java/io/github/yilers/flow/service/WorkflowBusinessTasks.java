@@ -1,7 +1,6 @@
-package io.github.yilers.flow.service.impl;
+package io.github.yilers.flow.service;
 
 import io.github.yilers.flow.model.WorkflowBusinessReference;
-import io.github.yilers.flow.service.WorkflowBusinessProvider;
 import io.github.yilers.flow.i18n.FlowMessage;
 import io.github.yilers.web.exception.CommonException;
 

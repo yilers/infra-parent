@@ -1,4 +1,4 @@
-package io.github.yilers.flow.service.impl;
+package io.github.yilers.flow.service;
 
 import io.github.yilers.flow.model.WorkflowAssigneeRule;
 import io.github.yilers.flow.model.WorkflowDepartmentInfo;
@@ -7,7 +7,6 @@ import io.github.yilers.flow.model.WorkflowDirectoryType;
 import io.github.yilers.flow.model.WorkflowLeaderType;
 import io.github.yilers.flow.model.WorkflowRoleInfo;
 import io.github.yilers.flow.model.WorkflowUserProfile;
-import io.github.yilers.flow.service.WorkflowDataProvider;
 import io.github.yilers.web.exception.CommonException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class WorkflowIdentityServiceTest {
 
     private final TestWorkflowDataProvider dataProvider = new TestWorkflowDataProvider();
-    private final WorkflowIdentityService service = new WorkflowIdentityService(dataProvider);
+    private final WorkflowIdentityServiceImpl service = new WorkflowIdentityServiceImpl(dataProvider);
 
     @BeforeEach
     void setUp() {

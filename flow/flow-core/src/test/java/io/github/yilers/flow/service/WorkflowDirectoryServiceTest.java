@@ -6,7 +6,6 @@ import io.github.yilers.flow.model.WorkflowDirectoryPage;
 import io.github.yilers.flow.model.WorkflowDirectoryType;
 import io.github.yilers.flow.model.WorkflowRoleInfo;
 import io.github.yilers.flow.model.WorkflowUserProfile;
-import io.github.yilers.flow.service.impl.WorkflowIdentityService;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -20,8 +19,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class WorkflowDirectoryServiceTest {
 
     private final DirectoryDataProvider dataProvider = new DirectoryDataProvider();
-    private final WorkflowIdentityService identityService = new WorkflowIdentityService(dataProvider);
-    private final WorkflowDirectoryService directoryService = new WorkflowDirectoryService(dataProvider, identityService);
+    private final WorkflowIdentityServiceImpl identityService = new WorkflowIdentityServiceImpl(dataProvider);
+    private final WorkflowDirectoryService directoryService = new WorkflowDirectoryServiceImpl(dataProvider, identityService);
 
     @Test
     void listsDynamicRulesWithoutQueryingOrganization() {

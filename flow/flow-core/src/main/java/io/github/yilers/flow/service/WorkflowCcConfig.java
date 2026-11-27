@@ -1,4 +1,4 @@
-package io.github.yilers.flow.service.impl;
+package io.github.yilers.flow.service;
 
 import io.github.yilers.flow.model.WorkflowAssigneeRule;
 import io.github.yilers.flow.i18n.FlowMessage;

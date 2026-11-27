@@ -1,9 +1,6 @@
-package io.github.yilers.flow.service.impl;
+package io.github.yilers.flow.service;
 
 import io.github.yilers.flow.mapper.WorkflowInboxMapper;
-import io.github.yilers.flow.service.WorkflowBusinessProvider;
-import io.github.yilers.flow.service.WorkflowIdentityProvider;
-import io.github.yilers.flow.service.WorkflowService;
 import io.github.yilers.flow.model.WorkflowUserInfo;
 import io.github.yilers.web.context.RequestContextHolder;
 import io.github.yilers.flow.i18n.FlowMessage;

@@ -1,4 +1,4 @@
-package io.github.yilers.flow.service.impl;
+package io.github.yilers.flow.service;
 
 import io.github.yilers.flow.model.WorkflowAssigneeRule;
 import io.github.yilers.flow.model.WorkflowDepartmentInfo;
@@ -6,8 +6,6 @@ import io.github.yilers.flow.model.WorkflowLeaderType;
 import io.github.yilers.flow.model.WorkflowRoleInfo;
 import io.github.yilers.flow.model.WorkflowUserInfo;
 import io.github.yilers.flow.model.WorkflowUserProfile;
-import io.github.yilers.flow.service.WorkflowDataProvider;
-import io.github.yilers.flow.service.WorkflowIdentityProvider;
 import io.github.yilers.flow.i18n.FlowMessage;
 import io.github.yilers.web.exception.CommonException;
 import org.springframework.stereotype.Service;
@@ -27,11 +25,11 @@ import java.util.Set;
  * 及展示信息；不依赖 UPM 实体或具体数据访问 Service。
  */
 @Service
-public class WorkflowIdentityService implements WorkflowIdentityProvider {
+public class WorkflowIdentityServiceImpl implements WorkflowIdentityProvider {
 
     private final WorkflowDataProvider dataProvider;
 
-    public WorkflowIdentityService(WorkflowDataProvider dataProvider) {
+    public WorkflowIdentityServiceImpl(WorkflowDataProvider dataProvider) {
         this.dataProvider = dataProvider;
     }
 
@@ -56,7 +54,7 @@ public class WorkflowIdentityService implements WorkflowIdentityProvider {
         if (hasText(user.departmentId())) {
             flags.add("dept:" + user.departmentId());
         }
-        dataProvider.findRoleIdsByUserId(user.id()).stream().filter(WorkflowIdentityService::hasText)
+        dataProvider.findRoleIdsByUserId(user.id()).stream().filter(WorkflowIdentityServiceImpl::hasText)
                 .map(roleId -> "role:" + roleId).forEach(flags::add);
         return List.copyOf(flags);
     }
@@ -146,7 +144,7 @@ public class WorkflowIdentityService implements WorkflowIdentityProvider {
     public Map<String, WorkflowUserInfo> resolveUsers(List<String> userIds) {
         requireCurrentUser();
         if (userIds == null || userIds.isEmpty()) return Map.of();
-        List<String> ids = userIds.stream().filter(WorkflowIdentityService::isNumericId).distinct().toList();
+        List<String> ids = userIds.stream().filter(WorkflowIdentityServiceImpl::isNumericId).distinct().toList();
         Map<String, WorkflowUserInfo> result = new LinkedHashMap<>();
         dataProvider.findUsersByIds(ids).forEach((id, user) -> result.put(id, new WorkflowUserInfo(id, displayName(user))));
         return result;
@@ -261,7 +259,7 @@ public class WorkflowIdentityService implements WorkflowIdentityProvider {
 
     private List<String> activeLeaders(String departmentId, WorkflowLeaderType type, String applicantId) {
         List<String> ids = dataProvider.findDepartmentLeaderUserIds(departmentId, type).stream()
-                .filter(WorkflowIdentityService::isNumericId).filter(id -> !id.equals(applicantId)).distinct().toList();
+                .filter(WorkflowIdentityServiceImpl::isNumericId).filter(id -> !id.equals(applicantId)).distinct().toList();
         if (ids.isEmpty()) return List.of();
         return dataProvider.findUsersByIds(ids).keySet().stream().filter(id -> !id.equals(applicantId)).toList();
     }

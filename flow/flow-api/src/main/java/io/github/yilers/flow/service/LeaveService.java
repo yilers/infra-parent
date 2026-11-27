@@ -1,4 +1,4 @@
-package io.github.yilers.flow.leave.service;
+package io.github.yilers.flow.service;
 
 import io.github.yilers.flow.leave.model.LeaveInfo;
 import io.github.yilers.flow.leave.model.LeavePage;

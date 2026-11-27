@@ -8,7 +8,7 @@ import io.github.yilers.flow.leave.model.LeavePage;
 import io.github.yilers.flow.leave.request.LeaveSaveRequest;
 import io.github.yilers.flow.leave.request.LeaveSubmitRequest;
 import io.github.yilers.flow.leave.request.LeaveVersionRequest;
-import io.github.yilers.flow.leave.service.LeaveService;
+import io.github.yilers.flow.service.LeaveService;
 import io.github.yilers.web.log.SysLog;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

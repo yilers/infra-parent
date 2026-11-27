@@ -1,6 +1,5 @@
 package io.github.yilers.flow.service;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import io.github.yilers.flow.model.WorkflowAssigneeRule;
 import io.github.yilers.flow.model.WorkflowDepartmentInfo;
 import io.github.yilers.flow.model.WorkflowDirectoryEntry;
@@ -8,7 +7,6 @@ import io.github.yilers.flow.model.WorkflowDirectoryPage;
 import io.github.yilers.flow.model.WorkflowDirectoryType;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -24,7 +22,7 @@ import java.util.Set;
  * 本服务不依赖 UPM 实体、Service 或 MyBatis-Plus 分页对象。
  */
 @Service
-public class WorkflowDirectoryService {
+public class WorkflowDirectoryServiceImpl implements WorkflowDirectoryService {
 
     private static final List<HandlerDict> HANDLER_TYPES = List.of(
             new HandlerDict("角色", "role", List.of()),
@@ -35,19 +33,22 @@ public class WorkflowDirectoryService {
     private final WorkflowDataProvider dataProvider;
     private final WorkflowIdentityProvider identityProvider;
 
-    public WorkflowDirectoryService(WorkflowDataProvider dataProvider, WorkflowIdentityProvider identityProvider) {
+    public WorkflowDirectoryServiceImpl(WorkflowDataProvider dataProvider, WorkflowIdentityProvider identityProvider) {
         this.dataProvider = dataProvider;
         this.identityProvider = identityProvider;
     }
 
+    @Override
     public List<String> handlerTypes() {
         return List.of("角色", "部门", "用户", "动态规则");
     }
 
+    @Override
     public List<HandlerDict> handlerDictionary() {
         return HANDLER_TYPES;
     }
 
+    @Override
     public HandlerResult searchHandlers(String handlerType, String keyword, Long departmentId,
                                         long pageNum, long pageSize) {
         validatePage(pageNum, pageSize, "办理人");
@@ -70,7 +71,7 @@ public class WorkflowDirectoryService {
         };
         WorkflowDirectoryPage page = dataProvider.searchDirectory(directoryType, normalizedKeyword,
                 departmentId == null ? null : departmentId.toString(), pageNum, pageSize);
-        List<HandlerRow> rows = page.records().stream().map(WorkflowDirectoryService::toHandlerRow).toList();
+        List<HandlerRow> rows = page.records().stream().map(WorkflowDirectoryServiceImpl::toHandlerRow).toList();
         return new HandlerResult(new HandlerPage(rows, page.total()),
                 buildDepartmentTree(dataProvider.findAllDepartments()));
     }
@@ -78,6 +79,7 @@ public class WorkflowDirectoryService {
     /**
      * 批量回显已保存的静态办理人名称，避免按每个选择项逐个访问用户、角色或部门服务。
      */
+    @Override
     public List<HandlerFeedback> resolveHandlerFeedback(String storageIds) {
         if (storageIds == null || storageIds.isBlank()) return List.of();
         List<String> requested = List.of(storageIds.split("[,，@]+"));
@@ -105,6 +107,7 @@ public class WorkflowDirectoryService {
         return result;
     }
 
+    @Override
     public WorkflowDirectoryPage searchTaskTargets(String keyword, long pageNum, long pageSize) {
         validatePage(pageNum, pageSize, "用户");
         return dataProvider.searchTransferTargets(normalizeKeyword(keyword), identityProvider.currentUserId(),
@@ -173,24 +176,4 @@ public class WorkflowDirectoryService {
             return false;
         }
     }
-
-    /** 办理人类型选项。 */
-    public record HandlerDict(String label, String value, List<?> childList) { }
-
-    /** 官方设计器办理人列表行。 */
-    public record HandlerRow(String storageId, String handlerCode, String handlerName, String groupName,
-                             @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime createTime) { }
-
-    /** 办理人分页数据。 */
-    public record HandlerPage(List<HandlerRow> rows, long total) { }
-
-    /** 部门树节点。 */
-    public record DeptTree(String id, String name, String parentId, List<DeptTree> children) { }
-
-    /** 办理人列表及部门树。 */
-    public record HandlerResult(HandlerPage handlerAuths, List<DeptTree> treeSelections) { }
-
-    /** 已选办理人名称回显。 */
-    public record HandlerFeedback(String storageId, String handlerName) { }
-
 }

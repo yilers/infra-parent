@@ -1,4 +1,4 @@
-package io.github.yilers.flow.service.impl;
+package io.github.yilers.flow.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.github.yilers.flow.mapper.WorkflowInboxMapper;
@@ -9,9 +9,6 @@ import io.github.yilers.flow.model.WorkflowInstanceDetail;
 import io.github.yilers.flow.model.WorkflowPage;
 import io.github.yilers.flow.model.WorkflowWorkItem;
 import io.github.yilers.flow.model.WorkflowUserInfo;
-import io.github.yilers.flow.service.WorkflowBusinessProvider;
-import io.github.yilers.flow.service.WorkflowIdentityProvider;
-import io.github.yilers.flow.service.WorkflowInboxService;
 import io.github.yilers.web.context.RequestContextHolder;
 import io.github.yilers.flow.i18n.FlowMessage;
 import io.github.yilers.web.exception.CommonException;

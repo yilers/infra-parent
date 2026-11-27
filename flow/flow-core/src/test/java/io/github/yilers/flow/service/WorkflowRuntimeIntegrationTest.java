@@ -9,10 +9,6 @@ import io.github.yilers.flow.config.FlowTenantConfig;
 import io.github.yilers.flow.config.FlowCcListener;
 import io.github.yilers.flow.mapper.WorkflowCcMapper;
 import io.github.yilers.flow.model.WorkflowWorkItem;
-import io.github.yilers.flow.service.impl.WorkflowDefinitionServiceImpl;
-import io.github.yilers.flow.service.impl.WorkflowInboxServiceImpl;
-import io.github.yilers.flow.service.impl.WorkflowServiceImpl;
-import io.github.yilers.flow.service.impl.WorkflowTaskActionConfig;
 import io.github.yilers.web.context.RequestContextHolder;
 import io.github.yilers.web.exception.CommonException;
 import org.dromara.warm.flow.core.FlowEngine;
@@ -491,9 +487,9 @@ class WorkflowRuntimeIntegrationTest {
     @Import({FlowAutoConfig.class, FlowQueryConfig.class, FlowTenantConfig.class, FlowPermissionConfig.class,
             FlowCcListener.class,
             WorkflowServiceImpl.class, WorkflowInboxServiceImpl.class, WorkflowDefinitionServiceImpl.class,
-            io.github.yilers.flow.service.impl.WorkflowAssigneeResolver.class,
+            io.github.yilers.flow.service.WorkflowAssigneeResolver.class,
             io.github.yilers.flow.leave.config.LeaveProperties.class,
-            io.github.yilers.flow.leave.service.LeaveServiceImpl.class,
+            io.github.yilers.flow.service.LeaveServiceImpl.class,
             io.github.yilers.flow.leave.service.LeaveApplicationTasks.class,
             io.github.yilers.flow.leave.service.LeaveBusinessProvider.class})
     static class Config {

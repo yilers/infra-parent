@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerIntercept
 import io.github.yilers.flow.config.FlowTenantConfig;
 import io.github.yilers.flow.mapper.WorkflowInboxMapper;
 import io.github.yilers.flow.mapper.WorkflowCcMapper;
-import io.github.yilers.flow.service.impl.WorkflowInboxServiceImpl;
 import io.github.yilers.web.context.RequestContextHolder;
 import io.github.yilers.web.exception.CommonException;
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;

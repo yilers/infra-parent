@@ -4,7 +4,7 @@ import io.github.yilers.flow.entity.WorkflowCc;
 import io.github.yilers.flow.mapper.WorkflowCcMapper;
 import io.github.yilers.flow.model.WorkflowUserInfo;
 import io.github.yilers.flow.service.WorkflowIdentityProvider;
-import io.github.yilers.flow.service.impl.WorkflowCcConfig;
+import io.github.yilers.flow.service.WorkflowCcConfig;
 import io.github.yilers.web.context.RequestContextHolder;
 import lombok.RequiredArgsConstructor;
 import org.dromara.warm.flow.core.enums.NodeType;
